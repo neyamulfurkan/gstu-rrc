@@ -515,7 +515,7 @@ export function AnnouncementSection({
           </div>
 
           <a
-            href="/announcements"
+            href="/events"
             className={cn(
               "hidden sm:inline-flex items-center gap-1.5 text-sm font-medium",
               "text-[var(--color-accent)] hover:text-[var(--color-primary)]",
@@ -542,7 +542,7 @@ export function AnnouncementSection({
         {/* Mobile "View All" link */}
         <div className="mt-6 text-center sm:hidden">
           <a
-            href="/announcements"
+            href="/events"
             className={cn(
               "inline-flex items-center gap-1.5 text-sm font-medium",
               "text-[var(--color-accent)] hover:text-[var(--color-primary)]",

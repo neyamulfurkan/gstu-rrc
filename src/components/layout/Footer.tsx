@@ -440,7 +440,7 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
               )}
 
               <Link
-                href="/announcements"
+                href="/events"
                 className="inline-flex items-center gap-1 text-xs font-medium mt-4 transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                 style={{ color: "var(--color-accent)" }}
               >
