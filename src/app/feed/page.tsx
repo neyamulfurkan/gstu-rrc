@@ -51,6 +51,7 @@ export default async function FeedPageRoute(): Promise<JSX.Element> {
         where: {
           isDeleted: false,
           isPinned: false,
+          author: { status: "active" },
         },
         orderBy: { createdAt: "desc" },
         take: 20,
@@ -197,6 +198,36 @@ export default async function FeedPageRoute(): Promise<JSX.Element> {
   // ── Map raw post to PostCard shape ───────────────────────────────────────────
 
   function mapToPostCard(raw: (typeof rawPosts)[number]): PostCard {
+    if (!raw.author) {
+      return {
+        id: raw.id,
+        content: raw.content,
+        mediaUrls: Array.isArray(raw.mediaUrls) ? (raw.mediaUrls as string[]) : [],
+        mediaType: raw.mediaType ?? null,
+        isPinned: raw.isPinned,
+        author: {
+          id: "",
+          username: "deleted",
+          fullName: "Deleted User",
+          avatarUrl: "",
+          coverUrl: "",
+          department: { name: "" },
+          role: { name: "Member", color: "#7B8DB0", category: "general" },
+          session: "",
+          memberType: "member",
+          skills: [],
+          socialLinks: {},
+          bio: null,
+          interests: null,
+          createdAt: raw.createdAt,
+          workplace: null,
+        },
+        likesCount: raw._count.likes,
+        commentsCount: raw._count.comments,
+        isLikedByMe: userLikes.has(raw.id),
+        createdAt: raw.createdAt,
+      };
+    }
     const author: MemberPublic = {
       id: raw.author.id,
       username: raw.author.username,
