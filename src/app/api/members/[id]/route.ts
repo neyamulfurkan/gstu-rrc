@@ -13,9 +13,10 @@ import { z } from "zod";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const CUID_REGEX = /^c[a-z0-9]{24}$/i;
+const MEMBER_ID_REGEX = /^member_/i;
 
 function isCuid(value: string): boolean {
-  return CUID_REGEX.test(value);
+  return CUID_REGEX.test(value) || MEMBER_ID_REGEX.test(value);
 }
 
 async function findMemberByIdOrUsername(idOrUsername: string) {

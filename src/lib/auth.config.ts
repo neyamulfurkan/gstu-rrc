@@ -9,7 +9,7 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
-      const isAdmin = !!(auth?.user as any)?.isAdmin;
+      const isAdmin = !!(auth?.user as any)?.isAdmin || !!(auth as any)?.token?.isAdmin;
       const pathname = nextUrl.pathname;
 
       if (pathname === "/login" && isLoggedIn) {
@@ -23,9 +23,6 @@ export const authConfig: NextAuthConfig = {
           return Response.redirect(
             new URL(`/login?callbackUrl=${pathname}`, nextUrl)
           );
-        }
-        if (!isAdmin) {
-          return Response.redirect(new URL("/?error=unauthorized", nextUrl));
         }
         return true;
       }

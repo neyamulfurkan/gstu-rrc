@@ -98,7 +98,7 @@ export default function LoginPage({ searchParams }: LoginPageProps): JSX.Element
 
     try {
       const result = await signIn("credentials", {
-        identifier: identifier.trim().toLowerCase(),
+        identifier: identifier.trim(),
         password,
         redirect: false,
       });
