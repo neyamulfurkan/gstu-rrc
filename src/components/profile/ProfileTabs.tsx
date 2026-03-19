@@ -640,13 +640,28 @@ function GalleryTab({ memberId }: GalleryTabProps): JSX.Element {
     []
   );
 
+  const { data: categoriesData } = useSWR<{ data: Array<{ id: string; name: string }> }>(
+    "/api/admin/gallery-categories",
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const { data: eventsData } = useSWR<{ data: Array<{ id: string; title: string }> }>(
+    "/api/events?tab=all&take=100&select=minimal",
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const categories = categoriesData?.data ?? [];
+  const eventNames = (eventsData?.data ?? []).map((e) => ({ id: e.id, name: e.title }));
+
   return (
     <GalleryGrid
       initialItems={[]}
       initialFilter={initialFilter}
       filterOptions={{
-        categories: [],
-        eventNames: [],
+        categories,
+        eventNames,
         years: [],
         currentMemberId: memberId,
       }}
