@@ -396,8 +396,8 @@ function TickerBar({ announcements, tickerSpeed }: TickerBarProps): JSX.Element 
   return (
     <div
       className={cn(
-        "w-full h-10 flex items-center overflow-hidden",
-        "bg-[var(--color-bg-elevated)] border-y border-[var(--color-border)]",
+        "w-full h-12 flex items-center overflow-hidden",
+        "bg-[var(--color-bg-surface)] border-y border-[var(--color-border)]",
         "relative"
       )}
       onMouseEnter={handleMouseEnter}
@@ -480,13 +480,13 @@ export function AnnouncementSection({
   return (
     <section
       aria-labelledby="announcements-heading"
-      className="w-full"
+      className="w-full relative z-10"
     >
       {/* Ticker bar */}
       <TickerBar announcements={announcements} tickerSpeed={tickerSpeed} />
 
       {/* Cards grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Section heading */}
         <motion.div
           variants={sectionHeaderVariants}

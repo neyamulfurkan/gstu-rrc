@@ -25,7 +25,7 @@ export function StatsBar({ stats }: StatsBarProps): JSX.Element {
 
   return (
     <section
-      className="bg-[var(--color-bg-surface)] border-y border-[var(--color-border)] py-8"
+      className="bg-[var(--color-bg-surface)] border-b border-[var(--color-border)] py-8"
       aria-label="Club statistics"
     >
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto px-4">
