@@ -152,7 +152,7 @@ function UploadForm({ categories, onClose, onSuccess }: UploadFormProps): JSX.El
             type: isVideo ? "video" : "image",
             title: entry.title || undefined,
             altText: entry.title || entry.file.name,
-            categoryId: entry.categoryId || undefined,
+            categoryId: entry.categoryId || (categories[0]?.id ?? ""),
             downloadEnabled: false,
             year: new Date().getFullYear(),
           }),
