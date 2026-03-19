@@ -562,12 +562,20 @@ function BulkUploadSection({ categories, onComplete }: BulkUploadSectionProps) {
       }
 
       try {
+        if (!bulkCategoryId) {
+          setProgress((prev) => ({ ...prev, [key]: "error" }));
+          errorCount++;
+          continue;
+        }
         const body: Record<string, unknown> = {
           url,
           type: "image",
           altText: file.name.replace(/\.[^/.]+$/, ""),
+          categoryId: bulkCategoryId,
+          year: new Date().getFullYear(),
+          tags: [],
+          downloadEnabled: false,
         };
-        if (bulkCategoryId) body.categoryId = bulkCategoryId;
 
         const apiRes = await fetch("/api/gallery", {
           method: "POST",
@@ -616,7 +624,7 @@ function BulkUploadSection({ categories, onComplete }: BulkUploadSectionProps) {
           onChange={(e) => setBulkCategoryId(e.target.value)}
           className={cn(inputClass, "w-48")}
         >
-          <option value="">No category</option>
+          <option value="" disabled>Select a category (required)</option>
           {categories.map((cat) => (
             <option key={cat.id} value={cat.id}>
               {cat.name}
