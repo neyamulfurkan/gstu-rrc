@@ -193,7 +193,8 @@ interface HeroImageEntry {
 const fetcher = (url: string) =>
   fetch(url).then(async (res) => {
     if (!res.ok) throw new Error("Failed to load config");
-    return res.json();
+    const json = await res.json();
+    return json.data ?? json;
   });
 
 // ─── Tab Button ───────────────────────────────────────────────────────────────
