@@ -1037,7 +1037,18 @@ export function ProjectsAdmin(): JSX.Element {
         <div className="p-6">
           <ProjectForm
             categories={categories}
-            onSubmit={async (_data) => { handleFormSuccess(); }}
+            onSubmit={async (data) => {
+              const res = await fetch("/api/projects", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error((err as { error?: string }).error ?? "Failed to create project");
+              }
+              handleFormSuccess();
+            }}
             onClose={() => setAddModalOpen(false)}
           />
         </div>
@@ -1058,7 +1069,18 @@ export function ProjectsAdmin(): JSX.Element {
             <ProjectForm
               initialData={selectedProject}
               categories={categories}
-              onSubmit={async (_data) => { handleFormSuccess(); }}
+              onSubmit={async (data) => {
+                const res = await fetch(`/api/projects/${selectedProject.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(data),
+                });
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}));
+                  throw new Error((err as { error?: string }).error ?? "Failed to update project");
+                }
+                handleFormSuccess();
+              }}
               onClose={() => {
                 setEditModalOpen(false);
                 setSelectedProject(null);

@@ -77,9 +77,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const takeParam = searchParams.get("take");
     const take = takeParam ? Math.min(parseInt(takeParam, 10), 100) : 20;
 
-    const where: Record<string, unknown> = {
-      isPublished: true,
-    };
+    const session = await auth();
+    const isAdminUser =
+      session?.user?.isAdmin === true ||
+      hasPermission(session?.user?.permissions ?? null, "manage_projects");
+
+    const where: Record<string, unknown> = isAdminUser ? {} : { isPublished: true };
 
     if (search) {
       where.title = { contains: search, mode: "insensitive" };
