@@ -166,7 +166,7 @@ export default async function CertificatesPage(): Promise<JSX.Element> {
   }
 
   return (
-    <main className="min-h-screen bg-[var(--color-bg-base)] py-12 px-4 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[var(--color-bg-base)] pt-28 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
