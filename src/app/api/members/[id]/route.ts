@@ -96,6 +96,51 @@ export async function GET(
 
   try {
     const session = await auth();
+    // ── Stats select mode ──────────────────────────────────────────────────
+    const selectMode = request.nextUrl.searchParams.get("select");
+    if (selectMode === "stats") {
+      const where = await findMemberByIdOrUsername(id);
+      const memberForStats = await prisma.member.findUnique({
+        where,
+        select: { id: true },
+      });
+
+      if (!memberForStats) {
+        return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      }
+
+      const [postsCount, projectsCount, certificatesCount, eventsAttended] =
+        await Promise.all([
+          prisma.post.count({
+            where: { authorId: memberForStats.id, isDeleted: false },
+          }),
+          prisma.project.count({
+            where: {
+              teamMembers: { some: { id: memberForStats.id } },
+              isPublished: true,
+            },
+          }),
+          prisma.certificate.count({
+            where: { recipientId: memberForStats.id, isRevoked: false },
+          }),
+          prisma.event.count({
+            where: {
+              attendees: { some: { id: memberForStats.id } },
+              isPublished: true,
+            },
+          }),
+        ]);
+
+      return NextResponse.json({
+        data: {
+          postsCount,
+          projectsCount,
+          certificatesCount,
+          eventsAttended,
+        },
+      });
+    }
+
     const where = await findMemberByIdOrUsername(id);
 
     const isOwnProfile = session?.user?.userId
