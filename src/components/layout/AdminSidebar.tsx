@@ -132,13 +132,6 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "manage_members",
       },
       {
-        label: "Advisors",
-        section: "advisors",
-        icon: "GraduationCap",
-        Icon: GraduationCap,
-        permission: "manage_members",
-      },
-      {
         label: "Certificates",
         section: "certifications",
         icon: "Award",
