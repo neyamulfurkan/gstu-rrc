@@ -838,13 +838,12 @@ function GalleryItemTile({
           <span className="text-xs text-[var(--color-text-secondary)]">Video</span>
         </div>
       ) : (
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden aspect-square">
           <Image
             src={item.url}
             alt={item.altText || item.title || "Gallery image"}
-            width={400}
-            height={300}
-            className="w-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         </div>

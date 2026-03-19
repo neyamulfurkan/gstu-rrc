@@ -404,15 +404,13 @@ function GalleryItemTile({ item, isPending, onClick }: GalleryItemTileProps): JS
           boxShadow: hovered ? "0 0 16px var(--color-glow-accent)" : undefined,
         }}
       >
-        <div className="relative w-full">
+        <div className="relative w-full aspect-square">
           <Image
             src={item.url}
             alt={item.altText}
-            width={400}
-            height={300}
+            fill
             sizes="(max-width: 768px) 50vw, 25vw"
-            className="w-full h-auto object-cover block"
-            style={{ display: "block" }}
+            className="object-cover"
           />
 
           {isVideo && (
