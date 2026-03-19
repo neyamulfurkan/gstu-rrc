@@ -1267,23 +1267,50 @@ async function handleCommittee(
     };
 
     if (replaceAll && Array.isArray(items)) {
-      // Replace current committee with the provided list
+      // For ex_committee, delete only the specific session being replaced
+      // For executive/sub_executive, delete all of that type (no session grouping)
       const currentTypes = [...new Set(items.map((i) => i.committeeType))];
-      await prisma.$transaction([
-        prisma.committeeMember.deleteMany({
-          where: { committeeType: { in: currentTypes } },
-        }),
-        prisma.committeeMember.createMany({
-          data: items.map((item, idx) => ({
-            memberId: item.memberId ?? null,
-            memberName: item.memberName,
-            designation: item.designation,
-            committeeType: item.committeeType,
-            sortOrder: item.sortOrder ?? idx,
-            session: item.sessionYear ?? null,
-          })),
-        }),
-      ]);
+      const isExCommittee = currentTypes.includes("ex_committee");
+
+      if (isExCommittee) {
+        // Group items by sessionYear so we only replace the targeted session(s)
+        const sessionLabels = [...new Set(items.map((i) => i.sessionYear ?? null))];
+        await prisma.$transaction([
+          prisma.committeeMember.deleteMany({
+            where: {
+              committeeType: "ex_committee",
+              session: { in: sessionLabels as string[] },
+            },
+          }),
+          prisma.committeeMember.createMany({
+            data: items.map((item, idx) => ({
+              memberId: item.memberId ?? null,
+              memberName: item.memberName,
+              designation: item.designation,
+              committeeType: item.committeeType,
+              sortOrder: item.sortOrder ?? idx,
+              session: item.sessionYear ?? null,
+            })),
+          }),
+        ]);
+      } else {
+        await prisma.$transaction([
+          prisma.committeeMember.deleteMany({
+            where: { committeeType: { in: currentTypes } },
+          }),
+          prisma.committeeMember.createMany({
+            data: items.map((item, idx) => ({
+              memberId: item.memberId ?? null,
+              memberName: item.memberName,
+              designation: item.designation,
+              committeeType: item.committeeType,
+              sortOrder: item.sortOrder ?? idx,
+              session: item.sessionYear ?? null,
+            })),
+          }),
+        ]);
+      }
+
       await logAction({
         adminId: session.user.userId,
         actionType: "update_committee",

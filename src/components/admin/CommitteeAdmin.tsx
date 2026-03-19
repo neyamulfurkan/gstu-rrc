@@ -543,7 +543,7 @@ function ExCommitteeTab(): JSX.Element {
       // Group ex-committee members by session label
       const sessionMap = new Map<string, CommitteeMemberEntry[]>();
       for (const member of exMembers) {
-        const label = (member as CommitteeMemberEntry & { session?: string }).session ?? "Unknown Session";
+        const label = member.session ?? "Unknown Session";
         if (!sessionMap.has(label)) sessionMap.set(label, []);
         sessionMap.get(label)!.push(member);
       }

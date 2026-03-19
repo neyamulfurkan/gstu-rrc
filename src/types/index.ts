@@ -314,6 +314,7 @@ export interface CommitteeMemberEntry {
   memberName: string;
   designation: string;
   committeeType: string;
+  session?: string | null;
   sortOrder: number;
   member?: { username: string; avatarUrl: string; fullName: string } | null;
 }
