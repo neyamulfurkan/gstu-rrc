@@ -1016,8 +1016,10 @@ export function CertificateTemplateEditor({
   const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── buildFinalCss must be declared BEFORE hooks that depend on it ──
-  const buildFinalCss = useCallback((baseCss: string): string => {
+  const buildFinalCss = useCallback((baseCss: string, resolvedLogoUrl?: string): string => {
     if (!logoWatermark) return baseCss;
+    // Use the resolved logo URL if provided (for preview), otherwise keep the placeholder (for saved CSS)
+    const logoValue = resolvedLogoUrl ?? "{{logo_url}}";
     const watermarkCss = `
 /* ── Logo Watermark (auto-generated) ── */
 .certificate, .cert, body > div:first-of-type {
@@ -1031,7 +1033,7 @@ export function CertificateTemplateEditor({
   transform: translate(-50%, -50%) !important;
   width: ${watermarkSize}px !important;
   height: ${watermarkSize}px !important;
-  background-image: url("{{logo_url}}") !important;
+  background-image: url("${logoValue}") !important;
   background-size: contain !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
@@ -1051,7 +1053,7 @@ export function CertificateTemplateEditor({
     }
 
     previewDebounceRef.current = setTimeout(() => {
-      setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent)));
+      setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent, SAMPLE_DATA["{{logo_url}}"])));
     }, 500);
 
     return () => {
@@ -1065,7 +1067,7 @@ export function CertificateTemplateEditor({
   const handleTogglePreview = useCallback(() => {
     setPreviewVisible((prev) => {
       if (!prev) {
-        setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent)));
+        setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent, SAMPLE_DATA["{{logo_url}}"])));
       }
       return !prev;
     });
@@ -1203,15 +1205,15 @@ export function CertificateTemplateEditor({
                   key={t.id}
                   type="button"
                   title={t.description}
-                  onClick={() => {
-                    setName(t.name);
-                    setType(t.type);
-                    setHtmlContent(t.htmlContent);
-                    setCssContent(t.cssContent);
-                    if (previewVisible) {
-                      setPreviewSrc(buildPreviewHtml(t.htmlContent, t.cssContent));
-                    }
-                  }}
+onClick={() => {
+setName(t.name);
+setType(t.type);
+setHtmlContent(t.htmlContent);
+setCssContent(t.cssContent);
+if (previewVisible) {
+setPreviewSrc(buildPreviewHtml(t.htmlContent, buildFinalCss(t.cssContent, SAMPLE_DATA["{{logo_url}}"])));
+}
+}}
                   className={cn(
                     "px-3 py-1.5 rounded-lg text-xs font-medium border transition-all duration-150",
                     "border-[var(--color-border)] text-[var(--color-text-secondary)]",
