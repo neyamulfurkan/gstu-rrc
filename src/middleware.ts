@@ -1,10 +1,13 @@
 // src/middleware.ts
-import { auth } from "@/lib/auth";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  const { nextUrl, auth: session } = req as typeof req & { auth: { user?: { isAdmin?: boolean } } | null };
+  const { nextUrl } = req;
+  const session = req.auth as { user?: { isAdmin?: boolean } } | null;
   const isLoggedIn = !!session?.user;
   const isAdmin = !!session?.user?.isAdmin;
 

@@ -5,6 +5,8 @@ import bcryptjs from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 
+// auth.ts runs in Node.js runtime only — prisma and bcryptjs are safe here
+
 declare module "next-auth" {
   interface Session {
     user: {
