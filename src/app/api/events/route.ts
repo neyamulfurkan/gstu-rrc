@@ -74,7 +74,18 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
     const now = new Date();
-    const where = buildWhereClause(tab, categoryId, now);
+    const session = await auth();
+    const isAdminUser =
+      session?.user?.isAdmin === true ||
+      hasPermission(session?.user?.permissions ?? null, "manage_events");
+
+    const allParam = searchParams.get("all");
+    const rawWhere = buildWhereClause(tab, categoryId, now);
+    const where = isAdminUser && allParam === "true" ? { ...rawWhere, isPublished: undefined } : rawWhere;
+    // Remove isPublished key if admin requesting all
+    if (isAdminUser && allParam === "true") {
+      delete (where as Record<string, unknown>).isPublished;
+    }
 
     const [events, total] = await Promise.all([
       prisma.event.findMany({
