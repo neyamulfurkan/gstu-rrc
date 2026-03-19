@@ -949,16 +949,16 @@ export default async function HomePage(): Promise<JSX.Element> {
       {/* Hero */}
       <HeroSection config={publicConfig} />
 
-      {/* Stats Bar */}
-      <StatsBar stats={stats} />
-
-      {/* Announcements ticker + cards */}
+      {/* Announcements ticker + cards — immediately after hero */}
       {announcementCards.length > 0 && (
         <AnnouncementSection
           announcements={announcementCards}
           tickerSpeed={publicConfig.announcementTickerSpeed ?? 30}
         />
       )}
+
+      {/* Stats Bar */}
+      <StatsBar stats={stats} />
 
       {/* Upcoming Events */}
       {eventCards.length > 0 && (
