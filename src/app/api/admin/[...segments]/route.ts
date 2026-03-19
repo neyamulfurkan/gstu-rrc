@@ -195,6 +195,8 @@ async function handleRequest(
         return await handleMemberRequests(req, session, method, ip);
       case "search":
         return await handleSearch(req, session, ip);
+      case "email-logs":
+        return await handleEmailLogs(req, session, method);
       case "export":
         return await handleExport(req, session);
       case "facebook-oauth":
@@ -205,6 +207,7 @@ async function handleRequest(
         return await handleProjectCategories(req, session, method, ip);
       case "gallery-categories":
         return await handleGalleryCategories(req, session, method, ip);
+      case "announcements-categories":
       case "announcement-categories":
         return await handleAnnouncementCategories(req, session, method, ip);
       case "instrument-categories":
@@ -2683,6 +2686,49 @@ async function handleInstrumentCategories(
     return new NextResponse(null, { status: 204 });
   }
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+}
+
+// ─── email-logs ──────────────────────────────────────────────────────────────
+
+async function handleEmailLogs(
+  req: NextRequest,
+  session: Session,
+  method: string
+): Promise<NextResponse> {
+  if (method !== "GET") {
+    return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
+  }
+  if (!hasPermission(session.user.permissions, "send_emails")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const sp = req.nextUrl.searchParams;
+  const page = Math.max(1, parseInt(sp.get("page") ?? "1", 10));
+  const take = Math.min(parseInt(sp.get("take") ?? "25", 10), 100);
+  const skip = (page - 1) * take;
+
+  try {
+    const [logs, total] = await Promise.all([
+      (prisma as any).emailLog.findMany({
+        orderBy: { sentAt: "desc" },
+        take,
+        skip,
+        select: {
+          id: true,
+          to: true,
+          subject: true,
+          templateName: true,
+          status: true,
+          sentAt: true,
+        },
+      }),
+      (prisma as any).emailLog.count(),
+    ]);
+    return NextResponse.json({ data: logs, total, page, take });
+  } catch {
+    // EmailLog table may not exist yet
+    return NextResponse.json({ data: [], total: 0, page, take });
+  }
 }
 
 // Re-export unused deleteCloudinaryAsset to satisfy linter for imported but

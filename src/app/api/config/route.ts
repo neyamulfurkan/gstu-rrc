@@ -4,6 +4,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(_request: NextRequest): Promise<NextResponse> {
+  // Handle previewColors override for ColorEditor iframe preview
+  const url = new URL(_request.url);
+  const previewColors = url.searchParams.get("previewColors");
+  let previewColorConfig: Record<string, string> | null = null;
+  if (previewColors) {
+    try {
+      previewColorConfig = JSON.parse(Buffer.from(previewColors, "base64").toString("utf-8"));
+    } catch {
+      // ignore invalid preview colors
+    }
+  }
   try {
     const config = await prisma.clubConfig.findUnique({
       where: { id: "main" },
@@ -72,11 +83,17 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    const responseData = previewColorConfig
+      ? { ...config, colorConfig: previewColorConfig }
+      : config;
+
     return NextResponse.json(
-      { data: config },
+      { data: responseData },
       {
         headers: {
-          "Cache-Control": "public, max-age=60, s-maxage=60, stale-while-revalidate=120",
+          "Cache-Control": previewColorConfig
+            ? "no-store"
+            : "public, max-age=60, s-maxage=60, stale-while-revalidate=120",
         },
       }
     );
