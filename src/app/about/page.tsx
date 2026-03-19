@@ -233,7 +233,7 @@ export default async function AboutPage(): Promise<JSX.Element> {
         },
       }),
       prisma.committeeMember.findMany({
-        where: { session: null },
+        where: { session: null, committeeType: { in: ["executive", "sub_executive"] } },
         orderBy: { sortOrder: "asc" },
         select: {
           id: true,
@@ -253,7 +253,7 @@ export default async function AboutPage(): Promise<JSX.Element> {
         },
       }),
       prisma.committeeMember.findMany({
-        where: { session: { not: null } },
+        where: { session: { not: null }, committeeType: "ex_committee" },
         orderBy: [{ session: "desc" }, { sortOrder: "asc" }],
         select: {
           id: true,
