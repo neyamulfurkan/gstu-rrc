@@ -1216,7 +1216,18 @@ export function EventsAdmin(): JSX.Element {
           {formModalOpen && (
             <EventFormWithCategories
               initialData={editingEventId ? { id: editingEventId } : undefined}
-              onSubmit={async (_data) => { handleFormSuccess(); }}
+              onSubmit={async (data) => {
+                const res = await fetch("/api/events", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(data),
+                });
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}));
+                  throw new Error((err as { error?: string }).error ?? "Failed to create event");
+                }
+                handleFormSuccess();
+              }}
               onClose={() => {
                 setFormModalOpen(false);
                 setEditingEventId(null);
