@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 interface ColorEditorProps {
   value: Record<string, string>;
   onChange: (v: Record<string, string>) => void;
+  fonts?: { displayFont: string; headingFont: string; bodyFont: string; monoFont: string };
+  onFontsChange?: (fonts: { displayFont: string; headingFont: string; bodyFont: string; monoFont: string }) => void;
 }
 
 interface TokenGroup {
@@ -588,7 +590,7 @@ function LivePreview({ colorValue }: LivePreviewProps): JSX.Element {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function ColorEditor({ value, onChange }: ColorEditorProps): JSX.Element {
+export function ColorEditor({ value, onChange, fonts, onFontsChange }: ColorEditorProps): JSX.Element {
   const [activePreset, setActivePreset] = useState<string | null>(() => {
     // Detect if current value matches a preset
     for (const [key, preset] of Object.entries(THEME_PRESETS)) {
@@ -630,8 +632,16 @@ export function ColorEditor({ value, onChange }: ColorEditorProps): JSX.Element 
       if (!preset) return;
       setActivePreset(presetKey);
       onChange({ ...preset.colors });
+      if (preset.fonts && onFontsChange) {
+        onFontsChange({
+          displayFont: preset.fonts.display ?? "Orbitron",
+          headingFont: preset.fonts.heading ?? "Syne",
+          bodyFont: preset.fonts.body ?? "DM Sans",
+          monoFont: preset.fonts.mono ?? "JetBrains Mono",
+        });
+      }
     },
-    [onChange]
+    [onChange, onFontsChange]
   );
 
   const handleTokenChange = useCallback(
@@ -645,7 +655,10 @@ export function ColorEditor({ value, onChange }: ColorEditorProps): JSX.Element 
   const handleResetToDefault = useCallback(() => {
     setActivePreset("cyber-blue");
     onChange({ ...THEME_PRESETS["cyber-blue"].colors });
-  }, [onChange]);
+    if (onFontsChange) {
+      onFontsChange({ displayFont: "Orbitron", headingFont: "Syne", bodyFont: "DM Sans", monoFont: "JetBrains Mono" });
+    }
+  }, [onChange, onFontsChange]);
 
   const toggleGroup = useCallback((groupLabel: string) => {
     setExpandedGroups((prev) => ({ ...prev, [groupLabel]: !prev[groupLabel] }));

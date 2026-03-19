@@ -879,8 +879,13 @@ function DesignTab({ config }: DesignTabProps): JSX.Element {
         <Alert variant="error" message={saveError} dismissible onDismiss={() => setSaveError(null)} />
       )}
 
-      <Section title="Color System" description="Choose a theme preset or customize individual color tokens.">
-        <ColorEditor value={colorConfig} onChange={setColorConfig} />
+      <Section title="Color System" description="Choose a theme preset or customize individual color tokens. Selecting a preset also updates typography.">
+        <ColorEditor
+          value={colorConfig}
+          onChange={setColorConfig}
+          fonts={fonts}
+          onFontsChange={setFonts}
+        />
       </Section>
 
       <Section title="Typography" description="Google Font names for the four font roles.">

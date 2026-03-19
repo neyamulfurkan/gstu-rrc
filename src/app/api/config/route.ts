@@ -193,8 +193,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       data: updateData,
     });
 
-    // Invalidate the colorInject cache by clearing the module-level cache
-    // This is done by calling revalidatePath on all ISR pages
+    // Bust the server-side colorInject module cache so next render picks up new colors
+    try {
+      const { invalidateColorCache } = await import("@/lib/colorInject");
+      invalidateColorCache();
+    } catch {
+      // non-fatal
+    }
+
     revalidatePath("/");
     revalidatePath("/members");
     revalidatePath("/events");

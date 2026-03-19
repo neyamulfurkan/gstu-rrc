@@ -35,11 +35,18 @@ type ColorConfig = Record<string, string>;
 export interface ThemePreset {
   name: string;
   colors: Record<ColorToken, string>;
+  fonts?: {
+    display?: string;
+    heading?: string;
+    body?: string;
+    mono?: string;
+  };
 }
 
 export const THEME_PRESETS: Record<string, ThemePreset> = {
   "cyber-blue": {
     name: "Cyber Blue",
+    fonts: { display: "Orbitron", heading: "Syne", body: "DM Sans", mono: "JetBrains Mono" },
     colors: {
       "--color-bg-base": "#060B14",
       "--color-bg-surface": "#0D1626",
@@ -71,6 +78,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   },
   "neon-green": {
     name: "Neon Green",
+    fonts: { display: "Orbitron", heading: "Exo 2", body: "Inter", mono: "JetBrains Mono" },
     colors: {
       "--color-bg-base": "#040F08",
       "--color-bg-surface": "#071A0E",
@@ -102,6 +110,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   },
   "crimson-steel": {
     name: "Crimson Steel",
+    fonts: { display: "Rajdhani", heading: "Syne", body: "DM Sans", mono: "JetBrains Mono" },
     colors: {
       "--color-bg-base": "#0F0608",
       "--color-bg-surface": "#1A0A0D",
@@ -133,6 +142,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   },
   "gold-academia": {
     name: "Gold Academia",
+    fonts: { display: "Syne", heading: "Montserrat", body: "IBM Plex Sans", mono: "IBM Plex Mono" },
     colors: {
       "--color-bg-base": "#0A0805",
       "--color-bg-surface": "#16110A",
@@ -164,6 +174,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   },
   "arctic-white": {
     name: "Arctic White",
+    fonts: { display: "Poppins", heading: "Montserrat", body: "Inter", mono: "Fira Code" },
     colors: {
       "--color-bg-base": "#F8FAFC",
       "--color-bg-surface": "#FFFFFF",
@@ -195,6 +206,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   },
   "deep-purple": {
     name: "Deep Purple",
+    fonts: { display: "Orbitron", heading: "Space Grotesk", body: "DM Sans", mono: "JetBrains Mono" },
     colors: {
       "--color-bg-base": "#080613",
       "--color-bg-surface": "#100D1F",
@@ -226,6 +238,7 @@ export const THEME_PRESETS: Record<string, ThemePreset> = {
   },
   "solar-orange": {
     name: "Solar Orange",
+    fonts: { display: "Rajdhani", heading: "Exo 2", body: "Roboto", mono: "Share Tech Mono" },
     colors: {
       "--color-bg-base": "#0F0906",
       "--color-bg-surface": "#1A100A",
