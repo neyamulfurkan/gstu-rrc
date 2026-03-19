@@ -69,12 +69,12 @@ interface BorrowRequestAdmin {
     name: string;
     imageUrl: string;
   };
-  member: {
+  member?: {
     id: string;
     username: string;
     fullName: string;
     avatarUrl: string;
-  };
+  } | null;
 }
 
 type Tab = "instruments" | "borrow-requests";
@@ -965,24 +965,31 @@ function BorrowRequestsTab(): JSX.Element {
       {
         key: "member",
         header: "Requester",
-        render: (row) => (
-          <div className="flex items-center gap-2">
-            <div className="relative h-6 w-6 overflow-hidden rounded-full bg-[var(--color-bg-elevated)] flex-shrink-0">
-              {row.member.avatarUrl && (
-                <Image
-                  src={row.member.avatarUrl}
-                  alt={row.member.fullName}
-                  fill
-                  className="object-cover"
-                  sizes="24px"
-                />
-              )}
+        render: (row) => {
+          if (!row.member) {
+            return (
+              <span className="text-sm text-[var(--color-text-secondary)]">Unknown</span>
+            );
+          }
+          return (
+            <div className="flex items-center gap-2">
+              <div className="relative h-6 w-6 overflow-hidden rounded-full bg-[var(--color-bg-elevated)] flex-shrink-0">
+                {row.member.avatarUrl && (
+                  <Image
+                    src={row.member.avatarUrl}
+                    alt={row.member.fullName ?? "Member"}
+                    fill
+                    className="object-cover"
+                    sizes="24px"
+                  />
+                )}
+              </div>
+              <span className="text-sm text-[var(--color-text-primary)]">
+                {row.member.fullName ?? row.member.username ?? "Unknown"}
+              </span>
             </div>
-            <span className="text-sm text-[var(--color-text-primary)]">
-              {row.member.fullName}
-            </span>
-          </div>
-        ),
+          );
+        },
       },
       {
         key: "purpose",
