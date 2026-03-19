@@ -356,7 +356,22 @@ function TemplatesTab({ templates, isLoading, onRefresh }: TemplatesTabProps): J
         <div className="p-6">
           <CertificateTemplateEditor
             initialData={editingTemplate ?? undefined}
-            onSubmit={async (data) => { handleEditorSave(); }}
+            onSubmit={async (data) => {
+              const method = editingTemplate?.id ? "PUT" : "POST";
+              const body = editingTemplate?.id
+                ? { id: editingTemplate.id, ...data }
+                : data;
+              const res = await fetch("/api/admin/cert-templates", {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+              });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error ?? err.message ?? "Failed to save template");
+              }
+              handleEditorSave();
+            }}
             onClose={handleEditorClose}
           />
         </div>
