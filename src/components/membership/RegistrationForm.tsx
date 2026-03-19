@@ -80,7 +80,7 @@ interface PaymentStepProps {
   config: Pick<
     ClubConfigPublic,
     "membershipFee" | "bkashNumber" | "nagadNumber"
-  >;
+  > & { requireScreenshot?: boolean };
   value: RegistrationFormState["paymentInfo"];
   onChange: (info: RegistrationFormState["paymentInfo"]) => void;
 }
@@ -710,6 +710,7 @@ function Step4Payment({ config, value, onChange }: Step4Props): JSX.Element {
           membershipFee: config.membershipFee,
           bkashNumber: config.bkashNumber,
           nagadNumber: config.nagadNumber,
+          requireScreenshot: config.requireScreenshot ?? false,
         }}
         value={value}
         onChange={onChange}
