@@ -216,9 +216,9 @@ export const announcementSchema = z.object({
 
 export const instrumentSchema = z.object({
   name: z.string().min(2, "Instrument name must be at least 2 characters"),
-  categoryId: z.string().cuid("Please select a valid category"),
+  categoryId: z.string().min(1, "Please select a valid category"),
   description: z.string().min(10, "Description must be at least 10 characters"),
-  imageUrl: z.string().url("Please upload a valid image"),
+  imageUrl: z.string().url("Please upload a valid image").optional().or(z.literal("")),
   status: z
     .enum(["available", "on_loan", "maintenance", "unavailable"])
     .default("available"),

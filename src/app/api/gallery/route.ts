@@ -187,7 +187,54 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       select: { id: true },
     });
 
-    return NextResponse.json({ id: newItem.id }, { status: 201 });
+    const createdItem = await prisma.galleryItem.findUnique({
+      where: { id: newItem.id },
+      select: {
+        id: true,
+        url: true,
+        type: true,
+        title: true,
+        altText: true,
+        category: { select: { name: true } },
+        uploaderId: true,
+        uploader: {
+          select: { username: true, fullName: true, avatarUrl: true },
+        },
+        eventId: true,
+        projectId: true,
+        downloadEnabled: true,
+        year: true,
+        createdAt: true,
+      },
+    });
+
+    if (!createdItem) {
+      return NextResponse.json({ error: "Failed to retrieve created item" }, { status: 500 });
+    }
+
+    const galleryItem = {
+      id: createdItem.id,
+      url: createdItem.url,
+      type: createdItem.type,
+      title: createdItem.title ?? null,
+      altText: createdItem.altText,
+      category: { name: createdItem.category.name },
+      uploaderId: createdItem.uploaderId ?? null,
+      uploader: createdItem.uploader
+        ? {
+            username: createdItem.uploader.username,
+            fullName: createdItem.uploader.fullName,
+            avatarUrl: createdItem.uploader.avatarUrl,
+          }
+        : null,
+      eventId: createdItem.eventId ?? null,
+      projectId: createdItem.projectId ?? null,
+      downloadEnabled: createdItem.downloadEnabled,
+      year: createdItem.year,
+      createdAt: createdItem.createdAt,
+    };
+
+    return NextResponse.json({ data: galleryItem }, { status: 201 });
   } catch (error) {
     console.error("[POST /api/gallery]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

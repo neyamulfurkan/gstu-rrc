@@ -641,7 +641,7 @@ function GalleryTab({ memberId }: GalleryTabProps): JSX.Element {
   );
 
   const { data: categoriesData } = useSWR<{ data: Array<{ id: string; name: string }> }>(
-    "/api/admin/gallery-categories",
+    "/api/gallery-categories",
     fetcher,
     { revalidateOnFocus: false }
   );
