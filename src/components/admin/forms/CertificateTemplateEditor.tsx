@@ -1007,10 +1007,40 @@ export function CertificateTemplateEditor({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
+  const [logoWatermark, setLogoWatermark] = useState(false);
+  const [watermarkOpacity, setWatermarkOpacity] = useState(8);
+  const [watermarkSize, setWatermarkSize] = useState(300);
 
   const htmlRef = useRef<HTMLTextAreaElement>(null);
   const cssRef = useRef<HTMLTextAreaElement>(null);
   const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── buildFinalCss must be declared BEFORE hooks that depend on it ──
+  const buildFinalCss = useCallback((baseCss: string): string => {
+    if (!logoWatermark) return baseCss;
+    const watermarkCss = `
+/* ── Logo Watermark (auto-generated) ── */
+.certificate, .cert, body > div:first-of-type {
+  position: relative !important;
+}
+.certificate::before, .cert::before, body > div:first-of-type::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: ${watermarkSize}px !important;
+  height: ${watermarkSize}px !important;
+  background-image: url("{{logo_url}}") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  opacity: ${watermarkOpacity / 100} !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}`;
+    return baseCss + watermarkCss;
+  }, [logoWatermark, watermarkOpacity, watermarkSize]);
 
   // Update preview with debounce whenever content changes
   useEffect(() => {
@@ -1021,7 +1051,7 @@ export function CertificateTemplateEditor({
     }
 
     previewDebounceRef.current = setTimeout(() => {
-      setPreviewSrc(buildPreviewHtml(htmlContent, cssContent));
+      setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent)));
     }, 500);
 
     return () => {
@@ -1029,17 +1059,17 @@ export function CertificateTemplateEditor({
         clearTimeout(previewDebounceRef.current);
       }
     };
-  }, [htmlContent, cssContent, previewVisible]);
+  }, [htmlContent, cssContent, previewVisible, buildFinalCss]);
 
   // Build preview immediately when toggled on
   const handleTogglePreview = useCallback(() => {
     setPreviewVisible((prev) => {
       if (!prev) {
-        setPreviewSrc(buildPreviewHtml(htmlContent, cssContent));
+        setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent)));
       }
       return !prev;
     });
-  }, [htmlContent, cssContent]);
+  }, [htmlContent, cssContent, buildFinalCss]);
 
   const handleInsertPlaceholder = useCallback(
     (placeholder: string) => {
@@ -1090,7 +1120,7 @@ export function CertificateTemplateEditor({
         name: name.trim(),
         type,
         htmlContent,
-        cssContent,
+        cssContent: buildFinalCss(cssContent),
       });
     } catch (err) {
       const message =
@@ -1193,6 +1223,141 @@ export function CertificateTemplateEditor({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Logo Watermark Toggle */}
+          <div
+            className={cn(
+              "rounded-xl border p-4 transition-all duration-200",
+              logoWatermark
+                ? "border-[var(--color-accent)]/40 bg-[var(--color-accent)]/5"
+                : "border-[var(--color-border)] bg-[var(--color-bg-elevated)]"
+            )}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-3">
+                {/* Toggle switch */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={logoWatermark}
+                  onClick={() => setLogoWatermark((v) => !v)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200",
+                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-base)]",
+                    logoWatermark
+                      ? "bg-[var(--color-accent)]"
+                      : "bg-[var(--color-bg-base)] border border-[var(--color-border)]"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200",
+                      logoWatermark ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
+                <div>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    Club Logo Watermark
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                    Shows the club logo as a faint background watermark on the certificate
+                  </p>
+                </div>
+              </div>
+              {logoWatermark && (
+                <span
+                  className={cn(
+                    "inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold",
+                    "bg-[var(--color-accent)]/15 text-[var(--color-accent)] border border-[var(--color-accent)]/25"
+                  )}
+                >
+                  ON
+                </span>
+              )}
+            </div>
+
+            {/* Controls shown only when ON */}
+            {logoWatermark && (
+              <div className="mt-4 grid grid-cols-2 gap-4 pt-4 border-t border-[var(--color-accent)]/20">
+                {/* Opacity slider */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-[var(--color-text-secondary)]">
+                      Opacity
+                    </label>
+                    <span className="text-xs font-mono text-[var(--color-accent)]">
+                      {watermarkOpacity}%
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={2}
+                    max={30}
+                    step={1}
+                    value={watermarkOpacity}
+                    onChange={(e) => setWatermarkOpacity(Number(e.target.value))}
+                    className={cn(
+                      "w-full h-1.5 rounded-full appearance-none cursor-pointer",
+                      "bg-[var(--color-bg-base)] accent-[var(--color-accent)]"
+                    )}
+                    style={{
+                      background: `linear-gradient(to right, var(--color-accent) 0%, var(--color-accent) ${((watermarkOpacity - 2) / 28) * 100}%, var(--color-bg-base) ${((watermarkOpacity - 2) / 28) * 100}%, var(--color-bg-base) 100%)`,
+                    }}
+                  />
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs text-[var(--color-text-secondary)] opacity-50">Subtle</span>
+                    <span className="text-xs text-[var(--color-text-secondary)] opacity-50">Bold</span>
+                  </div>
+                </div>
+
+                {/* Size slider */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-medium text-[var(--color-text-secondary)]">
+                      Size
+                    </label>
+                    <span className="text-xs font-mono text-[var(--color-accent)]">
+                      {watermarkSize}px
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={100}
+                    max={600}
+                    step={20}
+                    value={watermarkSize}
+                    onChange={(e) => setWatermarkSize(Number(e.target.value))}
+                    className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, var(--color-accent) 0%, var(--color-accent) ${((watermarkSize - 100) / 500) * 100}%, var(--color-bg-base) ${((watermarkSize - 100) / 500) * 100}%, var(--color-bg-base) 100%)`,
+                    }}
+                  />
+                  <div className="flex justify-between mt-1">
+                    <span className="text-xs text-[var(--color-text-secondary)] opacity-50">Small</span>
+                    <span className="text-xs text-[var(--color-text-secondary)] opacity-50">Large</span>
+                  </div>
+                </div>
+
+                {/* Preview hint */}
+                <div className="col-span-2">
+                  <div
+                    className={cn(
+                      "flex items-center gap-2 px-3 py-2 rounded-lg text-xs",
+                      "bg-[var(--color-bg-base)] border border-[var(--color-border)]",
+                      "text-[var(--color-text-secondary)]"
+                    )}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                      <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.2"/>
+                      <path d="M6 5.5v3M6 4h.01" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                    </svg>
+                    The watermark uses <code className="font-mono text-[var(--color-accent)] mx-1">{"{{logo_url}}"}</code> — enable preview to see the effect live.
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Meta fields */}
