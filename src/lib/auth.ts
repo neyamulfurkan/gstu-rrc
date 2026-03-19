@@ -1,10 +1,9 @@
 // src/lib/auth.ts
-
 import NextAuth, { type Session, type DefaultSession } from "next-auth";
-import type { NextAuthConfig } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcryptjs from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { authConfig } from "@/lib/auth.config";
 
 declare module "next-auth" {
   interface Session {
@@ -21,19 +20,8 @@ declare module "next-auth" {
   }
 }
 
-// JWT type augmentation skipped — next-auth/jwt module augmentation not supported in this version
-
-const authConfig: NextAuthConfig = {
-  secret: process.env.NEXTAUTH_SECRET,
-
-  session: {
-    strategy: "jwt",
-  },
-
-  pages: {
-    signIn: "/login",
-  },
-
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  ...authConfig,
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -73,10 +61,7 @@ const authConfig: NextAuthConfig = {
           isAdmin: boolean;
           adminRoleId: string | null;
           status: string;
-          adminRole: {
-            permissions: unknown;
-            name: string;
-          } | null;
+          adminRole: { permissions: unknown; name: string } | null;
         } | null = null;
 
         try {
@@ -98,10 +83,7 @@ const authConfig: NextAuthConfig = {
               adminRoleId: true,
               status: true,
               adminRole: {
-                select: {
-                  permissions: true,
-                  name: true,
-                },
+                select: { permissions: true, name: true },
               },
             },
           });
@@ -110,13 +92,7 @@ const authConfig: NextAuthConfig = {
           return null;
         }
 
-        if (!member) {
-          return null;
-        }
-
-        if (member.status !== "active") {
-          return null;
-        }
+        if (!member || member.status !== "active") return null;
 
         let passwordMatch = false;
         try {
@@ -126,9 +102,7 @@ const authConfig: NextAuthConfig = {
           return null;
         }
 
-        if (!passwordMatch) {
-          return null;
-        }
+        if (!passwordMatch) return null;
 
         let permissions: Record<string, boolean> = {};
         if (member.adminRole?.permissions) {
@@ -151,38 +125,8 @@ const authConfig: NextAuthConfig = {
       },
     }),
   ],
-
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const pathname = nextUrl.pathname;
-
-      if (pathname === "/login" && isLoggedIn) {
-        const callbackUrl = nextUrl.searchParams.get("callbackUrl") ?? "/profile";
-        return Response.redirect(new URL(callbackUrl, nextUrl));
-      }
-
-      if (pathname.startsWith("/admin")) {
-        if (!isLoggedIn) {
-          return Response.redirect(new URL(`/login?callbackUrl=${pathname}`, nextUrl));
-        }
-        const user = auth?.user as { isAdmin?: boolean } | undefined;
-        if (!user?.isAdmin) {
-          return Response.redirect(new URL("/?error=unauthorized", nextUrl));
-        }
-        return true;
-      }
-
-      const protectedPaths = ["/profile", "/feed", "/instruments", "/certificates"];
-      if (protectedPaths.some((p) => pathname.startsWith(p))) {
-        if (!isLoggedIn) {
-          return Response.redirect(new URL(`/login?callbackUrl=${pathname}`, nextUrl));
-        }
-      }
-
-      return true;
-    },
-
+    ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
         const u = user as {
@@ -195,7 +139,6 @@ const authConfig: NextAuthConfig = {
           adminRole: string | null;
           permissions: Record<string, boolean>;
         };
-
         token.userId = u.id;
         token.email = u.email;
         token.username = u.username;
@@ -205,10 +148,8 @@ const authConfig: NextAuthConfig = {
         token.adminRole = u.adminRole;
         token.permissions = u.permissions;
       }
-
       return token;
     },
-
     async session({ session, token }) {
       session.user.userId = token.userId as string;
       session.user.email = (token.email as string) ?? "";
@@ -218,12 +159,9 @@ const authConfig: NextAuthConfig = {
       session.user.isAdmin = token.isAdmin as boolean;
       session.user.adminRole = (token.adminRole as string | null) ?? null;
       session.user.permissions = (token.permissions as Record<string, boolean>) ?? {};
-
       return session;
     },
   },
-} satisfies NextAuthConfig;
-
-export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);
+});
 
 export type { Session };
