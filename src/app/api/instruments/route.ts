@@ -106,7 +106,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       where.categoryId = categoryId;
     }
 
-    if (status) {
+    if (status && status !== "all") {
       where.status = status;
     }
 
