@@ -1313,23 +1313,37 @@ function NavigationTab({ config }: NavigationTabProps): JSX.Element {
         </div>
       </Section>
 
-      <Section title="Announcement Ticker" description="Speed of the scrolling announcement ticker on the home page.">
-        <div className="flex items-center gap-4">
-          <input
-            type="range"
-            min={10}
-            max={120}
-            step={5}
-            value={Number(form.announcementTickerSpeed)}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, announcementTickerSpeed: e.target.value }))
-            }
-            className="flex-1 accent-[var(--color-accent)]"
-            aria-label="Ticker speed"
-          />
-          <span className="w-16 text-right text-sm font-mono text-[var(--color-text-primary)]">
-            {form.announcementTickerSpeed}px/s
-          </span>
+      <Section title="Announcement Ticker" description="Controls how fast the announcement ticker scrolls. Lower number = faster scroll. Higher number = slower scroll (duration in seconds for one full pass).">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-[var(--color-text-secondary)] w-16 shrink-0">Faster</span>
+            <input
+              type="range"
+              min={10}
+              max={120}
+              step={5}
+              value={Number(form.announcementTickerSpeed)}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, announcementTickerSpeed: e.target.value }))
+              }
+              className="flex-1 accent-[var(--color-accent)]"
+              aria-label="Ticker speed"
+            />
+            <span className="text-xs text-[var(--color-text-secondary)] w-16 text-right shrink-0">Slower</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              Duration: <span className="font-mono text-[var(--color-text-primary)]">{form.announcementTickerSpeed}s</span> per cycle
+            </p>
+            <Input
+              type="number"
+              min={10}
+              max={120}
+              value={form.announcementTickerSpeed}
+              onChange={(e) => setForm((p) => ({ ...p, announcementTickerSpeed: e.target.value }))}
+              className="w-24 text-right"
+            />
+          </div>
         </div>
       </Section>
 

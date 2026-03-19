@@ -398,7 +398,7 @@ function TickerBar({ announcements, tickerSpeed }: TickerBarProps): JSX.Element 
       className={cn(
         "w-full h-12 flex items-center overflow-hidden",
         "bg-[var(--color-bg-surface)] border-y border-[var(--color-border)]",
-        "relative"
+        "relative select-none"
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -424,18 +424,26 @@ function TickerBar({ announcements, tickerSpeed }: TickerBarProps): JSX.Element 
       <div className="overflow-hidden flex-1 pl-[140px]">
         <div
           ref={tickerRef}
-          className="flex items-center whitespace-nowrap"
+          className="inline-flex items-center"
           style={{
             animation: `ticker-scroll ${tickerSpeed}s linear infinite`,
             willChange: "transform",
+            whiteSpace: "nowrap",
           }}
           aria-hidden="true"
         >
-          {/* Two copies for seamless loop */}
-          <span className="text-sm text-[var(--color-text-secondary)] pr-8">
-            {tickerText}
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            {tickerText}
+          {/* Repeat copies for truly seamless infinite loop */}
+          <span className="text-sm text-[var(--color-text-secondary)] inline-block pr-16">
+            {tickerText}&nbsp;&nbsp;•&nbsp;&nbsp;
+          </span>
+          <span className="text-sm text-[var(--color-text-secondary)] inline-block pr-16">
+            {tickerText}&nbsp;&nbsp;•&nbsp;&nbsp;
+          </span>
+          <span className="text-sm text-[var(--color-text-secondary)] inline-block pr-16">
+            {tickerText}&nbsp;&nbsp;•&nbsp;&nbsp;
+          </span>
+          <span className="text-sm text-[var(--color-text-secondary)] inline-block pr-16">
+            {tickerText}&nbsp;&nbsp;•&nbsp;&nbsp;
           </span>
         </div>
       </div>
@@ -443,7 +451,7 @@ function TickerBar({ announcements, tickerSpeed }: TickerBarProps): JSX.Element 
       {/* CSS keyframes injected via style tag */}
       <style>{`
         @keyframes ticker-scroll {
-          0% { transform: translateX(0%); }
+          0% { transform: translateX(0); }
           100% { transform: translateX(-50%); }
         }
       `}</style>
