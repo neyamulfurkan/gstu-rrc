@@ -23,7 +23,7 @@ function isAllowedFolder(folder: string): folder is AllowedFolder {
   return (ALLOWED_FOLDERS as readonly string[]).includes(folder);
 }
 
-export const POST = auth(async function POST(request: NextRequest & { auth: Awaited<ReturnType<typeof auth>> | null }): Promise<NextResponse> {
+export const POST = auth(async function POST(request): Promise<NextResponse> {
   try {
     const session = request.auth;
 
