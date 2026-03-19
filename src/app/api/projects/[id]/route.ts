@@ -224,6 +224,39 @@ export async function PUT(
       );
     }
 
+    // If only isPublished is being toggled, skip full schema validation
+    const bodyRecord = body as Record<string, unknown>;
+    const isPublishedOnlyToggle =
+      Object.keys(bodyRecord).length === 1 &&
+      "isPublished" in bodyRecord &&
+      typeof bodyRecord.isPublished === "boolean";
+
+    if (isPublishedOnlyToggle) {
+      const identifier2 = params.id;
+      const existing2 = await prisma.project.findFirst({
+        where: isCuid(identifier2) ? { id: identifier2 } : { slug: identifier2 },
+        select: { id: true, title: true, slug: true, isPublished: true },
+      });
+      if (!existing2) {
+        return NextResponse.json({ error: "Project not found" }, { status: 404 });
+      }
+      const willBePublished = bodyRecord.isPublished as boolean;
+      const updated2 = await prisma.project.update({
+        where: { id: existing2.id },
+        data: { isPublished: willBePublished },
+        select: { id: true, slug: true, title: true, isPublished: true },
+      });
+      await logAction({
+        adminId: (session.user as { userId?: string }).userId ?? session.user.email ?? "unknown",
+        actionType: "UPDATE_PROJECT",
+        description: `Toggled publish status of project "${existing2.title}" to ${willBePublished}`,
+        entityType: "Project",
+        entityId: existing2.id,
+        ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? request.headers.get("x-real-ip") ?? undefined,
+      });
+      return NextResponse.json({ data: updated2, message: "Project updated successfully" });
+    }
+
     const parsed = projectSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(

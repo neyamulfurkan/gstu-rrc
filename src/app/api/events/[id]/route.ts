@@ -261,6 +261,52 @@ export async function PUT(
     }
 
     const bodyRecord = body as Record<string, unknown>;
+    // If only isPublished is being toggled, skip full schema validation
+    const bodyRecord2 = body as Record<string, unknown>;
+    const isPublishedOnlyToggle =
+      Object.keys(bodyRecord2).length === 1 &&
+      "isPublished" in bodyRecord2 &&
+      typeof bodyRecord2.isPublished === "boolean";
+
+    if (isPublishedOnlyToggle) {
+      const whereClause2 = isCuid(id) ? { id } : { slug: id };
+      const existingEvent2 = await prisma.event.findFirst({
+        where: whereClause2,
+        select: { id: true, title: true, isPublished: true, slug: true, startDate: true, venue: true, coverUrl: true },
+      });
+      if (!existingEvent2) {
+        return NextResponse.json({ error: "Event not found" }, { status: 404 });
+      }
+      const wasPublished2 = existingEvent2.isPublished;
+      const willBePublished2 = bodyRecord2.isPublished as boolean;
+      const updated2 = await prisma.event.update({
+        where: { id: existingEvent2.id },
+        data: { isPublished: willBePublished2 },
+        select: { id: true, slug: true, title: true, isPublished: true },
+      });
+      if (!wasPublished2 && willBePublished2) {
+        try {
+          const clubConfig2 = await prisma.clubConfig.findUnique({
+            where: { id: "main" },
+            select: { fbAutoPost: true },
+          });
+          const fbAutoPost2 = clubConfig2?.fbAutoPost as Record<string, boolean> | null;
+          if (fbAutoPost2?.events === true) {
+            void postToFacebook(existingEvent2.title, existingEvent2.venue, existingEvent2.startDate, existingEvent2.coverUrl ?? null);
+          }
+        } catch {}
+      }
+      await logAction({
+        adminId: session.user.userId,
+        actionType: "UPDATE_EVENT",
+        description: `Toggled publish status of event "${updated2.title}" to ${willBePublished2}`,
+        entityType: "Event",
+        entityId: updated2.id,
+        ipAddress: request.headers.get("x-forwarded-for") ?? request.headers.get("x-real-ip") ?? undefined,
+      });
+      return NextResponse.json({ data: updated2, message: "Event updated successfully" }, { status: 200 });
+    }
+
     const parsed = eventSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
