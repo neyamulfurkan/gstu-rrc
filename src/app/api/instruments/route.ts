@@ -150,25 +150,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
     let nextCursor: string | undefined;
-    const instrumentsWithIds = await prisma.instrument.findMany({
-      where,
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-      take: take + 1,
-      ...(cursor
-        ? {
-            cursor: { id: cursor },
-            skip: 1,
-          }
-        : {}),
-    });
-
-    if (instrumentsWithIds.length > take) {
-      nextCursor = instrumentsWithIds[take]?.id;
+    if (instruments.length > take) {
+      nextCursor = instruments[take]?.id;
     }
 
     const data = instruments.slice(0, take).map((instrument) => ({
-      id: instrumentsWithIds.find((i) => i.name === instrument.name)?.id ?? "",
+      id: instrument.id,
       name: instrument.name,
       category: instrument.category,
       description: instrument.description,
