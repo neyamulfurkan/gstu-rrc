@@ -458,29 +458,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       // Dynamically import CertificateIssuedEmail to avoid issues if the file
       // does not yet exist during incremental builds
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const emailModule = await (import as any)("../../../emails/CertificateEmail").catch(() => null);
-      if (emailModule?.CertificateIssuedEmail) {
-        const { createElement } = await import("react");
-        await sendEmail({
-          to: recipient.email,
-          subject: `Your Certificate: ${achievement.trim()}`,
-          reactComponent: createElement(emailModule.CertificateIssuedEmail, {
-            memberName: recipient.fullName,
-            achievement: achievement.trim(),
-            certificateType: template.type,
-            pdfUrl,
-            verifyUrl,
-            clubConfig: {
-              clubName: clubConfig?.clubName ?? "GSTU Robotics & Research Club",
-              logoUrl: clubConfig?.logoUrl ?? "",
-              primaryColor: "#00E5FF",
-            },
-          }),
-        });
-      }
+      await sendEmail({
+        to: recipient.email,
+        subject: `Your Certificate: ${achievement.trim()}`,
+        reactComponent: (
+          <div>
+            <p>Dear {recipient.fullName},</p>
+            <p>Congratulations! You have been awarded a certificate for: <strong>{achievement.trim()}</strong></p>
+            <p>Serial: {serial}</p>
+            <p><a href={verifyUrl}>Verify Certificate</a> | <a href={pdfUrl}>Download PDF</a></p>
+            <p>Issued by {signedByName.trim()}, {signedByDesignation.trim()}</p>
+            <p>{clubConfig?.clubName ?? "GSTU Robotics & Research Club"}</p>
+          </div>
+        ) as import("react").ReactElement,
+      });
     } catch (emailError) {
       // Non-fatal — certificate was still created
       console.error(
