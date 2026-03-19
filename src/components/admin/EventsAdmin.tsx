@@ -102,6 +102,53 @@ const fetcher = (url: string) =>
     return r.json();
   });
 
+// ─── EventFormWithCategories ─────────────────────────────────────────────────
+
+interface EventFormWithCategoriesProps {
+  initialData?: Partial<import("@/types/index").EventDetail>;
+  onSubmit: (data: import("@/lib/validations").EventSchemaInput & { coverUrl?: string }) => Promise<void>;
+  onClose: () => void;
+}
+
+function EventFormWithCategories({
+  initialData,
+  onSubmit,
+  onClose,
+}: EventFormWithCategoriesProps): JSX.Element {
+  const [categories, setCategories] = useState<EventCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  useEffect(() => {
+    setCategoriesLoading(true);
+    fetch("/api/admin/event-categories")
+      .then((r) => r.json())
+      .then((json: { data?: EventCategory[] }) => {
+        if (Array.isArray(json.data)) setCategories(json.data);
+      })
+      .catch(() => {})
+      .finally(() => setCategoriesLoading(false));
+  }, []);
+
+  if (categoriesLoading) {
+    return (
+      <div className="p-8 space-y-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} height={40} className="w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <EventForm
+      initialData={initialData}
+      categories={categories.map((c) => ({ id: c.id, name: c.name }))}
+      onSubmit={onSubmit}
+      onClose={onClose}
+    />
+  );
+}
+
 // ─── PublishedToggle ──────────────────────────────────────────────────────────
 
 interface PublishedToggleProps {
@@ -1167,9 +1214,8 @@ export function EventsAdmin(): JSX.Element {
       >
         <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
           {formModalOpen && (
-            <EventForm
+            <EventFormWithCategories
               initialData={editingEventId ? { id: editingEventId } : undefined}
-              categories={[]}
               onSubmit={async (_data) => { handleFormSuccess(); }}
               onClose={() => {
                 setFormModalOpen(false);
