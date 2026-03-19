@@ -460,7 +460,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // does not yet exist during incremental builds
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const emailModule = await import(/* webpackIgnore: true */ "../../../emails/CertificateEmail" as any).catch(() => null);
+      const emailModule = await import("@/emails/CertificateEmail").catch(() => null);
       if (emailModule?.CertificateIssuedEmail) {
         const { createElement } = await import("react");
         await sendEmail({
