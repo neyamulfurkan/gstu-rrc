@@ -162,7 +162,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       imageUrl: instrument.imageUrl,
       status: instrument.status,
       borrower:
-        instrument.status === "on_loan" ? instrument.borrower : undefined,
+        instrument.status === "on_loan" && instrument.borrower
+          ? {
+              username: instrument.borrower.username ?? "",
+              fullName: instrument.borrower.fullName ?? "Unknown",
+              avatarUrl: instrument.borrower.avatarUrl ?? "",
+            }
+          : undefined,
       returnDate:
         instrument.status === "on_loan" ? instrument.returnDate : undefined,
     }));

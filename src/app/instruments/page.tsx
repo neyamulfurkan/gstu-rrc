@@ -167,11 +167,11 @@ export default async function InstrumentsPageRoute(): Promise<JSX.Element> {
     borrower:
       inst.status === "on_loan" && inst.borrower
         ? {
-            username: inst.borrower.username,
-            fullName: inst.borrower.fullName,
-            avatarUrl: inst.borrower.avatarUrl,
+            username: inst.borrower.username ?? "",
+            fullName: inst.borrower.fullName ?? "Unknown",
+            avatarUrl: inst.borrower.avatarUrl ?? "",
           }
-        : null,
+        : undefined,
     returnDate: inst.returnDate ?? null,
   }));
 
