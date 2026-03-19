@@ -452,7 +452,7 @@ export default async function RootLayout({
   };
 
   return (
-    <html lang="en" className={fontClassNames} suppressHydrationWarning>
+    <html lang="en" className={fontClassNames} suppressHydrationWarning style={{ overflowX: "hidden", maxWidth: "100%" }}>
       <head>
         {/* Color system — injected FIRST to prevent FOUC */}
         <style
@@ -501,7 +501,9 @@ export default async function RootLayout({
           color: "var(--color-text-primary)",
           fontFamily: "var(--font-body)",
           overflowX: "hidden",
-        maxWidth: "100vw",
+          width: "100%",
+          maxWidth: "100%",
+          boxSizing: "border-box",
         }}
         suppressHydrationWarning
       >
@@ -519,7 +521,7 @@ export default async function RootLayout({
           <MobileNav config={config} />
 
           {/* Main content with page transitions */}
-          <main id="main-content">
+          <main id="main-content" style={{ overflowX: "hidden", width: "100%" }}>
             <PageTransition>
               {children}
             </PageTransition>
