@@ -117,6 +117,8 @@ function EventFormWithCategories({
 }: EventFormWithCategoriesProps): JSX.Element {
   const [categories, setCategories] = useState<EventCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [eventData, setEventData] = useState<Partial<import("@/types/index").EventDetail> | undefined>(initialData);
+  const [eventLoading, setEventLoading] = useState(false);
 
   useEffect(() => {
     setCategoriesLoading(true);
@@ -129,7 +131,19 @@ function EventFormWithCategories({
       .finally(() => setCategoriesLoading(false));
   }, []);
 
-  if (categoriesLoading) {
+  useEffect(() => {
+    if (!initialData?.id) return;
+    setEventLoading(true);
+    fetch(`/api/events/${initialData.id}`)
+      .then((r) => r.json())
+      .then((json: { data?: import("@/types/index").EventDetail }) => {
+        if (json.data) setEventData(json.data);
+      })
+      .catch(() => {})
+      .finally(() => setEventLoading(false));
+  }, [initialData?.id]);
+
+  if (categoriesLoading || eventLoading) {
     return (
       <div className="p-8 space-y-4">
         {Array.from({ length: 8 }).map((_, i) => (
@@ -141,7 +155,7 @@ function EventFormWithCategories({
 
   return (
     <EventForm
-      initialData={initialData}
+      initialData={eventData}
       categories={categories.map((c) => ({ id: c.id, name: c.name }))}
       onSubmit={onSubmit}
       onClose={onClose}
@@ -1217,14 +1231,26 @@ export function EventsAdmin(): JSX.Element {
             <EventFormWithCategories
               initialData={editingEventId ? { id: editingEventId } : undefined}
               onSubmit={async (data) => {
-                const res = await fetch("/api/events", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(data),
-                });
-                if (!res.ok) {
-                  const err = await res.json().catch(() => ({}));
-                  throw new Error((err as { error?: string }).error ?? "Failed to create event");
+                if (editingEventId) {
+                  const res = await fetch(`/api/events/${editingEventId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error((err as { error?: string }).error ?? "Failed to update event");
+                  }
+                } else {
+                  const res = await fetch("/api/events", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data),
+                  });
+                  if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error((err as { error?: string }).error ?? "Failed to create event");
+                  }
                 }
                 handleFormSuccess();
               }}
