@@ -83,6 +83,9 @@ function UploadForm({ categories, onClose, onSuccess }: UploadFormProps): JSX.El
 
   const defaultCategoryId = categories[0]?.id ?? "";
 
+  // Warn if no categories available
+  const noCategoriesAvailable = categories.length === 0;
+
   function handleFiles(newFiles: File[]) {
     const mapped: UploadFile[] = newFiles.map((f) => ({
       file: f,
@@ -144,6 +147,11 @@ function UploadForm({ categories, onClose, onSuccess }: UploadFormProps): JSX.El
 
         const isVideo = entry.file.type.startsWith("video/");
 
+        const effectiveCategoryId = entry.categoryId || categories[0]?.id || "";
+        if (!effectiveCategoryId) {
+          throw new Error("Please select a category before uploading");
+        }
+
         const res = await fetch("/api/gallery", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -152,7 +160,8 @@ function UploadForm({ categories, onClose, onSuccess }: UploadFormProps): JSX.El
             type: isVideo ? "video" : "image",
             title: entry.title || undefined,
             altText: entry.title || entry.file.name,
-            categoryId: entry.categoryId || (categories[0]?.id ?? ""),
+            categoryId: effectiveCategoryId,
+            tags: [],
             downloadEnabled: false,
             year: new Date().getFullYear(),
           }),
@@ -204,13 +213,21 @@ function UploadForm({ categories, onClose, onSuccess }: UploadFormProps): JSX.El
 
   return (
     <div className="flex flex-col gap-6 p-6">
+      {noCategoriesAvailable && (
+        <Alert
+          variant="error"
+          title="No categories available"
+          message="An admin must create at least one gallery category before you can upload."
+        />
+      )}
+
       <FileUpload
         accept="image/*,video/*"
         multiple
         maxSizeMb={50}
         onFiles={handleFiles}
         label="Click or drag to add images and videos"
-        disabled={submitting}
+        disabled={submitting || noCategoriesAvailable}
       />
 
       {files.length > 0 && (
