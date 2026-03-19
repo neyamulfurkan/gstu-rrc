@@ -9,28 +9,38 @@ export const authConfig: NextAuthConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const isAdmin = !!(auth?.user as any)?.isAdmin;
       const pathname = nextUrl.pathname;
 
       if (pathname === "/login" && isLoggedIn) {
-        const callbackUrl = nextUrl.searchParams.get("callbackUrl") ?? "/profile";
+        const callbackUrl =
+          nextUrl.searchParams.get("callbackUrl") ?? "/profile";
         return Response.redirect(new URL(callbackUrl, nextUrl));
       }
 
       if (pathname.startsWith("/admin")) {
         if (!isLoggedIn) {
-          return Response.redirect(new URL(`/login?callbackUrl=${pathname}`, nextUrl));
+          return Response.redirect(
+            new URL(`/login?callbackUrl=${pathname}`, nextUrl)
+          );
         }
-        const user = auth?.user as { isAdmin?: boolean } | undefined;
-        if (!user?.isAdmin) {
+        if (!isAdmin) {
           return Response.redirect(new URL("/?error=unauthorized", nextUrl));
         }
         return true;
       }
 
-      const protectedPaths = ["/profile", "/feed", "/instruments", "/certificates"];
+      const protectedPaths = [
+        "/profile",
+        "/feed",
+        "/instruments",
+        "/certificates",
+      ];
       if (protectedPaths.some((p) => pathname.startsWith(p))) {
         if (!isLoggedIn) {
-          return Response.redirect(new URL(`/login?callbackUrl=${pathname}`, nextUrl));
+          return Response.redirect(
+            new URL(`/login?callbackUrl=${pathname}`, nextUrl)
+          );
         }
       }
 

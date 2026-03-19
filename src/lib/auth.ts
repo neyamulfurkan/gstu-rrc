@@ -126,7 +126,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    ...authConfig.callbacks,
     async jwt({ token, user }) {
       if (user) {
         const u = user as {
@@ -150,7 +149,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
+async session({ session, token }) {
+      (session.user as any).isAdmin = token.isAdmin ?? false;
       session.user.userId = token.userId as string;
       session.user.email = (token.email as string) ?? "";
       session.user.username = token.username as string;
