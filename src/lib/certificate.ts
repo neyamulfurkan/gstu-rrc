@@ -87,16 +87,29 @@ export async function generateCertificatePdf(
     const chromium = await import("@sparticuz/chromium-min");
     const puppeteer = await import("puppeteer-core");
 
-    const executablePath = await chromium.default.executablePath(
+    const remoteUrl =
       process.env.CHROMIUM_REMOTE_EXEC_PATH ??
-        "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar"
-    );
+      "https://github.com/Sparticuz/chromium/releases/download/v131.0.1/chromium-v131.0.1-pack.tar";
+
+    let executablePath: string;
+    try {
+      executablePath = await chromium.default.executablePath(remoteUrl);
+    } catch {
+      executablePath = await chromium.default.executablePath();
+    }
 
     browser = await puppeteer.default.launch({
-      args: [...chromium.default.args, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+      args: [
+        ...chromium.default.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--single-process",
+      ],
       executablePath,
       headless: true as unknown as boolean,
-      defaultViewport: chromium.default.defaultViewport ?? { width: 1200, height: 850 },
+      defaultViewport: { width: 1200, height: 850 },
     });
 
     const page = await browser.newPage();
