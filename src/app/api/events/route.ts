@@ -192,6 +192,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    const bodyWithCover = body as Record<string, unknown>;
     const parseResult = eventSchema.safeParse(body);
     if (!parseResult.success) {
       return NextResponse.json(
@@ -240,7 +241,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         registrationDeadline: data.registrationDeadline ?? null,
         metaDescription: data.metaDescription ?? null,
         isPublished: data.isPublished,
-        coverUrl: "",
+        coverUrl: bodyWithCover.coverUrl as string ?? "",
       },
       select: {
         id: true,

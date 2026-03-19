@@ -260,6 +260,7 @@ export async function PUT(
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
     }
 
+    const bodyRecord = body as Record<string, unknown>;
     const parsed = eventSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -316,6 +317,7 @@ export async function PUT(
         registrationDeadline: data.registrationDeadline ?? null,
         metaDescription: data.metaDescription ?? null,
         isPublished: data.isPublished,
+        coverUrl: bodyRecord.coverUrl as string ?? existingEvent.coverUrl ?? "",
       },
       select: {
         id: true,
