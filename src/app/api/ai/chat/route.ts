@@ -255,14 +255,12 @@ async function assembleContext(aiContextItems: unknown): Promise<{
 
   const achievementsText =
     achievements.length > 0
-      ? achievements.map((a) => `- ${a.title} (${a.year}): ${a.description}`).join("
-")
+      ? achievements.map((a) => `- ${a.title} (${a.year}): ${a.description}`).join("\n")
       : "No achievements listed.";
 
   const milestonesText =
     milestones.length > 0
-      ? milestones.map((m) => `- ${m.date}: ${m.title} — ${m.description}`).join("
-")
+      ? milestones.map((m) => `- ${m.date}: ${m.title} — ${m.description}`).join("\n")
       : "No milestones listed.";
 
   const clubInfoText = clubConfig
@@ -276,8 +274,7 @@ async function assembleContext(aiContextItems: unknown): Promise<{
             (e) =>
               `- ${e.title} on ${new Date(e.startDate).toLocaleDateString("en-BD", { dateStyle: "medium" })} at ${e.venue}`
           )
-          .join("
-")
+          .join("\n")
       : "No past events available.";
 
   const allProjectsText =
@@ -287,14 +284,12 @@ async function assembleContext(aiContextItems: unknown): Promise<{
             (p) =>
               `- ${p.title} (${p.status}, ${p.year}) — Technologies: ${Array.isArray(p.technologies) ? p.technologies.join(", ") : "N/A"}`
           )
-          .join("
-")
+          .join("\n")
       : "No projects available.";
 
   const exCommitteeText =
     exCommitteeMembers.length > 0
-      ? exCommitteeMembers.map((c) => `- ${c.designation}: ${c.memberName} (${c.session})`).join("
-")
+      ? exCommitteeMembers.map((c) => `- ${c.designation}: ${c.memberName} (${c.session})`).join("\n")
       : "No ex-committee data available.";
 
   const exAdvisorsText =
@@ -304,8 +299,7 @@ async function assembleContext(aiContextItems: unknown): Promise<{
             (a) =>
               `- ${a.name} (${a.designation})${a.periodStart ? `, ${a.periodStart}–${a.periodEnd ?? "present"}` : ""}`
           )
-          .join("
-")
+          .join("\n")
       : "No ex-advisor data available.";
 
   return {
