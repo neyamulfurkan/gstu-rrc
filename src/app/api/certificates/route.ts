@@ -458,19 +458,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       // Dynamically import CertificateIssuedEmail to avoid issues if the file
       // does not yet exist during incremental builds
+      const { createElement } = await import("react");
       await sendEmail({
         to: recipient.email,
         subject: `Your Certificate: ${achievement.trim()}`,
-        reactComponent: (
-          <div>
-            <p>Dear {recipient.fullName},</p>
-            <p>Congratulations! You have been awarded a certificate for: <strong>{achievement.trim()}</strong></p>
-            <p>Serial: {serial}</p>
-            <p><a href={verifyUrl}>Verify Certificate</a> | <a href={pdfUrl}>Download PDF</a></p>
-            <p>Issued by {signedByName.trim()}, {signedByDesignation.trim()}</p>
-            <p>{clubConfig?.clubName ?? "GSTU Robotics & Research Club"}</p>
-          </div>
-        ) as import("react").ReactElement,
+        reactComponent: createElement(
+          "div",
+          null,
+          createElement("p", null, `Dear ${recipient.fullName},`),
+          createElement("p", null, `Congratulations! You have been awarded a certificate for: ${achievement.trim()}`),
+          createElement("p", null, `Serial: ${serial}`),
+          createElement("p", null, `Verify: ${verifyUrl}`),
+          createElement("p", null, `Download PDF: ${pdfUrl}`),
+          createElement("p", null, `Issued by ${signedByName.trim()}, ${signedByDesignation.trim()}`),
+          createElement("p", null, clubConfig?.clubName ?? "GSTU Robotics & Research Club")
+        ),
       });
     } catch (emailError) {
       // Non-fatal — certificate was still created
