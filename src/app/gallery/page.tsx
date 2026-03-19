@@ -180,7 +180,7 @@ export default async function GalleryPage(): Promise<JSX.Element> {
       prisma.galleryCategory.findMany({
         select: { id: true, name: true },
         orderBy: { name: "asc" },
-      }),
+      }).catch(() => []),
 
       prisma.event.findMany({
         where: { isPublished: true },
