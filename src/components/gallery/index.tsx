@@ -488,6 +488,38 @@ function GalleryItemTile({ item, isPending, onClick }: GalleryItemTileProps): JS
   );
 }
 
+// ─── Upload Form With Categories Fetcher ────────────────────────────────────
+
+interface UploadFormWithCategoriesProps {
+  onClose: () => void;
+  onSuccess: (items: GalleryItemCard[]) => void;
+}
+
+function UploadFormWithCategories({ onClose, onSuccess }: UploadFormWithCategoriesProps): JSX.Element {
+  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [loadingCats, setLoadingCats] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/gallery/categories")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.data) setCategories(d.data);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingCats(false));
+  }, []);
+
+  if (loadingCats) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Spinner size="md" label="Loading categories..." />
+      </div>
+    );
+  }
+
+  return <UploadForm categories={categories} onClose={onClose} onSuccess={onSuccess} />;
+}
+
 // ─── Main GalleryGrid ─────────────────────────────────────────────────────────
 
 const DEFAULT_FILTER: GalleryFilter = {
@@ -990,8 +1022,7 @@ export function GalleryGrid({
         side="right"
         width="520px"
       >
-        <UploadForm
-          categories={filterOptions.categories}
+        <UploadFormWithCategories
           onClose={() => setUploadModalOpen(false)}
           onSuccess={handleUploadSuccess}
         />
