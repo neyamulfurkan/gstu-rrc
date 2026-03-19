@@ -232,6 +232,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const { name, categoryId, description, imageUrl, status } = parseResult.data;
+    const safeImageUrl = imageUrl ?? "";
 
     // Verify category exists
     const category = await prisma.instrumentCategory.findUnique({
@@ -251,7 +252,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         name,
         categoryId,
         description,
-        imageUrl,
+        imageUrl: safeImageUrl,
         status: status ?? "available",
       },
       select: {

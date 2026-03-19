@@ -433,19 +433,21 @@ function CurrentCommitteeTab({ committeeType }: CurrentCommitteeTabProps): JSX.E
     setSaving(true);
     setSaveError(null);
     try {
-      const payload = rows.map((r, i) => ({
-        id: r.id || undefined,
-        memberId: r.memberId || null,
-        memberName: r.memberName.trim(),
-        designation: r.designation.trim(),
-        committeeType: apiType,
-        sortOrder: i,
-      }));
+      const payload = rows
+        .filter((r) => r.memberName.trim() && r.designation.trim())
+        .map((r, i) => ({
+          id: r.id || undefined,
+          memberId: r.memberId || null,
+          memberName: r.memberName.trim(),
+          designation: r.designation.trim(),
+          committeeType: apiType,
+          sortOrder: i,
+        }));
 
       const res = await fetch("/api/admin/committee", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: apiType, members: payload }),
+        body: JSON.stringify({ replaceAll: true, items: payload }),
       });
 
       if (!res.ok) {
@@ -582,23 +584,20 @@ function ExCommitteeTab(): JSX.Element {
     if (!session) return;
     setSaving(idx);
     try {
-      const payload = {
-        sessionLabel: session.sessionLabel,
-        type: "ex",
-        members: session.rows.map((r, i) => ({
-          id: r.id || undefined,
-          memberId: r.memberId || null,
-          memberName: r.memberName.trim(),
-          designation: r.designation.trim(),
-          committeeType: "ex",
-          sortOrder: i,
-        })),
-      };
+      const payload = session.rows.map((r, i) => ({
+        id: r.id || undefined,
+        memberId: r.memberId || null,
+        memberName: r.memberName.trim(),
+        designation: r.designation.trim(),
+        committeeType: "ex_committee",
+        sortOrder: i,
+        sessionYear: session.sessionLabel,
+      }));
 
       const res = await fetch("/api/admin/committee", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ replaceAll: true, items: payload }),
       });
 
       if (!res.ok) {
