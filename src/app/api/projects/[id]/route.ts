@@ -9,7 +9,7 @@ import { isAdmin, hasPermission, isSuperAdmin } from "@/lib/permissions";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function isCuid(value: string): boolean {
-  return /^c[a-z0-9]{24}$/.test(value);
+  return /^c[a-z0-9]{20,30}$/.test(value);
 }
 
 async function logAction(params: {
@@ -54,14 +54,10 @@ export async function GET(
         "manage_projects"
       );
 
-    const whereClause = isCuid(identifier)
-      ? { id: identifier }
-      : { slug: identifier };
-
     const project = await prisma.project.findFirst({
       where: isAdminUser
-        ? whereClause
-        : { ...whereClause, isPublished: true },
+        ? { OR: [{ id: identifier }, { slug: identifier }] }
+        : { OR: [{ id: identifier }, { slug: identifier }], isPublished: true },
       select: {
         id: true,
         slug: true,

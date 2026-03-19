@@ -4,7 +4,6 @@
 import React, {
   useCallback,
   useEffect,
-  useRef,
   useState,
 } from "react";
 
@@ -13,7 +12,11 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import { Skeleton, Spinner } from "@/components/ui/Feedback";
 import { ProjectCard } from "@/components/projects/Card";
-import { ProjectDetail } from "@/components/projects/Detail";
+import dynamic from "next/dynamic";
+const ProjectDetail = dynamic(
+  () => import("@/components/projects/Detail").then((m) => ({ default: m.ProjectDetail })),
+  { ssr: false }
+);
 import type { ProjectCard as ProjectCardType } from "@/types/index";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -380,21 +383,13 @@ export function ProjectsGrid({
   const [nextCursor, setNextCursor] = useState<string | undefined>(undefined);
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   const [isFetchingMore, setIsFetchingMore] = useState(false);
   const [hasError, setHasError] = useState(false);
 
   const debouncedSearch = useDebounce(filters.search, 300);
 
-  // Track if filters have changed to reset data
-  const prevFiltersRef = useRef({
-    search: "",
-    categoryId: "",
-    status: "",
-    year: "",
-  });
-
-  // Build query string from filters
-  function buildQuery(cursor?: string): string {
+  const fetchProjects = useCallback(async (cursor?: string) => {
     const params = new URLSearchParams();
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (filters.categoryId) params.set("categoryId", filters.categoryId);
@@ -402,88 +397,53 @@ export function ProjectsGrid({
     if (filters.year) params.set("year", filters.year);
     params.set("take", "12");
     if (cursor) params.set("cursor", cursor);
-    return params.toString();
-  }
-
-  // Fetch first page when filters change
-  useEffect(() => {
-    const prev = prevFiltersRef.current;
-    const changed =
-      prev.search !== debouncedSearch ||
-      prev.categoryId !== filters.categoryId ||
-      prev.status !== filters.status ||
-      prev.year !== filters.year;
-
-    if (!changed) return;
-
-    prevFiltersRef.current = {
-      search: debouncedSearch,
-      categoryId: filters.categoryId,
-      status: filters.status,
-      year: filters.year,
-    };
-
-    let cancelled = false;
-    setIsLoading(true);
-    setHasError(false);
-
-    fetch(`/api/projects?${buildQuery()}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch projects");
-        return res.json();
-      })
-      .then((json) => {
-        if (cancelled) return;
-        setProjects(json.data ?? []);
-        setNextCursor(json.nextCursor ?? undefined);
-      })
-      .catch(() => {
-        if (cancelled) return;
-        setHasError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const res = await fetch(`/api/projects?${params.toString()}`);
+    if (!res.ok) throw new Error("Failed to fetch projects");
+    return res.json() as Promise<{ data: ProjectCardType[]; nextCursor?: string; total: number }>;
   }, [debouncedSearch, filters.categoryId, filters.status, filters.year]);
 
-  // Load more (infinite scroll)
-  const loadMore = useCallback(() => {
-    if (!nextCursor || isFetchingMore || isLoading) return;
-
+  useEffect(() => {
+    if (!hasFetched && initialProjects.length > 0) {
+      setHasFetched(true);
+      return;
+    }
     let cancelled = false;
-    setIsFetchingMore(true);
-
-    fetch(`/api/projects?${buildQuery(nextCursor)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch more projects");
-        return res.json();
-      })
-      .then((json) => {
+    const load = async () => {
+      setIsLoading(true);
+      setNextCursor(undefined);
+      setHasError(false);
+      try {
+        const result = await fetchProjects();
         if (cancelled) return;
-        setProjects((prev) => [...prev, ...(json.data ?? [])]);
-        setNextCursor(json.nextCursor ?? undefined);
-      })
-      .catch(() => {
-        // Silently fail load-more — user can scroll to retry
-      })
-      .finally(() => {
-        if (!cancelled) setIsFetchingMore(false);
-      });
-
-    return () => {
-      cancelled = true;
+        setProjects(result.data);
+        setNextCursor(result.nextCursor);
+        setHasFetched(true);
+      } catch {
+        if (!cancelled) setHasError(true);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextCursor, isFetchingMore, isLoading, buildQuery]);
+    load();
+    return () => { cancelled = true; };
+  }, [fetchProjects]);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || isFetchingMore || isLoading) return;
+    setIsFetchingMore(true);
+    try {
+      const result = await fetchProjects(nextCursor);
+      setProjects((prev) => [...prev, ...result.data]);
+      setNextCursor(result.nextCursor);
+    } catch {
+      // Silently fail load-more
+    } finally {
+      setIsFetchingMore(false);
+    }
+  }, [nextCursor, isFetchingMore, isLoading, fetchProjects]);
 
   const { ref: sentinelRef } = useInfiniteScroll(loadMore, { threshold: 0.1 });
 
-  // Filter change handler
   function handleFilterChange(partial: Partial<FilterState>): void {
     setFilters((prev) => ({ ...prev, ...partial }));
   }
@@ -562,7 +522,6 @@ export function ProjectsGrid({
             <button
               type="button"
               onClick={() => {
-                prevFiltersRef.current = { search: "__reset__", categoryId: "", status: "", year: "" };
                 handleFilterChange({ search: filters.search });
               }}
               className={cn(

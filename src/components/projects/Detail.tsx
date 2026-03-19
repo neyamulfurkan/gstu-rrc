@@ -23,7 +23,14 @@ import { cn, cloudinaryUrl, formatDate, truncateText } from "@/lib/utils";
 import { Badge, Skeleton, Spinner } from "@/components/ui/Feedback";
 import { Modal } from "@/components/ui/Overlay";
 import { Timeline } from "@/components/ui/DataDisplay";
-import type { ProjectDetail as ProjectDetailType, GalleryItemCard, MemberPublic, TimelineItem } from "@/types/index";
+import type { ProjectDetail as ProjectDetailType, GalleryItemCard, MemberPublic } from "@/types/index";
+
+interface TimelineItem {
+  date: string;
+  title: string;
+  description: string;
+  imageUrl?: string;
+}
 
 // ─── Fetcher ──────────────────────────────────────────────────────────────────
 
@@ -33,7 +40,9 @@ async function fetcher(url: string): Promise<ProjectDetailType> {
     const text = await res.text().catch(() => "Unknown error");
     throw new Error(`Failed to fetch project: ${res.status} ${text}`);
   }
-  return res.json();
+  const json = await res.json();
+  // API wraps response in { data: ... }
+  return json.data ?? json;
 }
 
 // ─── TipTap Read-Only Renderer ────────────────────────────────────────────────
@@ -190,8 +199,8 @@ function TeamMemberAvatar({ member }: TeamMemberAvatarProps): JSX.Element {
         <Image
           src={
             member.avatarUrl
-              ? cloudinaryUrl(member.avatarUrl, { width: 96, height: 96 })
-              : member.avatarUrl
+              ? (member.avatarUrl.startsWith("http") ? member.avatarUrl : cloudinaryUrl(member.avatarUrl, { width: 96, height: 96 }))
+              : "/placeholder-avatar.png"
           }
           alt={member.fullName}
           width={48}

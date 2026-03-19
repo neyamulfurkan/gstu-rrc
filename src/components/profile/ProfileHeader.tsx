@@ -146,9 +146,9 @@ export function ProfileHeader({
   const bio = member.bio ? parseRichText(member.bio as unknown as Record<string, unknown>) : null;
 
   return (
-    <div className="rounded-xl overflow-hidden bg-[var(--color-bg-surface)] border border-[var(--color-border)] shadow-[0_4px_24px_rgba(0,0,0,0.4)]">
+    <div className="rounded-xl overflow-hidden bg-[var(--color-bg-surface)] border border-[var(--color-border)] shadow-[0_4px_24px_rgba(0,0,0,0.4)] mt-4">
       {/* ── Cover Banner ────────────────────────────────────────────────── */}
-      <div className="relative h-48 w-full">
+      <div className="relative h-48 w-full bg-[var(--color-bg-elevated)]">
         {hasCover && optimizedCover ? (
           <Image
             src={optimizedCover}

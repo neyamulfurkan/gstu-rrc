@@ -125,25 +125,5 @@ export function PageTransition({
     exit: activeVariant.exit,
   };
 
-  if (!motionModule) {
-    return <>{children}</>;
-  }
-
-  const { AnimatePresence, motion } = motionModule;
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={pathname}
-        variants={motionVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        transition={activeVariant.transition}
-        style={{ minHeight: "100%" }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  );
+  return <>{children}</>;
 }

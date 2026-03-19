@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 
 import { cn, parseRichText, cloudinaryUrl } from "@/lib/utils";
@@ -11,19 +11,6 @@ import { Badge } from "@/components/ui/Feedback";
 import type { ProjectCard as ProjectCardType } from "@/types/index";
 
 // ─── Animation Variants ───────────────────────────────────────────────────────
-
-const cardVariants = {
-  rest: {
-    borderColor: "var(--color-border)",
-    boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
-  },
-  hover: {
-    borderColor: "var(--color-card-border-hover)",
-    boxShadow: "0 0 16px var(--color-glow-accent), 0 4px 24px rgba(0,0,0,0.4)",
-    y: -6,
-    transition: { type: "spring", stiffness: 300, damping: 24 },
-  },
-};
 
 const overlayVariants = {
   hidden: { y: "100%", opacity: 0 },
@@ -139,7 +126,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element
     : "";
 
   return (
-    <motion.div
+    <div
       role="button"
       tabIndex={0}
       aria-label={`View project: ${project.title}`}
@@ -150,18 +137,19 @@ export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element
           onClick();
         }
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
       className={cn(
         "relative rounded-lg overflow-hidden cursor-pointer",
         "border bg-[var(--color-bg-surface)]",
-        "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+        "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+        "transition-all duration-200",
+        isHovered
+          ? "border-[rgba(0,229,255,0.5)] -translate-y-1.5 shadow-[0_0_16px_rgba(0,229,255,0.35),0_4px_24px_rgba(0,0,0,0.4)]"
+          : "border-[var(--color-border)] shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
       )}
-      initial="rest"
-      animate={isHovered ? "hover" : "rest"}
-      variants={cardVariants}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      onFocus={() => setIsHovered(true)}
-      onBlur={() => setIsHovered(false)}
     >
       {/* ── Cover Image ── */}
       <div className="relative aspect-[4/3] w-full bg-[var(--color-bg-elevated)]">
@@ -172,6 +160,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
             className="object-cover"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-[var(--color-bg-elevated)] to-[var(--color-bg-surface)]">
@@ -314,6 +303,6 @@ export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
