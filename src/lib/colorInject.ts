@@ -10,6 +10,15 @@ import {
 let cachedBlock: string | null = null;
 let cachedAt: number = 0;
 
+/**
+ * Call this to bust the in-memory color cache after an admin saves colors.
+ * The next call to getColorStyleBlock will re-fetch from the database.
+ */
+export function invalidateColorCache(): void {
+  cachedBlock = null;
+  cachedAt = 0;
+}
+
 const FALLBACK_FONTS: FontConfig = {
   display: "Orbitron",
   heading: "Syne",

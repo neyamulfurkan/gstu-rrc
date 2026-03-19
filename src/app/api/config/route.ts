@@ -1,7 +1,10 @@
 // src/app/api/config/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { buildCssVariableBlock, DEFAULT_COLORS } from "@/lib/colorSystem";
 
 export async function GET(_request: NextRequest): Promise<NextResponse> {
   // Handle previewColors override for ColorEditor iframe preview
@@ -13,6 +16,41 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
       previewColorConfig = JSON.parse(Buffer.from(previewColors, "base64").toString("utf-8"));
     } catch {
       // ignore invalid preview colors
+    }
+  }
+
+  // Handle admin=true for masked secrets (email tab)
+  const isAdminRequest = url.searchParams.get("admin") === "true";
+  if (isAdminRequest) {
+    try {
+      const { auth } = await import("@/lib/auth");
+      const session = await auth();
+      if (!session?.user?.isAdmin) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const adminConfig = await prisma.clubConfig.findUnique({
+        where: { id: "main" },
+        select: {
+          resendApiKey: true,
+          resendFromEmail: true,
+          resendFromName: true,
+          welcomeEmailSubject: true,
+          welcomeEmailBody: true,
+        },
+      });
+      if (!adminConfig) {
+        return NextResponse.json({ error: "Configuration not found." }, { status: 404 });
+      }
+      return NextResponse.json({
+        resendApiKey: adminConfig.resendApiKey ? "masked" : "",
+        resendFromEmail: adminConfig.resendFromEmail ?? "",
+        resendFromName: adminConfig.resendFromName ?? "",
+        welcomeEmailSubject: adminConfig.welcomeEmailSubject ?? "",
+        welcomeEmailBody: adminConfig.welcomeEmailBody ?? "",
+      }, { headers: { "Cache-Control": "no-store" } });
+    } catch (error) {
+      console.error("[GET /api/config?admin=true] Error:", error);
+      return NextResponse.json({ error: "Internal server error." }, { status: 500 });
     }
   }
   try {
@@ -103,5 +141,73 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
       { error: "Internal server error." },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (!(session.user as any).isAdmin) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { tab, ...data } = body as { tab: string; [key: string]: unknown };
+
+    if (!tab) {
+      return NextResponse.json({ error: "Missing tab identifier" }, { status: 400 });
+    }
+
+    const allowedFields: Record<string, string[]> = {
+      branding: ["clubName", "clubShortName", "clubMotto", "clubDescription", "universityName", "departmentName", "foundedYear", "logoUrl", "faviconUrl"],
+      contact: ["email", "phone", "address", "fbUrl", "ytUrl", "igUrl", "liUrl", "ghUrl", "twitterUrl", "extraSocialLinks"],
+      seo: ["metaDescription", "seoKeywords", "gscVerifyTag", "ogImageUrl"],
+      membership: ["regStatus", "membershipFee", "bkashNumber", "nagadNumber", "bkashName", "nagadName", "autoApprove", "requireScreenshot"],
+      design: ["colorConfig", "displayFont", "headingFont", "bodyFont", "monoFont", "animationStyle", "transitionStyle"],
+      hero: ["heroType", "heroImages", "heroVideoUrl", "heroFallbackImg", "overlayOpacity", "heroCtaLabel1", "heroCtaUrl1", "heroCtaLabel2", "heroCtaUrl2", "particleEnabled", "particleCount", "particleSpeed", "particleColor"],
+      navigation: ["footerCopyright", "constitutionUrl", "announcementTickerSpeed", "privacyPolicy", "termsOfUse"],
+      email: ["resendApiKey", "resendFromEmail", "resendFromName", "welcomeEmailSubject", "welcomeEmailBody"],
+    };
+
+    const allowed = allowedFields[tab];
+    if (!allowed) {
+      return NextResponse.json({ error: "Unknown config tab" }, { status: 400 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    for (const field of allowed) {
+      if (field in data) {
+        updateData[field] = data[field];
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ message: "No fields to update" });
+    }
+
+    await prisma.clubConfig.update({
+      where: { id: "main" },
+      data: updateData,
+    });
+
+    // Invalidate the colorInject cache by clearing the module-level cache
+    // This is done by calling revalidatePath on all ISR pages
+    revalidatePath("/");
+    revalidatePath("/members");
+    revalidatePath("/events");
+    revalidatePath("/projects");
+    revalidatePath("/gallery");
+    revalidatePath("/about");
+    revalidatePath("/alumni");
+    revalidatePath("/instruments");
+    revalidatePath("/membership");
+
+    return NextResponse.json({ message: "Configuration saved successfully." });
+  } catch (error) {
+    console.error("[POST /api/config] Error:", error);
+    return NextResponse.json({ error: "Internal server error." }, { status: 500 });
   }
 }
