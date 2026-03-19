@@ -501,6 +501,7 @@ export default async function RootLayout({
           color: "var(--color-text-primary)",
           fontFamily: "var(--font-body)",
           overflowX: "hidden",
+        maxWidth: "100vw",
         }}
         suppressHydrationWarning
       >

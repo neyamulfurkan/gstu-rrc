@@ -189,10 +189,10 @@ export function MembersFilter({
         )}
       >
         {/* ── Main filter row ── */}
-        <div className="px-4 pt-4 pb-3">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-2">
+        <div className="px-3 pt-3 pb-2">
+          <div className="flex flex-row items-center gap-2 overflow-x-auto scrollbar-none flex-nowrap">
             {/* Search */}
-            <div className="relative flex-1 min-w-0">
+            <div className="relative flex-shrink-0 w-40 sm:flex-1 sm:min-w-0 sm:w-auto">
               <Search
                 size={16}
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] z-10"
@@ -210,7 +210,7 @@ export function MembersFilter({
             </div>
 
             {/* Role */}
-            <div className="w-full sm:w-36">
+            <div className="flex-shrink-0 w-28">
               <Select
                 value={state.role ?? ""}
                 onChange={handleRoleChange}
@@ -227,7 +227,7 @@ export function MembersFilter({
             </div>
 
             {/* Department */}
-            <div className="w-full sm:w-44">
+            <div className="flex-shrink-0 w-36">
               <Select
                 value={state.department ?? ""}
                 onChange={handleDepartmentChange}
@@ -244,7 +244,7 @@ export function MembersFilter({
             </div>
 
             {/* Session */}
-            <div className="w-full sm:w-32">
+            <div className="flex-shrink-0 w-28">
               <Select
                 value={state.session ?? ""}
                 onChange={handleSessionChange}
@@ -261,7 +261,7 @@ export function MembersFilter({
             </div>
 
             {/* Status */}
-            <div className="w-full sm:w-36">
+            <div className="flex-shrink-0 w-28">
               <Select
                 value={state.status ?? ""}
                 onChange={handleStatusChange}
