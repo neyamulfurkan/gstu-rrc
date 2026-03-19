@@ -1,51 +1,42 @@
 // src/middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { auth } from "@/lib/auth";
+import { getToken } from "next-auth/jwt";
 
-export default auth(function middleware(req) {
-  const session = req.auth;
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const { pathname, searchParams } = req.nextUrl;
 
-  // If user is on /login and already authenticated, redirect to /profile
-  if (pathname === "/login" && session) {
+  if (pathname === "/login" && token) {
     const callbackUrl = searchParams.get("callbackUrl");
     const redirectTo = callbackUrl ?? "/profile";
     return NextResponse.redirect(new URL(redirectTo, req.url));
   }
 
-  // Admin route protection
   if (pathname.startsWith("/admin")) {
-    if (!session) {
+    if (!token) {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-
-    const isAdmin =
-      session.user?.isAdmin === true;
-
-    if (!isAdmin) {
+    if (!token.isAdmin) {
       const homeUrl = new URL("/", req.url);
       homeUrl.searchParams.set("error", "unauthorized");
       return NextResponse.redirect(homeUrl);
     }
-
     return NextResponse.next();
   }
 
-  // Protected member routes
   const protectedPaths = ["/profile", "/feed", "/instruments", "/certificates"];
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
-
-  if (isProtected && !session) {
+  if (isProtected && !token) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
