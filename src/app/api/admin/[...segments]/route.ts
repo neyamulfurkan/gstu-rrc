@@ -646,7 +646,7 @@ async function handleAdminRoles(
   session: Session,
   method: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_admins")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_admins")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -781,7 +781,7 @@ async function handlePromote(
   if (method !== "POST") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
-  if (!hasPermission(session.user.permissions, "manage_admins")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_admins")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   let body: Record<string, unknown>;
@@ -827,7 +827,7 @@ async function handleRevokeAdmin(
   if (method !== "POST") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
-  if (!hasPermission(session.user.permissions, "manage_admins")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_admins")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   let body: Record<string, unknown>;
