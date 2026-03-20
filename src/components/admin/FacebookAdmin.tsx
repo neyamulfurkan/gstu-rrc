@@ -286,7 +286,7 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
                 <p className="text-sm text-[var(--color-text-secondary)]">
                   Connected to:{" "}
                   <span className="font-medium text-[var(--color-text-primary)]">
-                    {fbConfig?.fbPageName ?? "Facebook Page"}
+                    {fbConfig?.fbPageId ?? "Facebook Page"}
                   </span>
                 </p>
                 {fbConfig?.fbUrl && (
@@ -705,7 +705,7 @@ function CommentRepliesTab({ fbConfig, onMutate }: CommentRepliesTabProps): JSX.
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [prompt, setPrompt] = useState(
-    fbConfig?.fbCommentReplyPrompt ??
+    fbConfig?.fbCommentSystemPrompt ??
       "You are a helpful assistant for the GSTU Robotics & Research Club. Reply to comments on the club's Facebook page in a friendly, professional tone. Keep replies short (under 100 words)."
   );
   const [delay, setDelay] = useState(String(fbConfig?.fbCommentReplyDelay ?? 5));
@@ -714,7 +714,7 @@ function CommentRepliesTab({ fbConfig, onMutate }: CommentRepliesTabProps): JSX.
     if (!fbConfig) return;
     setEnabled(fbConfig.fbAutoReplyComments ?? false);
     setPrompt(
-      fbConfig.fbCommentSystemPrompt ?? fbConfig.fbCommentReplyPrompt ??
+      fbConfig.fbCommentSystemPrompt ??
         "You are a helpful assistant for the GSTU Robotics & Research Club. Reply to comments on the club's Facebook page in a friendly, professional tone. Keep replies short (under 100 words)."
     );
     setDelay(String(fbConfig.fbCommentReplyDelay ?? 5));
@@ -873,7 +873,7 @@ function MessageRepliesTab({ fbConfig, onMutate }: MessageRepliesTabProps): JSX.
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [prompt, setPrompt] = useState(
-    fbConfig?.fbMessageSystemPrompt ?? fbConfig?.fbMessageReplyPrompt ??
+    fbConfig?.fbMessageSystemPrompt ??
       "You are a helpful assistant for the GSTU Robotics & Research Club on Facebook Messenger. Answer questions about the club, membership, events, and projects. Be concise, friendly, and helpful."
   );
   const [greeting, setGreeting] = useState(
@@ -889,7 +889,7 @@ function MessageRepliesTab({ fbConfig, onMutate }: MessageRepliesTabProps): JSX.
     if (!fbConfig) return;
     setEnabled(fbConfig.fbAutoReplyMessages ?? false);
     setPrompt(
-      fbConfig.fbMessageSystemPrompt ?? fbConfig.fbMessageReplyPrompt ??
+      fbConfig.fbMessageSystemPrompt ??
         "You are a helpful assistant for the GSTU Robotics & Research Club on Facebook Messenger. Answer questions about the club, membership, events, and projects. Be concise, friendly, and helpful."
     );
     setGreeting(
@@ -1068,7 +1068,7 @@ function TestTab({ fbConfig }: TestTabProps): JSX.Element {
   const getSystemPrompt = useCallback((): string => {
     if (mode === "comment") {
       return (
-        fbConfig?.fbCommentSystemPrompt ?? fbConfig?.fbCommentReplyPrompt ??
+        fbConfig?.fbCommentSystemPrompt ??
         "You are a helpful assistant for the GSTU Robotics & Research Club. Reply to comments in a friendly, professional tone."
       );
     }

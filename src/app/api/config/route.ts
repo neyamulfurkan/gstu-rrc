@@ -126,7 +126,6 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         aiEnabled: true,
         aiChatHistory: true,
         fbPageId: true,
-        fbPageName: true,
         fbAutoPost: true,
         fbAutoReplyComments: true,
         fbCommentSystemPrompt: true,
