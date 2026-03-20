@@ -279,7 +279,7 @@ function NavItem({ item, isActive, collapsed }: NavItemProps): JSX.Element {
 
 // ─── AdminSidebar ─────────────────────────────────────────────────────────────
 
-export function AdminSidebar(): JSX.Element {
+export function AdminSidebar({ forceExpanded = false }: { forceExpanded?: boolean }): JSX.Element {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { canAccess: canAccessSection, isSuperAdmin } = usePermissions();
@@ -293,14 +293,18 @@ export function AdminSidebar(): JSX.Element {
     }
   });
 
-  // Persist collapse preference
+  // When forceExpanded is true (inside mobile drawer), always treat as expanded
+  const effectiveCollapsed = forceExpanded ? false : collapsed;
+
+  // Persist collapse preference — only save when NOT force-expanded
   useEffect(() => {
+    if (forceExpanded) return;
     try {
       localStorage.setItem(STORAGE_KEY, String(collapsed));
     } catch {
       // localStorage may be unavailable in some environments
     }
-  }, [collapsed]);
+  }, [collapsed, forceExpanded]);
 
   // Active section detection
   const activeSection = useMemo<string>(() => {
@@ -349,38 +353,40 @@ export function AdminSidebar(): JSX.Element {
       className={cn(
         "relative flex h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-surface)] transition-all duration-200",
         "w-full",
-        collapsed ? "md:w-16" : "md:w-64"
+        effectiveCollapsed ? "md:w-16" : "md:w-64"
       )}
       aria-label="Admin navigation"
     >
-      {/* Toggle Button — desktop only, floats on the right edge of the sidebar */}
-      <button
-        type="button"
-        onClick={() => setCollapsed((prev) => !prev)}
-        className={cn(
-          "absolute -right-3 top-[72px] z-20 hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] shadow-sm transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)]",
-          "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-        )}
-        aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-      >
-        {collapsed ? (
-          <ChevronRight size={12} aria-hidden="true" />
-        ) : (
-          <ChevronLeft size={12} aria-hidden="true" />
-        )}
-      </button>
+      {/* Toggle Button — desktop only, hidden when forceExpanded (mobile drawer) */}
+      {!forceExpanded && (
+        <button
+          type="button"
+          onClick={() => setCollapsed((prev) => !prev)}
+          className={cn(
+            "absolute -right-3 top-[72px] z-20 hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] shadow-sm transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)]",
+            "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          )}
+          aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {effectiveCollapsed ? (
+            <ChevronRight size={12} aria-hidden="true" />
+          ) : (
+            <ChevronLeft size={12} aria-hidden="true" />
+          )}
+        </button>
+      )}
 
       {/* Logo / Header */}
       <div
         className={cn(
           "flex h-14 shrink-0 items-center border-b border-[var(--color-border)] px-4",
-          collapsed ? "justify-center" : "justify-start gap-3"
+          effectiveCollapsed ? "justify-center" : "justify-start gap-3"
         )}
       >
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[var(--color-primary)] text-[var(--color-text-inverse)]">
           <Settings size={14} aria-hidden="true" />
         </div>
-        {!collapsed && (
+        {!effectiveCollapsed && (
           <span className="overflow-hidden whitespace-nowrap text-sm font-semibold text-[var(--color-text-primary)]">
             Admin Panel
           </span>
@@ -396,14 +402,14 @@ export function AdminSidebar(): JSX.Element {
           {filteredGroups.map((group, groupIndex) => (
             <div key={group.label} className={cn(groupIndex > 0 && "mt-4")}>
               {/* Group Label */}
-              {!collapsed && (
+              {!effectiveCollapsed && (
                 <div className="mb-1 px-3 py-0.5">
                   <span className="text-[10px] font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
                     {group.label}
                   </span>
                 </div>
               )}
-              {collapsed && groupIndex > 0 && (
+              {effectiveCollapsed && groupIndex > 0 && (
                 <div className="my-2 border-t border-[var(--color-border)]" />
               )}
 
@@ -414,7 +420,7 @@ export function AdminSidebar(): JSX.Element {
                     key={item.section}
                     item={item}
                     isActive={activeSection === item.section}
-                    collapsed={collapsed}
+                    collapsed={effectiveCollapsed}
                   />
                 ))}
               </div>
@@ -425,7 +431,7 @@ export function AdminSidebar(): JSX.Element {
 
       {/* Bottom: User Info */}
       <div className="shrink-0 border-t border-[var(--color-border)] p-3">
-        {collapsed ? (
+        {effectiveCollapsed ? (
           <div className="flex justify-center">
             <div
               className="relative h-8 w-8 shrink-0"

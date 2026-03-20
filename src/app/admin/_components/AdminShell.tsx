@@ -52,7 +52,7 @@ export function AdminShell({
         showCloseButton={false}
         disableBodyScrollLock={true}
       >
-        <AdminSidebar />
+        <AdminSidebar forceExpanded={true} />
       </Drawer>
 
       {/* Right column: top bar + scrollable main content, never moves */}
