@@ -21,8 +21,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const appId = process.env.FB_APP_ID ?? process.env.NEXT_PUBLIC_FB_APP_ID ?? "";
   const appSecret = process.env.FB_APP_SECRET ?? "";
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? `https://${req.headers.get("host")}`;
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL ?? "").replace(/\/+$/, "");
   const redirectUri = `${baseUrl}/api/admin/facebook-oauth`;
+  console.log("[facebook-oauth] redirectUri:", redirectUri);
+  console.log("[facebook-oauth] appId:", appId ? "SET" : "MISSING");
+  console.log("[facebook-oauth] appSecret:", appSecret ? "SET" : "MISSING");
 
   try {
     // Exchange code for short-lived token
