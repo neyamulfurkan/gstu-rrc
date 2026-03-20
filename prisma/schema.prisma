@@ -79,6 +79,7 @@ model ClubConfig {
   aiContextItems           Json     @default("{\"events\":true,\"projects\":true,\"committee\":true,\"advisors\":true,\"announcements\":true,\"instruments\":true,\"membership\":true}")
   aiChatHistory            String   @default("session")
   fbPageId                 String   @default("")
+  fbPageName               String   @default("")
   fbPageToken              String   @default("") @db.Text
   fbWebhookToken           String   @default("")
   fbAutoPost               Json     @default("{\"events\":false,\"projects\":false,\"announcements\":false,\"gallery\":false}")
