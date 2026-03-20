@@ -91,7 +91,7 @@ export function FacebookAdmin(): JSX.Element {
   const { data: configData, isLoading: configLoading } = useSWR<{ data: ClubConfigPublic & FacebookConfig }>(
     "/api/config",
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: false, revalidateOnMount: true }
   );
 
   const fbConfig = configData?.data as (ClubConfigPublic & FacebookConfig) | undefined;
@@ -587,7 +587,7 @@ interface CommentRepliesTabProps {
 
 function CommentRepliesTab({ fbConfig, onMutate }: CommentRepliesTabProps): JSX.Element {
   const [saving, setSaving] = useState(false);
-  const [enabled, setEnabled] = useState(fbConfig?.fbAutoReplyComments ?? false);
+  const [enabled, setEnabled] = useState(false);
   const [prompt, setPrompt] = useState(
     fbConfig?.fbCommentReplyPrompt ??
       "You are a helpful assistant for the GSTU Robotics & Research Club. Reply to comments on the club's Facebook page in a friendly, professional tone. Keep replies short (under 100 words)."
@@ -755,7 +755,7 @@ interface MessageRepliesTabProps {
 
 function MessageRepliesTab({ fbConfig, onMutate }: MessageRepliesTabProps): JSX.Element {
   const [saving, setSaving] = useState(false);
-  const [enabled, setEnabled] = useState(fbConfig?.fbAutoReplyMessages ?? false);
+  const [enabled, setEnabled] = useState(false);
   const [prompt, setPrompt] = useState(
     fbConfig?.fbMessageReplyPrompt ??
       "You are a helpful assistant for the GSTU Robotics & Research Club on Facebook Messenger. Answer questions about the club, membership, events, and projects. Be concise, friendly, and helpful."

@@ -152,9 +152,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
       { data: responseData },
       {
         headers: {
-          "Cache-Control": previewColorConfig
-            ? "no-store"
-            : "public, max-age=60, s-maxage=60, stale-while-revalidate=120",
+          "Cache-Control": "no-store, no-cache, must-revalidate",
         },
       }
     );
