@@ -189,6 +189,7 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
       return;
     }
     const redirectUri = encodeURIComponent(`${baseUrl}/api/admin/facebook-oauth`);
+    // redirectUri must match exactly what is set in Facebook App → Valid OAuth Redirect URIs
     const scope = "pages_manage_posts,pages_read_engagement,pages_messaging,pages_manage_metadata";
     const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
     window.location.href = oauthUrl;
