@@ -182,7 +182,7 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
   const isConnected = !!fbConfig?.fbPageId;
 
   const handleConnect = useCallback(() => {
-    const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
+    const appId = process.env.NEXT_PUBLIC_FB_APP_ID ?? process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     if (!appId) {
       toast("FB_APP_ID is not configured. Contact the developer.", "error");
