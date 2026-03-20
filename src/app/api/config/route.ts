@@ -126,6 +126,8 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         aiEnabled: true,
         aiChatHistory: true,
         fbPageId: true,
+        fbPageName: true,
+        fbUrl: true,
         fbAutoPost: true,
         fbAutoReplyComments: true,
         fbCommentSystemPrompt: true,
@@ -193,7 +195,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       hero: ["heroType", "heroImages", "heroVideoUrl", "heroFallbackImg", "overlayOpacity", "heroCtaLabel1", "heroCtaUrl1", "heroCtaLabel2", "heroCtaUrl2", "particleEnabled", "particleCount", "particleSpeed", "particleColor"],
       navigation: ["footerCopyright", "constitutionUrl", "announcementTickerSpeed", "privacyPolicy", "termsOfUse"],
       email: ["resendApiKey", "resendFromEmail", "resendFromName", "welcomeEmailSubject", "welcomeEmailBody"],
-      facebook: ["fbPageId", "fbPageToken", "fbWebhookToken", "fbAutoPost", "fbAutoReplyComments", "fbCommentSystemPrompt", "fbCommentReplyPrompt", "fbCommentReplyDelay", "fbAutoReplyMessages", "fbMessageSystemPrompt", "fbMessageReplyPrompt", "fbGreetingMessage", "fbFallbackMessage"],
+      facebook: ["fbPageId", "fbPageToken", "fbWebhookToken", "fbUrl", "fbAutoPost", "fbAutoReplyComments", "fbCommentSystemPrompt", "fbCommentReplyPrompt", "fbCommentReplyDelay", "fbAutoReplyMessages", "fbMessageSystemPrompt", "fbMessageReplyPrompt", "fbGreetingMessage", "fbFallbackMessage"],
     };
 
     const allowed = allowedFields[tab];
