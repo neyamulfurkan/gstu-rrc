@@ -414,7 +414,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let pdfUrl = "";
     try {
       const publicId = `certificates/${serial}`;
-      pdfUrl = await uploadPdfToCloudinary(pdfBuffer, publicId);
+      const isHtml = pdfBuffer.slice(0, 20).toString().includes("DOCTYPE");
+      pdfUrl = await uploadPdfToCloudinary(pdfBuffer, isHtml ? publicId + ".html" : publicId);
     } catch (error) {
       console.error(
         `[POST /api/certificates] Cloudinary upload failed for serial ${serial}:`,

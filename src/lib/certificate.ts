@@ -80,6 +80,12 @@ export async function generateCertificatePdf(
   </body>
 </html>`;
 
+  // Skip Puppeteer on Vercel free tier — return HTML buffer instead
+  const populatedHtmlFallback = replacePlaceholders(templateHtml, data);
+  const fallbackHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><style>* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } ${templateCss}</style></head><body>${populatedHtmlFallback}</body></html>`;
+  return Buffer.from(fallbackHtml, "utf-8");
+
+  // eslint-disable-next-line no-unreachable
   let browser: import("puppeteer-core").Browser | null = null;
 
   try {
