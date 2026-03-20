@@ -463,23 +463,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Send email (fire-and-forget style — errors logged but don't block)
     try {
-      // Dynamically import CertificateIssuedEmail to avoid issues if the file
-      // does not yet exist during incremental builds
       const { createElement } = await import("react");
+      const { CertificateIssuedEmail } = await import("../../../../emails/CertificateEmail");
+      const certEmailConfig = {
+        clubName: clubConfig?.clubName ?? "GSTU Robotics & Research Club",
+        logoUrl: clubConfig?.logoUrl ?? "",
+        primaryColor: "#0050FF",
+      };
       await sendEmail({
         to: recipient.email,
-        subject: `Your Certificate: ${achievement.trim()}`,
-        reactComponent: createElement(
-          "div",
-          null,
-          createElement("p", null, `Dear ${recipient.fullName},`),
-          createElement("p", null, `Congratulations! You have been awarded a certificate for: ${achievement.trim()}`),
-          createElement("p", null, `Serial: ${serial}`),
-          createElement("p", null, `Verify: ${verifyUrl}`),
-          createElement("p", null, `Download PDF: ${pdfUrl}`),
-          createElement("p", null, `Issued by ${signedByName.trim()}, ${signedByDesignation.trim()}`),
-          createElement("p", null, clubConfig?.clubName ?? "GSTU Robotics & Research Club")
-        ),
+        subject: `Your Certificate: ${achievement.trim()} — ${certEmailConfig.clubName}`,
+        reactComponent: createElement(CertificateIssuedEmail, {
+          memberName: recipient.fullName,
+          achievement: achievement.trim(),
+          certificateType: template.type,
+          pdfUrl,
+          verifyUrl,
+          serial,
+          clubConfig: certEmailConfig,
+        }),
       });
     } catch (emailError) {
       // Non-fatal — certificate was still created

@@ -61,64 +61,8 @@ async function createNotification(params: {
 
 // ─── Inline email components (FILE 060 not yet generated) ────────────────────
 
-import React from "react";
-
-function ApplicationApprovedEmailFallback(props: {
-  fullName: string;
-  email: string;
-  loginUrl: string;
-  clubName: string;
-  adminNote?: string | null;
-}): React.ReactElement {
-  return React.createElement(
-    "div",
-    null,
-    React.createElement("h1", null, `Congratulations, ${props.fullName}!`),
-    React.createElement(
-      "p",
-      null,
-      `Your application to ${props.clubName} has been approved.`
-    ),
-    React.createElement("p", null, `You can now log in at: ${props.loginUrl}`),
-    React.createElement(
-      "p",
-      null,
-      `Your login email: ${props.email}`
-    ),
-    props.adminNote
-      ? React.createElement("p", null, `Note from admin: ${props.adminNote}`)
-      : null
-  );
-}
-
-function ApplicationRejectedEmailFallback(props: {
-  fullName: string;
-  clubName: string;
-  adminNote?: string | null;
-}): React.ReactElement {
-  return React.createElement(
-    "div",
-    null,
-    React.createElement("h1", null, `Application Update — ${props.clubName}`),
-    React.createElement(
-      "p",
-      null,
-      `Dear ${props.fullName}, we regret to inform you that your application has not been approved at this time.`
-    ),
-    props.adminNote
-      ? React.createElement(
-          "p",
-          null,
-          `Reason: ${props.adminNote}`
-        )
-      : null,
-    React.createElement(
-      "p",
-      null,
-      "You are welcome to reapply in the future if the issue is correctable."
-    )
-  );
-}
+import React, { createElement } from "react";
+import { ApplicationApprovedEmail, ApplicationRejectedEmail } from "../../../../emails/ApplicationEmails";
 
 // ─── GET /api/applications/[id] ───────────────────────────────────────────────
 
@@ -399,22 +343,27 @@ export async function PATCH(
           process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
         const loginUrl = `${baseUrl}/login`;
 
-        const clubConfig = await prisma.clubConfig.findUnique({
+        const clubConfigForEmail = await prisma.clubConfig.findUnique({
           where: { id: "main" },
-          select: { clubName: true },
+          select: { clubName: true, logoUrl: true, colorConfig: true },
         });
 
-        const clubName = clubConfig?.clubName ?? "GSTU Robotics Club";
+        const clubName = clubConfigForEmail?.clubName ?? "GSTU Robotics Club";
+        const approvalEmailConfig = {
+          clubName,
+          logoUrl: clubConfigForEmail?.logoUrl ?? "",
+          primaryColor:
+            (clubConfigForEmail?.colorConfig as Record<string, string> | null)?.["--color-primary"] ?? "#0050FF",
+        };
 
         await sendEmail({
           to: application.email,
           subject: `Welcome to ${clubName} — Application Approved!`,
-          reactComponent: ApplicationApprovedEmailFallback({
-            fullName: application.fullName,
-            email: application.email,
+          reactComponent: createElement(ApplicationApprovedEmail, {
+            applicantName: application.fullName,
             loginUrl,
-            clubName,
-            adminNote: note ?? null,
+            email: application.email,
+            clubConfig: approvalEmailConfig,
           }),
         });
 
@@ -513,20 +462,26 @@ export async function PATCH(
       }
 
       // Send rejection email
-      const clubConfig = await prisma.clubConfig.findUnique({
+      const rejectionClubConfig = await prisma.clubConfig.findUnique({
         where: { id: "main" },
-        select: { clubName: true },
+        select: { clubName: true, logoUrl: true, colorConfig: true },
       });
 
-      const clubName = clubConfig?.clubName ?? "GSTU Robotics Club";
+      const clubName = rejectionClubConfig?.clubName ?? "GSTU Robotics Club";
+      const rejectionEmailConfig = {
+        clubName,
+        logoUrl: rejectionClubConfig?.logoUrl ?? "",
+        primaryColor:
+          (rejectionClubConfig?.colorConfig as Record<string, string> | null)?.["--color-primary"] ?? "#0050FF",
+      };
 
       await sendEmail({
         to: application.email,
         subject: `Application Update — ${clubName}`,
-        reactComponent: ApplicationRejectedEmailFallback({
-          fullName: application.fullName,
-          clubName,
-          adminNote: note ?? null,
+        reactComponent: createElement(ApplicationRejectedEmail, {
+          applicantName: application.fullName,
+          reason: note ?? undefined,
+          clubConfig: rejectionEmailConfig,
         }),
       });
 

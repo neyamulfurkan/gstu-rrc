@@ -12,6 +12,8 @@ import {
   paginationSchema,
 } from "@/lib/validations";
 import { sendEmail } from "@/lib/resend";
+import { ApplicationReceivedEmail } from "../../../../emails/ApplicationEmails";
+import { createElement } from "react";
 import { z } from "zod";
 
 // ─── Combined application schema ─────────────────────────────────────────────
@@ -292,14 +294,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ── Send confirmation email to applicant ────────────────────────────────
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const emailMod = await import(/* webpackIgnore: true */ "../../../emails/ApplicationEmails" as any).catch(() => null) as { ApplicationReceivedEmail?: (props: { applicantName: string; clubConfig: typeof emailConfig }) => JSX.Element } | null;
-      if (!emailMod?.ApplicationReceivedEmail) throw new Error("Email template unavailable");
-      const { createElement } = await import("react");
       await sendEmail({
         to: application.email,
         subject: `Application Received — ${emailConfig.clubName}`,
-        reactComponent: createElement(emailMod.ApplicationReceivedEmail, {
+        reactComponent: createElement(ApplicationReceivedEmail, {
           applicantName: application.fullName,
           clubConfig: emailConfig,
         }),
@@ -343,26 +341,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Send notification emails to eligible admins
       if (eligibleAdmins.length > 0) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const adminEmailMod = await import(/* webpackIgnore: true */ "../../../emails/ApplicationEmails" as any).catch(() => null);
-          const ApplicationReceivedAdminEmail = adminEmailMod?.ApplicationReceivedAdminEmail ?? null;
-
           for (const admin of eligibleAdmins) {
-            if (ApplicationReceivedAdminEmail) {
-              const { createElement } = await import("react");
-              await sendEmail({
-                to: admin.email,
-                subject: `New Membership Application — ${data.fullName}`,
-                reactComponent: createElement(ApplicationReceivedAdminEmail, {
-                  adminName: admin.fullName,
-                  applicantName: data.fullName,
-                  applicantEmail: data.email,
-                  applicationId: application.id,
-                  clubConfig: emailConfig,
-                }),
-              });
-            }
+            await sendEmail({
+              to: admin.email,
+              subject: `New Membership Application — ${data.fullName}`,
+              reactComponent: createElement("div", null,
+                createElement("h2", null, `New Membership Application`),
+                createElement("p", null, `Hi ${admin.fullName},`),
+                createElement("p", null, `A new membership application has been submitted by ${data.fullName} (${data.email}).`),
+                createElement("p", null, `Please review it in the admin panel: ${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/admin/applications`)
+              ),
+            });
           }
         } catch (adminEmailError) {
           console.error(
