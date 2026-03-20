@@ -500,7 +500,7 @@ function UploadFormWithCategories({ onClose, onSuccess }: UploadFormWithCategori
   const [loadingCats, setLoadingCats] = useState(true);
 
   useEffect(() => {
-    fetch("/api/gallery/categories")
+    fetch("/api/admin/gallery-categories")
       .then((r) => r.json())
       .then((d) => {
         if (d?.data) setCategories(d.data);
