@@ -62,7 +62,7 @@ async function createNotification(params: {
 // ─── Inline email components (FILE 060 not yet generated) ────────────────────
 
 import React, { createElement } from "react";
-import { ApplicationApprovedEmail, ApplicationRejectedEmail } from "../../../../emails/ApplicationEmails";
+import { ApplicationApprovedEmail, ApplicationRejectedEmail } from "../../../../../emails/ApplicationEmails";
 
 // ─── GET /api/applications/[id] ───────────────────────────────────────────────
 

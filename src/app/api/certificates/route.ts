@@ -2,12 +2,14 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import QRCode from "qrcode";
+import { createElement } from "react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { hasPermission } from "@/lib/permissions";
 import { generateSerial } from "@/lib/utils";
 import { generateCertificatePdf } from "@/lib/certificate";
 import { sendEmail } from "@/lib/resend";
+import { CertificateIssuedEmail } from "../../../../emails/CertificateEmail";
 import type { CertificateCard } from "@/types/index";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -463,8 +465,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Send email (fire-and-forget style — errors logged but don't block)
     try {
-      const { createElement } = await import("react");
-      const { CertificateIssuedEmail } = await import("../../../../emails/CertificateEmail");
       const certEmailConfig = {
         clubName: clubConfig?.clubName ?? "GSTU Robotics & Research Club",
         logoUrl: clubConfig?.logoUrl ?? "",
