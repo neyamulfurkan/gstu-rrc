@@ -305,11 +305,66 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // ── Facebook auto-post ───────────────────────────────────────────────────
     if (data.isPublished) {
-      void postProjectToFacebook({
-        title: project.title,
-        slug: project.slug,
-        coverUrl: project.coverUrl ?? null,
-      });
+      try {
+        const fbConfig = await prisma.clubConfig.findUnique({
+          where: { id: "main" },
+          select: {
+            fbAutoPost: true,
+            fbPageId: true,
+            fbPageToken: true,
+          },
+        });
+
+        const fbAutoPost = fbConfig?.fbAutoPost as Record<string, boolean> | null;
+        const autoPostProjects = fbAutoPost?.projects === true;
+
+        if (autoPostProjects) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+          const projectUrl = `${baseUrl}/projects/${project.slug}`;
+          const techList = (data.technologies ?? []).slice(0, 5).join(" · ");
+          const message = [
+            `🚀 New Project: ${project.title}`,
+            ``,
+            techList ? `🛠 Technologies: ${techList}` : null,
+            `📅 Year: ${data.year}`,
+            `📌 Status: ${data.status === "completed" ? "✅ Completed" : "🔄 Ongoing"}`,
+            ``,
+            `Check out the full project details:`,
+            `🔗 ${projectUrl}`,
+            ``,
+            `#GSTURobotics #GSTURRC #Project #${project.title.replace(/\s+/g, "")}`,
+          ].filter(Boolean).join("\n");
+
+          const requiresApproval = (fbConfig as unknown as { fbRequireApproval?: boolean } | null)?.fbRequireApproval === true;
+
+          if (requiresApproval) {
+            const { queuePostForReview } = await import("@/lib/facebook");
+            await queuePostForReview({
+              entityType: "project",
+              entityId: project.id,
+              entityTitle: project.title,
+              message,
+              imageUrl: project.coverUrl || null,
+              link: projectUrl,
+            });
+          } else if (fbConfig?.fbPageId && fbConfig?.fbPageToken) {
+            const { postToPage } = await import("@/lib/facebook");
+            await postToPage({
+              message,
+              link: projectUrl,
+              imageUrl: project.coverUrl || null,
+              name: project.title,
+              description: [
+                techList ? `Technologies: ${techList}` : null,
+                `Year: ${data.year}`,
+              ].filter(Boolean).join(" | "),
+            });
+          }
+        }
+      } catch (fbErr) {
+        console.error("[api/projects] Facebook post error:", fbErr);
+        // Non-fatal
+      }
     }
 
     if (data.isPublished) {

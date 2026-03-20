@@ -275,7 +275,34 @@ export async function generateMetadata({
     constitutionUrl: "",
   } satisfies ClubConfigPublic;
 
-  return genProjectMeta(project, fullConfig);
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const meta = genProjectMeta(project, fullConfig);
+  // Ensure og:image is always the project cover so Facebook scraper picks it up
+  if (project.coverUrl) {
+    return {
+      ...meta,
+      openGraph: {
+        ...(typeof meta.openGraph === "object" && meta.openGraph !== null ? meta.openGraph : {}),
+        images: [
+          {
+            url: project.coverUrl,
+            width: 1200,
+            height: 630,
+            alt: project.title,
+          },
+        ],
+        url: `${base}/projects/${project.slug}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: project.title,
+        description: typeof meta.description === "string" ? meta.description : "",
+        images: [project.coverUrl],
+      },
+    };
+  }
+  return meta;
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────

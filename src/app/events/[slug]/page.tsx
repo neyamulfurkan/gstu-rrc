@@ -189,7 +189,34 @@ export async function generateMetadata({
     attendees: (eventRow.attendees ?? []) as MemberPublic[],
   };
 
-  return generateEventMetadata(event, config);
+  const base = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const meta = generateEventMetadata(event, config);
+  // Ensure og:image is always the event cover so Facebook scraper picks it up
+  if (eventRow.coverUrl) {
+    return {
+      ...meta,
+      openGraph: {
+        ...(typeof meta.openGraph === "object" && meta.openGraph !== null ? meta.openGraph : {}),
+        images: [
+          {
+            url: eventRow.coverUrl,
+            width: 1200,
+            height: 630,
+            alt: eventRow.title,
+          },
+        ],
+        url: `${base}/events/${eventRow.slug}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: eventRow.title,
+        description: eventRow.metaDescription ?? "",
+        images: [eventRow.coverUrl],
+      },
+    };
+  }
+  return meta;
 }
 
 // ─── Page Component ───────────────────────────────────────────────────────────

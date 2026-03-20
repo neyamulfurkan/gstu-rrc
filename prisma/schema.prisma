@@ -83,6 +83,7 @@ model ClubConfig {
   fbPageToken              String   @default("") @db.Text
   fbWebhookToken           String   @default("")
   fbAutoPost               Json     @default("{\"events\":false,\"projects\":false,\"announcements\":false,\"gallery\":false}")
+  fbRequireApproval        Boolean  @default(false)
   fbAutoPostTemplates      Json     @default("{}")
   fbAutoReplyComments      Boolean  @default(false)
   fbCommentSystemPrompt    String   @default("") @db.Text
@@ -637,4 +638,23 @@ model EmailLog {
   sentAt       DateTime @default(now())
 
   @@index([sentAt])
+}
+
+model FacebookPendingPost {
+  id          String    @id @default(cuid())
+  entityType  String
+  entityId    String
+  entityTitle String
+  message     String    @db.Text
+  imageUrl    String?
+  link        String
+  status      String    @default("pending")
+  postedAt    DateTime?
+  fbPostId    String?
+  adminNote   String?
+  createdAt   DateTime  @default(now())
+
+  @@index([status])
+  @@index([entityType])
+  @@index([createdAt])
 }

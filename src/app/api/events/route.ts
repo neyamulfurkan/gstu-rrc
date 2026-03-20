@@ -281,13 +281,52 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             ? (fbAutoPost as { events?: boolean }).events === true
             : false;
 
-        if (autoPostEvents && config?.fbPageId && config?.fbPageToken) {
-          // Dynamic import to avoid bundling facebook.ts when not needed
+        if (autoPostEvents) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+          const eventUrl = `${baseUrl}/events/${uniqueSlug}`;
+          // The standalone page at /events/[slug] is a real SSR page with full OG meta tags.
+          // Facebook scrapes this URL to build the preview card.
+          const eventDate = new Date(data.startDate).toLocaleDateString("en-BD", {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          });
+          const message = [
+            `📅 New Event: ${data.title}`,
+            ``,
+            `📍 Venue: ${data.venue}`,
+            `🗓 Date: ${eventDate}`,
+            ``,
+            `Click the link below to view full details, register, and stay updated!`,
+            ``,
+            `🔗 ${eventUrl}`,
+            ``,
+            `#GSTURobotics #GSTURRC #Event #${data.title.replace(/\s+/g, "")}`,
+          ].join("\n");
+
           try {
-            const { postToPage } = await import("@/lib/facebook");
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-            const message = `📅 New Event: ${data.title}\n📍 ${data.venue}\n🗓 ${new Date(data.startDate).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}\n\nMore details: ${baseUrl}/events/${uniqueSlug}`;
-            await postToPage(message);
+            const { postToPage, queuePostForReview } = await import("@/lib/facebook");
+            const requiresApproval = (config as unknown as { fbRequireApproval?: boolean } | null)?.fbRequireApproval === true;
+
+            if (requiresApproval) {
+              await queuePostForReview({
+                entityType: "event",
+                entityId: event.id,
+                entityTitle: data.title,
+                message,
+                imageUrl: event.coverUrl || null,
+                link: eventUrl,
+              });
+            } else if (config?.fbPageId && config?.fbPageToken) {
+              await postToPage({
+                message,
+                link: eventUrl,
+                imageUrl: event.coverUrl || null,
+                name: data.title,
+                description: `📍 ${data.venue} | 🗓 ${eventDate}`,
+              });
+            }
           } catch (fbError) {
             console.error("[POST /api/events] Facebook auto-post failed:", fbError);
             // Non-fatal — event is still created

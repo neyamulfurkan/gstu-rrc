@@ -23,20 +23,57 @@ async function getPageCredentials(): Promise<{ pageId: string; pageToken: string
   }
 }
 
-export async function postToPage(content: string, imageUrl?: string): Promise<string | null> {
+export interface FacebookPostPayload {
+  message: string;
+  link: string;
+  imageUrl?: string | null;
+  name?: string;
+  description?: string;
+}
+
+export async function postToPage(payload: FacebookPostPayload | string, imageUrl?: string): Promise<string | null> {
   try {
     const credentials = await getPageCredentials();
     if (!credentials) return null;
 
     const { pageId, pageToken } = credentials;
 
+    // Support both legacy string call and new rich payload object
+    let message: string;
+    let linkUrl: string | undefined;
+    let pictureUrl: string | null | undefined;
+    let name: string | undefined;
+    let description: string | undefined;
+
+    if (typeof payload === "string") {
+      message = payload;
+      linkUrl = imageUrl;
+      pictureUrl = undefined;
+    } else {
+      message = payload.message;
+      linkUrl = payload.link;
+      pictureUrl = payload.imageUrl;
+      name = payload.name;
+      description = payload.description;
+    }
+
     const body: Record<string, string> = {
-      message: content,
+      message,
       access_token: pageToken,
     };
 
-    if (imageUrl) {
-      body.link = imageUrl;
+    // Use the page URL as the link for proper link preview card
+    if (linkUrl) {
+      body.link = linkUrl;
+    }
+
+    // Add open graph fields for a rich preview card
+    if (name) body.name = name;
+    if (description) body.description = description;
+
+    // If we have a Cloudinary image, use it as the picture for the link preview
+    if (pictureUrl) {
+      body.picture = pictureUrl;
     }
 
     const response = await fetch(`${GRAPH_API_BASE}/${pageId}/feed`, {
@@ -65,6 +102,89 @@ export async function postToPage(content: string, imageUrl?: string): Promise<st
   } catch (error) {
     console.error("[facebook.ts] postToPage encountered an unexpected error:", error);
     return null;
+  }
+}
+
+/**
+ * Queues a Facebook post for admin review instead of posting immediately.
+ * Creates a FacebookPendingPost record in the database.
+ */
+export async function queuePostForReview(payload: {
+  entityType: string;
+  entityId: string;
+  entityTitle: string;
+  message: string;
+  imageUrl?: string | null;
+  link: string;
+}): Promise<void> {
+  try {
+    await (prisma as unknown as { facebookPendingPost: { create: (args: unknown) => Promise<unknown> } }).facebookPendingPost.create({
+      data: {
+        entityType: payload.entityType,
+        entityId: payload.entityId,
+        entityTitle: payload.entityTitle,
+        message: payload.message,
+        imageUrl: payload.imageUrl ?? null,
+        link: payload.link,
+        status: "pending",
+      },
+    });
+  } catch (error) {
+    console.error("[facebook.ts] queuePostForReview failed:", error);
+  }
+}
+
+/**
+ * Approves and publishes a pending Facebook post.
+ * Called from the admin Facebook panel.
+ */
+export async function approvePendingPost(pendingPostId: string): Promise<{ success: boolean; fbPostId?: string; error?: string }> {
+  try {
+    const fbPendingModel = (prisma as unknown as { facebookPendingPost: { findUnique: (args: unknown) => Promise<{ id: string; status: string; message: string; link: string; imageUrl: string | null } | null>; update: (args: unknown) => Promise<unknown> } }).facebookPendingPost;
+    const pending = await fbPendingModel.findUnique({
+      where: { id: pendingPostId },
+    });
+
+    if (!pending) return { success: false, error: "Pending post not found" };
+    if (pending.status !== "pending") return { success: false, error: "Post is not in pending state" };
+
+    const fbPostId = await postToPage({
+      message: pending.message,
+      link: pending.link,
+      imageUrl: pending.imageUrl,
+    });
+
+    if (!fbPostId) {
+      return { success: false, error: "Facebook API call failed" };
+    }
+
+    await fbPendingModel.update({
+      where: { id: pendingPostId },
+      data: {
+        status: "posted",
+        fbPostId,
+        postedAt: new Date(),
+      },
+    });
+
+    return { success: true, fbPostId };
+  } catch (error) {
+    console.error("[facebook.ts] approvePendingPost failed:", error);
+    return { success: false, error: "Internal error" };
+  }
+}
+
+/**
+ * Rejects a pending Facebook post.
+ */
+export async function rejectPendingPost(pendingPostId: string, adminNote?: string): Promise<void> {
+  try {
+    await (prisma as unknown as { facebookPendingPost: { update: (args: unknown) => Promise<unknown> } }).facebookPendingPost.update({
+      where: { id: pendingPostId },
+      data: { status: "rejected", adminNote: adminNote ?? null },
+    });
+  } catch (error) {
+    console.error("[facebook.ts] rejectPendingPost failed:", error);
   }
 }
 
