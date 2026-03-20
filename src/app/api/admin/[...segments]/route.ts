@@ -1852,17 +1852,179 @@ async function handleCustomCards(
     return NextResponse.json({ data: section }, { status: 201 });
   }
 
-  if (method === "PUT") {
+  if (method === "PATCH") {
+    // Publish toggle: { sectionId, isPublished }
     let body: Record<string, unknown>;
     try {
       body = await req.json();
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-    const { id, entityType: eType, ...rest } = body as {
+    const { sectionId, isPublished } = body as { sectionId?: string; isPublished?: boolean };
+    if (!sectionId || isPublished === undefined) {
+      return NextResponse.json({ error: "sectionId and isPublished are required" }, { status: 400 });
+    }
+    const section = await prisma.customCardSection.update({
+      where: { id: sectionId },
+      data: { isPublished },
+      select: { id: true, isPublished: true },
+    });
+    return NextResponse.json({ data: section });
+  }
+
+  if (method === "PUT") {
+    // Bulk upsert: { targetPage, sections: [...] }
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const { targetPage, sections: incomingSections, id, entityType: eType, ...rest } = body as {
+      targetPage?: string;
+      sections?: Array<{
+        id: string;
+        heading: string;
+        subtitle?: string | null;
+        position: string;
+        isPublished: boolean;
+        sortOrder: number;
+        cards: Array<{
+          id: string;
+          heading: string;
+          description?: unknown;
+          imageUrl?: string | null;
+          buttonLabel?: string | null;
+          buttonUrl?: string | null;
+          buttonStyle?: string | null;
+          sortOrder: number;
+        }>;
+      }>;
       id?: string;
       entityType?: "section" | "card";
     } & Record<string, unknown>;
+
+    // Bulk save path
+    if (targetPage && Array.isArray(incomingSections)) {
+      // Fetch existing section IDs for this page
+      const existing = await prisma.customCardSection.findMany({
+        where: { targetPage },
+        select: { id: true },
+      });
+      const existingIds = new Set(existing.map((s) => s.id));
+
+      for (const sec of incomingSections) {
+        const isTemp = sec.id.startsWith("temp_");
+        if (isTemp) {
+          // Create new section
+          const created = await prisma.customCardSection.create({
+            data: {
+              targetPage,
+              heading: sec.heading ?? null,
+              subtitle: sec.subtitle ?? null,
+              position: sec.position,
+              isPublished: sec.isPublished,
+              sortOrder: sec.sortOrder,
+            },
+            select: { id: true },
+          });
+          // Create its cards
+          for (const card of sec.cards ?? []) {
+            await prisma.customCard.create({
+              data: {
+                sectionId: created.id,
+                heading: card.heading ?? "",
+                description: (card.description ?? {}) as object,
+                imageUrl: card.imageUrl ?? null,
+                buttonLabel: card.buttonLabel ?? null,
+                buttonUrl: card.buttonUrl ?? null,
+                buttonStyle: card.buttonStyle ?? null,
+                sortOrder: card.sortOrder,
+              },
+            });
+          }
+        } else {
+          // Update existing section
+          await prisma.customCardSection.update({
+            where: { id: sec.id },
+            data: {
+              heading: sec.heading ?? null,
+              subtitle: sec.subtitle ?? null,
+              position: sec.position,
+              isPublished: sec.isPublished,
+              sortOrder: sec.sortOrder,
+            },
+          });
+          // Delete removed cards then upsert remaining
+          const incomingCardIds = sec.cards.filter((c) => !c.id.startsWith("temp_")).map((c) => c.id);
+          await prisma.customCard.deleteMany({
+            where: { sectionId: sec.id, id: { notIn: incomingCardIds } },
+          });
+          for (const card of sec.cards ?? []) {
+            const isCardTemp = card.id.startsWith("temp_");
+            if (isCardTemp) {
+              await prisma.customCard.create({
+                data: {
+                  sectionId: sec.id,
+                  heading: card.heading ?? "",
+                  description: (card.description ?? {}) as object,
+                  imageUrl: card.imageUrl ?? null,
+                  buttonLabel: card.buttonLabel ?? null,
+                  buttonUrl: card.buttonUrl ?? null,
+                  buttonStyle: card.buttonStyle ?? null,
+                  sortOrder: card.sortOrder,
+                },
+              });
+            } else {
+              await prisma.customCard.update({
+                where: { id: card.id },
+                data: {
+                  heading: card.heading ?? "",
+                  description: (card.description ?? {}) as object,
+                  imageUrl: card.imageUrl ?? null,
+                  buttonLabel: card.buttonLabel ?? null,
+                  buttonUrl: card.buttonUrl ?? null,
+                  buttonStyle: card.buttonStyle ?? null,
+                  sortOrder: card.sortOrder,
+                },
+              });
+            }
+          }
+          existingIds.delete(sec.id);
+        }
+      }
+
+      // Delete sections that were removed locally
+      const incomingRealIds = incomingSections.filter((s) => !s.id.startsWith("temp_")).map((s) => s.id);
+      await prisma.customCardSection.deleteMany({
+        where: { targetPage, id: { notIn: incomingRealIds } },
+      });
+
+      await logAction({
+        adminId: session.user.userId,
+        actionType: "save_custom_cards",
+        description: `Saved custom cards for page: ${targetPage}`,
+        entityType: "custom_card_section",
+        ipAddress: ip,
+      });
+
+      const updated = await prisma.customCardSection.findMany({
+        where: { targetPage },
+        select: {
+          id: true, targetPage: true, heading: true, subtitle: true,
+          position: true, isPublished: true, sortOrder: true,
+          cards: {
+            select: { id: true, heading: true, description: true, imageUrl: true, buttonLabel: true, buttonUrl: true, buttonStyle: true, sortOrder: true },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+        orderBy: { sortOrder: "asc" },
+      });
+      return NextResponse.json({ data: updated });
+    }
+
+    // Single section/card update fallback
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
