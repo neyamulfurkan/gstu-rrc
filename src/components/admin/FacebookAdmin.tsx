@@ -244,7 +244,6 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
           tab: "facebook",
           fbPageId: "",
           fbPageToken: "",
-          fbWebhookToken: "",
         }),
       });
       if (!res.ok) throw new Error("Failed to disconnect");

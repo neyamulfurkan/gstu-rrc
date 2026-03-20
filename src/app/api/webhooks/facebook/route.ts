@@ -150,9 +150,40 @@ async function processCommentEvent(
     return;
   }
 
-  const systemPrompt =
+  let rawCommentPrompt =
     config.fbCommentSystemPrompt ||
     "You are a helpful assistant for a robotics and research club. Reply politely and helpfully to comments on the club's Facebook page.";
+
+  try {
+    const clubConfig = await prisma.clubConfig.findUnique({
+      where: { id: "main" },
+      select: {
+        clubName: true,
+        clubShortName: true,
+        universityName: true,
+        clubMotto: true,
+        email: true,
+        phone: true,
+        membershipFee: true,
+        regStatus: true,
+        foundedYear: true,
+      },
+    });
+    if (clubConfig) {
+      rawCommentPrompt = rawCommentPrompt
+        .replace(/\{\{clubName\}\}/g, clubConfig.clubName || "GSTU Robotics & Research Club")
+        .replace(/\{\{clubShortName\}\}/g, clubConfig.clubShortName || "GSTU RRC")
+        .replace(/\{\{universityName\}\}/g, clubConfig.universityName || "Gopalganj Science and Technology University")
+        .replace(/\{\{clubMotto\}\}/g, clubConfig.clubMotto || "")
+        .replace(/\{\{email\}\}/g, clubConfig.email || "")
+        .replace(/\{\{phone\}\}/g, clubConfig.phone || "")
+        .replace(/\{\{membershipFee\}\}/g, String(clubConfig.membershipFee || ""))
+        .replace(/\{\{regStatus\}\}/g, clubConfig.regStatus || "")
+        .replace(/\{\{foundedYear\}\}/g, String(clubConfig.foundedYear || ""));
+    }
+  } catch {
+    // use raw prompt with unresolved placeholders as fallback
+  }
 
   const messages: GroqMessage[] = [
     {
@@ -161,7 +192,7 @@ async function processCommentEvent(
     },
   ];
 
-  const replyText = await callGroq(messages, systemPrompt);
+  const replyText = await callGroq(messages, rawCommentPrompt);
 
   const delay = config.fbCommentReplyDelay ?? 2000;
 
@@ -198,9 +229,41 @@ async function processMessageEvent(
     return;
   }
 
-  const systemPrompt =
+  let rawPrompt =
     config.fbMessageSystemPrompt ||
     "You are a helpful assistant for a robotics and research club. Answer questions from students about the club politely and informatively.";
+
+  // Replace placeholders with actual club data
+  try {
+    const clubConfig = await prisma.clubConfig.findUnique({
+      where: { id: "main" },
+      select: {
+        clubName: true,
+        clubShortName: true,
+        universityName: true,
+        clubMotto: true,
+        email: true,
+        phone: true,
+        membershipFee: true,
+        regStatus: true,
+        foundedYear: true,
+      },
+    });
+    if (clubConfig) {
+      rawPrompt = rawPrompt
+        .replace(/\{\{clubName\}\}/g, clubConfig.clubName || "GSTU Robotics & Research Club")
+        .replace(/\{\{clubShortName\}\}/g, clubConfig.clubShortName || "GSTU RRC")
+        .replace(/\{\{universityName\}\}/g, clubConfig.universityName || "Gopalganj Science and Technology University")
+        .replace(/\{\{clubMotto\}\}/g, clubConfig.clubMotto || "")
+        .replace(/\{\{email\}\}/g, clubConfig.email || "")
+        .replace(/\{\{phone\}\}/g, clubConfig.phone || "")
+        .replace(/\{\{membershipFee\}\}/g, String(clubConfig.membershipFee || ""))
+        .replace(/\{\{regStatus\}\}/g, clubConfig.regStatus || "")
+        .replace(/\{\{foundedYear\}\}/g, String(clubConfig.foundedYear || ""));
+    }
+  } catch {
+    // use raw prompt with unresolved placeholders as fallback
+  }
 
   const messages: GroqMessage[] = [
     {
@@ -209,7 +272,7 @@ async function processMessageEvent(
     },
   ];
 
-  const replyText = await callGroq(messages, systemPrompt);
+  const replyText = await callGroq(messages, rawPrompt);
 
   await sendMessage(senderPsid, replyText, config.fbPageId!, config.fbPageToken!);
 }
