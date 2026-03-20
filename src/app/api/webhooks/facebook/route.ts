@@ -304,10 +304,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const challenge = searchParams.get("hub.challenge");
 
     if (!mode || !token || !challenge) {
+      console.error("[facebook/webhook] Missing params:", { mode, token: !!token, challenge: !!challenge });
       return new NextResponse("Missing verification parameters", { status: 400 });
     }
 
     if (mode !== "subscribe") {
+      console.error("[facebook/webhook] Invalid mode:", mode);
       return new NextResponse("Invalid mode", { status: 403 });
     }
 
