@@ -258,10 +258,11 @@ export interface DrawerProps extends WithChildren {
   isOpen: boolean;
   onClose: () => void;
   title?: string;
-  side?: "right" | "bottom";
+  side?: "right" | "left" | "bottom";
   className?: string;
   showCloseButton?: boolean;
   width?: string;
+  disableBodyScrollLock?: boolean;
 }
 
 const drawerRightVariants = {
@@ -273,6 +274,20 @@ const drawerRightVariants = {
   },
   exit: {
     x: "100%",
+    opacity: 0,
+    transition: { duration: 0.2, ease: "easeIn" },
+  },
+};
+
+const drawerLeftVariants = {
+  hidden: { x: "-100%", opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: { type: "spring", damping: 28, stiffness: 300 },
+  },
+  exit: {
+    x: "-100%",
     opacity: 0,
     transition: { duration: 0.2, ease: "easeIn" },
   },
@@ -301,25 +316,13 @@ export function Drawer({
   className,
   showCloseButton = true,
   width = "480px",
+  disableBodyScrollLock = false,
 }: DrawerProps) {
   const drawerRef = useRef<HTMLDivElement>(null);
   const titleId = useRef(`drawer-title-${Math.random().toString(36).slice(2)}`).current;
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    function checkMobile() {
-      setIsMobile(window.innerWidth < 768);
-    }
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const effectiveSide = isMobile ? "bottom" : side;
-
   useFocusTrap(drawerRef, isOpen);
-  useBodyScrollLock(isOpen);
+  useBodyScrollLock(disableBodyScrollLock ? false : isOpen);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -333,19 +336,50 @@ export function Drawer({
   }, [isOpen, onClose]);
 
   function handleDragEnd(_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
-    if (effectiveSide === "bottom" && info.offset.y > 100) {
+    if (side === "bottom" && info.offset.y > 100) {
       onClose();
-    } else if (effectiveSide === "right" && info.offset.x > 100) {
+    } else if (side === "right" && info.offset.x > 100) {
+      onClose();
+    } else if (side === "left" && info.offset.x < -100) {
       onClose();
     }
   }
 
-  const variants = effectiveSide === "bottom" ? drawerBottomVariants : drawerRightVariants;
+  const variants =
+    side === "bottom"
+      ? drawerBottomVariants
+      : side === "left"
+      ? drawerLeftVariants
+      : drawerRightVariants;
 
   const drawerClasses =
-    effectiveSide === "bottom"
+    side === "bottom"
       ? "fixed bottom-0 left-0 right-0 w-full max-h-[90vh] rounded-t-2xl pb-[env(safe-area-inset-bottom)]"
+      : side === "left"
+      ? "fixed top-0 left-0 h-full"
       : "fixed top-0 right-0 h-full";
+
+  const shadowClass =
+    side === "left"
+      ? "shadow-[10px_0_40px_-10px_rgba(0,0,0,0.8)]"
+      : side === "bottom"
+      ? "shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.8)]"
+      : "shadow-[-10px_0_40px_-10px_rgba(0,0,0,0.8)]";
+
+  const borderClass =
+    side === "bottom"
+      ? "border-t"
+      : side === "left"
+      ? "border-r"
+      : "border-l";
+
+  const dragAxis = side === "bottom" ? "y" : "x";
+  const dragConstraints =
+    side === "bottom"
+      ? { top: 0, bottom: 0 }
+      : side === "left"
+      ? { left: 0, right: 0 }
+      : { left: 0, right: 0 };
 
   return (
     <Portal>
@@ -371,17 +405,15 @@ export function Drawer({
               aria-modal="true"
               aria-labelledby={title ? titleId : undefined}
               className={cn(
-                "z-[200] flex flex-col",
+                "z-[201] flex flex-col",
                 "bg-[var(--color-bg-elevated)] border-[var(--color-border)]",
-                "shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.8)]",
-                effectiveSide === "bottom"
-                  ? "border-t"
-                  : "border-l",
+                shadowClass,
+                borderClass,
                 drawerClasses,
                 className
               )}
               style={
-                effectiveSide === "right"
+                side !== "bottom"
                   ? { width: `min(${width}, 100vw)` }
                   : undefined
               }
@@ -389,16 +421,12 @@ export function Drawer({
               initial="hidden"
               animate="visible"
               exit="exit"
-              drag={effectiveSide === "bottom" ? "y" : "x"}
-              dragConstraints={
-                effectiveSide === "bottom"
-                  ? { top: 0, bottom: 0 }
-                  : { left: 0, right: 0 }
-              }
+              drag={dragAxis}
+              dragConstraints={dragConstraints}
               dragElastic={0.2}
               onDragEnd={handleDragEnd}
             >
-              {effectiveSide === "bottom" && (
+              {side === "bottom" && (
                 <div className="flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing shrink-0">
                   <div className="w-10 h-1 rounded-full bg-[var(--color-border)]" />
                 </div>

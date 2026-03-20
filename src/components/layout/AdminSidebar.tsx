@@ -348,17 +348,17 @@ export function AdminSidebar(): JSX.Element {
     <aside
       className={cn(
         "relative flex h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-surface)] transition-all duration-200",
-        "md:w-auto w-full",
+        "w-full",
         collapsed ? "md:w-16" : "md:w-64"
       )}
       aria-label="Admin navigation"
     >
-      {/* Toggle Button */}
+      {/* Toggle Button — desktop only, floats on the right edge of the sidebar */}
       <button
         type="button"
         onClick={() => setCollapsed((prev) => !prev)}
         className={cn(
-          "absolute -right-3 top-[72px] z-20 flex h-6 w-6 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] shadow-sm transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)]",
+          "absolute -right-3 top-[72px] z-20 hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)] shadow-sm transition-colors hover:bg-[var(--color-bg-surface)] hover:text-[var(--color-text-primary)]",
           "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
         )}
         aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
