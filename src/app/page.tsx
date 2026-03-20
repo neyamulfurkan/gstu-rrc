@@ -684,9 +684,8 @@ export default async function HomePage(): Promise<JSX.Element> {
       },
     }),
 
-    // 4 available instruments
+    // 4 instruments (any status)
     prisma.instrument.findMany({
-      where: { status: "available" },
       take: 4,
       select: {
         id: true,
