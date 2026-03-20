@@ -5,9 +5,7 @@ import { Pool, neonConfig } from "@neondatabase/serverless";
 
 neonConfig.fetchConnectionCache = true;
 import { PrismaNeon } from "@prisma/adapter-neon";
-if (typeof WebSocket === 'undefined') {
-  neonConfig.webSocketConstructor = require('ws');
-}
+// ws is handled by @neondatabase/serverless internally on Vercel edge
 
 
 

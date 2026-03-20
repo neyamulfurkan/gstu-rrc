@@ -64,7 +64,7 @@ async function uploadPdfToCloudinary(
   const formData = new FormData();
   formData.append(
     "file",
-    new Blob([pdfBuffer], { type: "application/pdf" }),
+    new Blob([new Uint8Array(pdfBuffer)], { type: "application/pdf" }),
     `${publicId}.pdf`
   );
   formData.append("public_id", publicId);
