@@ -62,10 +62,14 @@ async function uploadPdfToCloudinary(
     .digest("hex");
 
   const formData = new FormData();
+  const bufferPreview = pdfBuffer.slice(0, 20).toString();
+  const isHtmlFile = bufferPreview.includes("DOCTYPE") || bufferPreview.includes("<html");
+  const mimeType = isHtmlFile ? "text/html" : "application/pdf";
+  const fileExtension = isHtmlFile ? "html" : "pdf";
   formData.append(
     "file",
-    new Blob([new Uint8Array(pdfBuffer)], { type: "application/pdf" }),
-    `${publicId}.pdf`
+    new Blob([new Uint8Array(pdfBuffer)], { type: mimeType }),
+    `${publicId}.${fileExtension}`
   );
   formData.append("public_id", publicId);
   formData.append("access_mode", "public");
@@ -415,7 +419,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let pdfUrl = "";
     try {
       const publicId = `certificates/${serial}`;
-      const isHtml = pdfBuffer.slice(0, 20).toString().includes("DOCTYPE");
+      const bufferStart = pdfBuffer.slice(0, 20).toString();
+      const isHtml = bufferStart.includes("DOCTYPE") || bufferStart.includes("<html");
       pdfUrl = await uploadPdfToCloudinary(pdfBuffer, isHtml ? publicId + ".html" : publicId);
     } catch (error) {
       console.error(

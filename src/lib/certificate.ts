@@ -363,12 +363,41 @@ function CertificateDoc({ data }: { data: CertificateData }) {
  * templateHtml and templateCss are accepted for backward compatibility
  * but are not used; the React PDF layout is the authoritative renderer.
  */
+function replacePlaceholders(html: string, data: CertificateData): string {
+  return html
+    .replace(/\{\{member_name\}\}/g, data.memberName)
+    .replace(/\{\{achievement\}\}/g, data.achievement)
+    .replace(/\{\{date\}\}/g, data.date)
+    .replace(/\{\{signed_by_name\}\}/g, data.signedByName)
+    .replace(/\{\{signed_by_designation\}\}/g, data.signedByDesignation)
+    .replace(/\{\{signature_image\}\}/g, data.signatureUrl)
+    .replace(/\{\{serial\}\}/g, data.serial)
+    .replace(/\{\{qr_code\}\}/g, data.qrCodeDataUrl)
+    .replace(/\{\{club_name\}\}/g, data.clubName)
+    .replace(/\{\{logo_url\}\}/g, data.logoUrl);
+}
+
 export async function generateCertificatePdf(
-  _templateHtml: string,
-  _templateCss: string,
+  templateHtml: string,
+  templateCss: string,
   data: CertificateData
 ): Promise<Buffer> {
   try {
+    // If a real HTML template exists, use it
+    if (templateHtml && templateHtml.trim().length > 0) {
+      const populated = replacePlaceholders(templateHtml, data);
+      const hasHead = /<head[\s>]/i.test(populated);
+      const styleTag = `<style>${templateCss}</style>`;
+      let fullHtml: string;
+      if (hasHead) {
+        fullHtml = populated.replace(/<\/head>/i, `${styleTag}</head>`);
+      } else {
+        fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8">${styleTag}</head><body>${populated}</body></html>`;
+      }
+      return Buffer.from(fullHtml, "utf-8");
+    }
+
+    // Fallback: use React PDF layout
     const docElement = CertificateDoc({ data });
     const uint8 = await renderToBuffer(docElement);
     return Buffer.from(uint8);
