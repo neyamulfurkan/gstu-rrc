@@ -106,6 +106,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       (where as Record<string, unknown>).memberType = memberType;
     }
 
+    // ── isAdmin filter (for admin panel use) ──────────────────────────────
+    const isAdminFilter = searchParams.get("isAdmin");
+    if (isAdminFilter === "true") {
+      (where as Record<string, unknown>).isAdmin = true;
+    }
+
     // ── Count total for response ──────────────────────────────────────────
     const total = await prisma.member.count({ where: where as any });
 
@@ -116,6 +122,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         id: true,
         username: true,
         fullName: true,
+        email: isAdminUser,
         avatarUrl: true,
         coverUrl: true,
         department: { select: { name: true } },
@@ -128,6 +135,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         interests: true,
         createdAt: true,
         workplace: true,
+        isAdmin: isAdminUser,
+        adminRole: isAdminUser
+          ? { select: { id: true, name: true, permissions: true } }
+          : false,
       },
       take: take + 1,
       ...(cursor
@@ -174,6 +185,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         interests: m.interests ?? null,
         createdAt: m.createdAt,
         workplace: m.workplace ?? null,
+        email: (m as any).email ?? undefined,
+        isAdmin: (m as any).isAdmin ?? false,
+        adminRole: (m as any).adminRole ?? null,
+        permissions:
+          (m as any).adminRole?.permissions &&
+          typeof (m as any).adminRole.permissions === "object"
+            ? ((m as any).adminRole.permissions as Record<string, boolean>)
+            : undefined,
       })),
       nextCursor,
       total,

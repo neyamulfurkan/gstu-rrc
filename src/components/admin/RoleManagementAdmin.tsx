@@ -242,7 +242,7 @@ function AdminUsersTab(): JSX.Element {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: adminMembersData, error: membersError, isLoading: membersLoading } =
-    useSWR<{ data: AdminMember[] }>("/api/members?isAdmin=true&take=100", fetcher);
+    useSWR<{ data: AdminMember[] }>("/api/admin/admin-roles?includeMembers=true", fetcher);
 
   const { data: rolesData } =
     useSWR<{ data: AdminRole[] }>("/api/admin/admin-roles", fetcher);
