@@ -298,7 +298,7 @@ function TemplatesTab({ templates, isLoading, onRefresh }: TemplatesTabProps): J
                     srcDoc={`<!DOCTYPE html><html><head><style>${tmpl.cssContent} body{zoom:0.18;transform-origin:top left;} </style></head><body>${tmpl.htmlContent}</body></html>`}
                     className="w-full border-0 pointer-events-none"
                     style={{ height: "550px", transform: "scale(0.18)", transformOrigin: "top left", width: "555%" }}
-                    sandbox="allow-same-origin"
+                    sandbox="allow-same-origin allow-scripts"
                     title={tmpl.name}
                   />
                 </div>

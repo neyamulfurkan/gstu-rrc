@@ -1033,10 +1033,10 @@ export function CertificateTemplateEditor({
     const logoValue = resolvedLogoUrl ?? "{{logo_url}}";
     const watermarkCss = `
 /* ── Logo Watermark (auto-generated) ── */
-.certificate, .cert, body > div:first-of-type {
+body, .certificate, .cert, body > div:first-of-type {
   position: relative !important;
 }
-.certificate::before, .cert::before, body > div:first-of-type::before {
+body::after, .certificate::before, .cert::before, body > div:first-of-type::before {
   content: "" !important;
   position: absolute !important;
   top: 50% !important;
@@ -1488,7 +1488,7 @@ setPreviewSrc(buildPreviewHtml(t.htmlContent, buildFinalCss(t.cssContent, SAMPLE
                   title="Certificate Preview"
                   srcDoc={previewSrc}
                   className="w-full h-full border-0"
-                  sandbox="allow-same-origin"
+                  sandbox="allow-same-origin allow-scripts"
                   aria-label="Certificate template preview with sample data"
                 />
               ) : (
