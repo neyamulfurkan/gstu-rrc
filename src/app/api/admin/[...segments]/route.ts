@@ -2569,14 +2569,15 @@ async function handleFacebookOAuth(
 
     const pagesUrl = new URL("https://graph.facebook.com/v19.0/me/accounts");
     pagesUrl.searchParams.set("access_token", longLivedToken);
-    pagesUrl.searchParams.set("fields", "id,name,access_token");
+    pagesUrl.searchParams.set("fields", "id,name,access_token,link");
 
     let pageId: string;
     let pageToken: string;
     let pageName: string;
+    let pageLink: string;
     try {
       const pagesRes = await fetch(pagesUrl.toString());
-      const pagesData = (await pagesRes.json()) as { data?: Array<{ id: string; name: string; access_token: string }>; error?: { message?: string } };
+      const pagesData = (await pagesRes.json()) as { data?: Array<{ id: string; name: string; access_token: string; link?: string }>; error?: { message?: string } };
       if (!pagesData.data || pagesData.data.length === 0) {
         return NextResponse.redirect(`${redirectUri}?error=no_pages_found`);
       }
@@ -2584,6 +2585,7 @@ async function handleFacebookOAuth(
       pageId = page.id;
       pageToken = page.access_token;
       pageName = page.name;
+      pageLink = page.link ?? `https://www.facebook.com/${pageId}`;
     } catch (err) {
       console.error("[facebook-oauth] Pages fetch failed:", err);
       return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
@@ -2591,7 +2593,7 @@ async function handleFacebookOAuth(
 
     await prisma.clubConfig.update({
       where: { id: "main" },
-      data: { fbPageId: pageId, fbPageToken: pageToken },
+      data: { fbPageId: pageId, fbPageToken: pageToken, fbUrl: pageLink },
     });
 
     await logAction({
@@ -2694,14 +2696,16 @@ async function handleFacebookOAuth(
   // Fetch pages managed by this user
   const pagesUrl = new URL("https://graph.facebook.com/v19.0/me/accounts");
   pagesUrl.searchParams.set("access_token", longLivedToken);
-  pagesUrl.searchParams.set("fields", "id,name,access_token");
+  pagesUrl.searchParams.set("fields", "id,name,access_token,link");
 
   let pageId: string;
   let pageToken: string;
+  let pageNamePost: string;
+  let pageLinkPost: string;
   try {
     const pagesRes = await fetch(pagesUrl.toString());
     const pagesData = (await pagesRes.json()) as {
-      data?: Array<{ id: string; name: string; access_token: string }>;
+      data?: Array<{ id: string; name: string; access_token: string; link?: string }>;
       error?: { message?: string };
     };
     if (!pagesData.data || pagesData.data.length === 0) {
@@ -2714,6 +2718,8 @@ async function handleFacebookOAuth(
     const page = pagesData.data[0];
     pageId = page.id;
     pageToken = page.access_token;
+    pageNamePost = page.name;
+    pageLinkPost = page.link ?? `https://www.facebook.com/${page.id}`;
   } catch (err) {
     console.error("[facebook-oauth] Pages fetch failed:", err);
     return NextResponse.json(
@@ -2725,20 +2731,20 @@ async function handleFacebookOAuth(
   // Store in ClubConfig
   await prisma.clubConfig.update({
     where: { id: "main" },
-    data: { fbPageId: pageId, fbPageToken: pageToken },
+    data: { fbPageId: pageId, fbPageToken: pageToken, fbUrl: pageLinkPost },
   });
 
   await logAction({
     adminId: session.user.userId,
     actionType: "connect_facebook",
-    description: `Connected Facebook page (id: ${pageId})`,
+    description: `Connected Facebook page: ${pageNamePost} (id: ${pageId})`,
     entityType: "club_config",
     entityId: "main",
     ipAddress: ip,
   });
 
   return NextResponse.json({
-    data: { connected: true, pageId, pageName: pageId },
+    data: { connected: true, pageId, pageName: pageNamePost },
   });
 }
 
