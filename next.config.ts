@@ -7,34 +7,33 @@ const nextConfig: NextConfig = {
         source: "/api/auth/:path*",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: process.env.NEXTAUTH_URL ?? "*" },
-          { key: "Access-Control-Allow-Methods", value: "GET,POST,OPTIONS" },
-          { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization" },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: process.env.NEXTAUTH_URL ?? "*",
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET,POST,OPTIONS",
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "Content-Type, Authorization",
+          },
         ],
       },
     ];
   },
   images: {
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      {
-        protocol: "https",
-        hostname: "img.youtube.com",
-      },
-      {
-        protocol: "https",
-        hostname: "i.ytimg.com",
-      },
+      { protocol: "https", hostname: "res.cloudinary.com" },
+      { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "i.ytimg.com" },
     ],
     unoptimized: true,
   },
   experimental: {
     serverComponentsExternalPackages: [
-      "puppeteer-core",
-      "@sparticuz/chromium-min",
+      "@react-pdf/renderer",
       "bcryptjs",
     ],
   },
@@ -51,12 +50,10 @@ const nextConfig: NextConfig = {
         canvas: false,
       };
     }
-
     config.module.rules.push({
       test: /[\\/]node_modules[\\/]canvas[\\/]/,
       use: "null-loader",
     });
-
     return config;
   },
 };
