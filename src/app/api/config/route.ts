@@ -192,7 +192,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       hero: ["heroType", "heroImages", "heroVideoUrl", "heroFallbackImg", "overlayOpacity", "heroCtaLabel1", "heroCtaUrl1", "heroCtaLabel2", "heroCtaUrl2", "particleEnabled", "particleCount", "particleSpeed", "particleColor"],
       navigation: ["footerCopyright", "constitutionUrl", "announcementTickerSpeed", "privacyPolicy", "termsOfUse"],
       email: ["resendApiKey", "resendFromEmail", "resendFromName", "welcomeEmailSubject", "welcomeEmailBody"],
-      facebook: ["fbPageId", "fbPageToken", "fbPageName", "fbAutoPost", "fbAutoReplyComments", "fbCommentSystemPrompt", "fbCommentReplyDelay", "fbAutoReplyMessages", "fbMessageSystemPrompt", "fbGreetingMessage", "fbFallbackMessage"],
+      facebook: ["fbPageId", "fbPageToken", "fbWebhookToken", "fbAutoPost", "fbAutoReplyComments", "fbCommentSystemPrompt", "fbCommentReplyDelay", "fbAutoReplyMessages", "fbMessageSystemPrompt", "fbGreetingMessage", "fbFallbackMessage"],
     };
 
     const allowed = allowedFields[tab];
