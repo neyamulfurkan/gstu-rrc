@@ -2006,9 +2006,19 @@ async function handleCustomCards(
 
       // Delete sections that were removed locally
       const incomingRealIds = incomingSections.filter((s) => !s.id.startsWith("temp_")).map((s) => s.id);
-      await prisma.customCardSection.deleteMany({
-        where: { targetPage, id: { notIn: incomingRealIds } },
-      });
+      if (incomingRealIds.length > 0) {
+        await prisma.customCardSection.deleteMany({
+          where: { targetPage, id: { notIn: incomingRealIds } },
+        });
+      } else {
+        // All remaining sections are new (temp ids) — delete all old ones for this page
+        const allExistingIds = existing.map((s) => s.id);
+        if (allExistingIds.length > 0) {
+          await prisma.customCardSection.deleteMany({
+            where: { targetPage, id: { in: allExistingIds } },
+          });
+        }
+      }
 
       await logAction({
         adminId: session.user.userId,
