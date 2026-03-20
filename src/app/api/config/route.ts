@@ -177,7 +177,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const allowedFields: Record<string, string[]> = {
       branding: ["clubName", "clubShortName", "clubMotto", "clubDescription", "universityName", "departmentName", "foundedYear", "logoUrl", "faviconUrl"],
-      ai: ["aiEnabled", "groqApiKey", "groqModel", "groqTemperature", "groqMaxTokens", "aiSystemPrompt", "aiContextItems", "aiChatHistory"],
+      ai: ["aiEnabled", "groqApiKey", "groqModel", "groqTemperature", "aiSystemPrompt", "aiContextItems", "aiChatHistory"],
       contact: ["email", "phone", "address", "fbUrl", "ytUrl", "igUrl", "liUrl", "ghUrl", "twitterUrl", "extraSocialLinks"],
       seo: ["metaDescription", "seoKeywords", "gscVerifyTag", "ogImageUrl"],
       membership: ["regStatus", "membershipFee", "bkashNumber", "nagadNumber", "bkashName", "nagadName", "autoApprove", "requireScreenshot"],
@@ -210,8 +210,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Bust the server-side colorInject module cache so next render picks up new colors
     try {
-      const { invalidateColorCache } = await import("@/lib/colorInject");
-      invalidateColorCache();
+      const colorInjectModule = await import("@/lib/colorInject");
+      if (typeof colorInjectModule.invalidateColorCache === "function") {
+        colorInjectModule.invalidateColorCache();
+      }
     } catch {
       // non-fatal
     }

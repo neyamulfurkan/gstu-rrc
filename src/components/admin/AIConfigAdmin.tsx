@@ -567,7 +567,7 @@ export function AIConfigAdmin(): JSX.Element {
         aiEnabled: formState.aiEnabled,
         groqModel: formState.groqModel,
         groqTemperature: formState.groqTemperature,
-        groqMaxTokens: isNaN(maxTokensParsed) ? 1000 : maxTokensParsed,
+        // groqMaxTokens is not a DB field — omitted from payload
         aiSystemPrompt: formState.aiSystemPrompt,
         aiContextItems: formState.aiContextItems,
         aiChatHistory: formState.aiChatHistory,
