@@ -1014,7 +1014,8 @@ export function CustomCardsAdmin(): JSX.Element {
     setSaveError(null);
 
     try {
-      const payload = sections.map((s, sIdx) => ({
+      // Filter out sections with empty headings before saving
+      const payload = sections.filter((s) => s.heading?.trim()).map((s, sIdx) => ({
         ...s,
         sortOrder: sIdx,
         cards: s.cards.map((c, cIdx) => ({ ...c, sortOrder: cIdx })),

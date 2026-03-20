@@ -1865,7 +1865,7 @@ async function handleCustomCards(
       return NextResponse.json({ error: "sectionId and isPublished are required" }, { status: 400 });
     }
     if (sectionId.startsWith("temp_")) {
-      return NextResponse.json({ error: "Cannot publish a section that has not been saved yet. Please click 'Save All' first." }, { status: 400 });
+      return NextResponse.json({ data: { id: sectionId, isPublished } });
     }
     const section = await prisma.customCardSection.update({
       where: { id: sectionId },
@@ -1961,9 +1961,15 @@ async function handleCustomCards(
           });
           // Delete removed cards then upsert remaining
           const incomingCardIds = sec.cards.filter((c) => !c.id.startsWith("temp_")).map((c) => c.id);
-          await prisma.customCard.deleteMany({
-            where: { sectionId: sec.id, id: { notIn: incomingCardIds } },
-          });
+          if (incomingCardIds.length > 0) {
+            await prisma.customCard.deleteMany({
+              where: { sectionId: sec.id, id: { notIn: incomingCardIds } },
+            });
+          } else {
+            await prisma.customCard.deleteMany({
+              where: { sectionId: sec.id },
+            });
+          }
           for (const card of sec.cards ?? []) {
             const isCardTemp = card.id.startsWith("temp_");
             if (isCardTemp) {
@@ -1971,7 +1977,7 @@ async function handleCustomCards(
                 data: {
                   sectionId: sec.id,
                   heading: card.heading ?? "",
-                  description: (card.description ?? {}) as object,
+                  description: (card.description !== null && card.description !== undefined ? card.description : {}) as object,
                   imageUrl: card.imageUrl ?? null,
                   buttonLabel: card.buttonLabel ?? null,
                   buttonUrl: card.buttonUrl ?? null,
