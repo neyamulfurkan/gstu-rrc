@@ -672,7 +672,7 @@ export function InstrumentTeaser({ instruments }: InstrumentTeaserProps): JSX.El
               <div className="relative h-40 overflow-hidden bg-[var(--color-bg-surface)]">
                 {instrument.imageUrl ? (
                   <Image
-                    src={cloudinaryUrl(instrument.imageUrl, { width: 400, height: 160 })}
+                    src={instrument.imageUrl.startsWith("http") ? instrument.imageUrl : cloudinaryUrl(instrument.imageUrl, { width: 400, height: 160 })}
                     alt={instrument.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
