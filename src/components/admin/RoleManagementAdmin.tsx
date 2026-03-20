@@ -242,7 +242,7 @@ function AdminUsersTab(): JSX.Element {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const { data: adminMembersData, error: membersError, isLoading: membersLoading } =
-    useSWR<{ data: AdminMember[] }>("/api/admin/admin-roles?includeMembers=true", fetcher);
+    useSWR<{ data: AdminMember[] }>("/api/members?isAdmin=true&take=100", fetcher);
 
   const { data: rolesData } =
     useSWR<{ data: AdminRole[] }>("/api/admin/admin-roles", fetcher);
@@ -266,6 +266,7 @@ function AdminUsersTab(): JSX.Element {
         }
         toast("Admin access revoked successfully", "success");
         await globalMutate("/api/members?isAdmin=true&take=100");
+        await globalMutate("/api/admin/admin-roles");
         setRevokeTarget(null);
       } catch (err) {
         setActionError(err instanceof Error ? err.message : "Failed to revoke admin");
@@ -323,7 +324,7 @@ function AdminUsersTab(): JSX.Element {
         header: "Permissions",
         render: (row: AdminMember) => {
           const count = row.permissions
-            ? Object.values(row.permissions).filter(Boolean).length
+            ? PERMISSION_LIST.filter((p) => row.permissions![p] === true).length
             : 0;
           return (
             <span className="text-sm font-mono text-[var(--color-accent)]">
@@ -487,7 +488,7 @@ function AdminUsersTab(): JSX.Element {
           onClose={() => setIsAssignModalOpen(false)}
           adminRoles={adminRoles}
           onSuccess={() => {
-            globalMutate("/api/members?isAdmin=true&take=100");
+            void globalMutate("/api/members?isAdmin=true&take=100");
             setIsAssignModalOpen(false);
           }}
         />
@@ -1042,12 +1043,45 @@ function PermissionMatrixTab(): JSX.Element {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  const [isCreateRoleModalOpen, setIsCreateRoleModalOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [isCreatingRole, setIsCreatingRole] = useState(false);
+  const [createRoleError, setCreateRoleError] = useState<string | null>(null);
+
   const { data, error, isLoading, mutate } = useSWR<{ data: AdminRole[] }>(
     "/api/admin/admin-roles",
     fetcher
   );
 
   const adminRoles = data?.data ?? [];
+
+  const handleCreateRole = useCallback(async () => {
+    if (!newRoleName.trim()) {
+      setCreateRoleError("Role name is required.");
+      return;
+    }
+    setIsCreatingRole(true);
+    setCreateRoleError(null);
+    try {
+      const res = await fetch("/api/admin/admin-roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newRoleName.trim() }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error ?? "Failed to create role");
+      }
+      toast(`Role "${newRoleName.trim()}" created successfully`, "success");
+      setNewRoleName("");
+      setIsCreateRoleModalOpen(false);
+      await mutate();
+    } catch (err) {
+      setCreateRoleError(err instanceof Error ? err.message : "Failed to create role");
+    } finally {
+      setIsCreatingRole(false);
+    }
+  }, [newRoleName, mutate]);
 
   // Initialize local state when data loads
   useEffect(() => {
@@ -1158,6 +1192,73 @@ function PermissionMatrixTab(): JSX.Element {
 
   return (
     <div className="space-y-4">
+      {/* Create Role Modal */}
+      <Modal
+        isOpen={isCreateRoleModalOpen}
+        onClose={() => { setIsCreateRoleModalOpen(false); setNewRoleName(""); setCreateRoleError(null); }}
+        title="Create Admin Role"
+        size="sm"
+      >
+        <div className="p-6 space-y-4">
+          {createRoleError && (
+            <Alert variant="error" message={createRoleError} dismissible onDismiss={() => setCreateRoleError(null)} />
+          )}
+          <div className="space-y-1.5">
+            <label htmlFor="new-role-name" className="block text-sm font-medium text-[var(--color-text-primary)]">
+              Role Name <span className="text-[var(--color-error)]">*</span>
+            </label>
+            <input
+              id="new-role-name"
+              type="text"
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              placeholder="e.g. Content Manager"
+              className={cn(
+                "w-full px-3 py-2.5 rounded-lg text-sm",
+                "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
+                "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent"
+              )}
+              onKeyDown={(e) => { if (e.key === "Enter") void handleCreateRole(); }}
+            />
+            <p className="text-xs text-[var(--color-text-secondary)]">
+              All permissions will be disabled by default. Use the matrix below to enable them.
+            </p>
+          </div>
+          <div className="flex gap-3 justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => { setIsCreateRoleModalOpen(false); setNewRoleName(""); setCreateRoleError(null); }}
+              disabled={isCreatingRole}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium",
+                "text-[var(--color-text-secondary)] border border-[var(--color-border)]",
+                "hover:bg-[var(--color-bg-elevated)] transition-colors",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleCreateRole()}
+              disabled={isCreatingRole || !newRoleName.trim()}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium",
+                "bg-[var(--color-primary)] text-white",
+                "hover:opacity-90 transition-opacity",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+            >
+              {isCreatingRole ? <Spinner size="sm" /> : <Plus size={14} aria-hidden="true" />}
+              Create Role
+            </button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
@@ -1172,6 +1273,19 @@ function PermissionMatrixTab(): JSX.Element {
           )}
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsCreateRoleModalOpen(true)}
+            className={cn(
+              "inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium",
+              "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
+              "hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-text-primary)] transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            )}
+          >
+            <Plus size={14} aria-hidden="true" />
+            New Role
+          </button>
           {isDirty && (
             <button
               type="button"
