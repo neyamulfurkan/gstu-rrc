@@ -2510,6 +2510,102 @@ async function handleFacebookOAuth(
   method: string,
   ip: string
 ): Promise<NextResponse> {
+  if (method === "GET") {
+    const code = req.nextUrl.searchParams.get("code");
+    const error = req.nextUrl.searchParams.get("error");
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+    const redirectUri = `${baseUrl.replace(/\/+$/, "")}/admin/facebook`;
+
+    if (error || !code) {
+      return NextResponse.redirect(`${redirectUri}?error=oauth_denied`);
+    }
+
+    const appId = process.env.FB_APP_ID;
+    const appSecret = process.env.FB_APP_SECRET;
+
+    if (!appId || !appSecret) {
+      return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
+    }
+
+    const tokenUrl = new URL("https://graph.facebook.com/v19.0/oauth/access_token");
+    tokenUrl.searchParams.set("client_id", appId);
+    tokenUrl.searchParams.set("client_secret", appSecret);
+    tokenUrl.searchParams.set("redirect_uri", redirectUri);
+    tokenUrl.searchParams.set("code", code);
+
+    let userToken: string;
+    try {
+      const tokenRes = await fetch(tokenUrl.toString());
+      const tokenData = (await tokenRes.json()) as { access_token?: string; error?: { message?: string } };
+      if (!tokenData.access_token) {
+        console.error("[facebook-oauth] Token exchange failed:", tokenData.error);
+        return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
+      }
+      userToken = tokenData.access_token;
+    } catch (err) {
+      console.error("[facebook-oauth] Token exchange request failed:", err);
+      return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
+    }
+
+    const longLivedUrl = new URL("https://graph.facebook.com/v19.0/oauth/access_token");
+    longLivedUrl.searchParams.set("grant_type", "fb_exchange_token");
+    longLivedUrl.searchParams.set("client_id", appId);
+    longLivedUrl.searchParams.set("client_secret", appSecret);
+    longLivedUrl.searchParams.set("fb_exchange_token", userToken);
+
+    let longLivedToken: string;
+    try {
+      const llRes = await fetch(longLivedUrl.toString());
+      const llData = (await llRes.json()) as { access_token?: string; error?: { message?: string } };
+      if (!llData.access_token) {
+        console.error("[facebook-oauth] Long-lived token exchange failed:", llData.error);
+        return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
+      }
+      longLivedToken = llData.access_token;
+    } catch (err) {
+      console.error("[facebook-oauth] Long-lived token request failed:", err);
+      return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
+    }
+
+    const pagesUrl = new URL("https://graph.facebook.com/v19.0/me/accounts");
+    pagesUrl.searchParams.set("access_token", longLivedToken);
+    pagesUrl.searchParams.set("fields", "id,name,access_token");
+
+    let pageId: string;
+    let pageToken: string;
+    let pageName: string;
+    try {
+      const pagesRes = await fetch(pagesUrl.toString());
+      const pagesData = (await pagesRes.json()) as { data?: Array<{ id: string; name: string; access_token: string }>; error?: { message?: string } };
+      if (!pagesData.data || pagesData.data.length === 0) {
+        return NextResponse.redirect(`${redirectUri}?error=no_pages_found`);
+      }
+      const page = pagesData.data[0];
+      pageId = page.id;
+      pageToken = page.access_token;
+      pageName = page.name;
+    } catch (err) {
+      console.error("[facebook-oauth] Pages fetch failed:", err);
+      return NextResponse.redirect(`${redirectUri}?error=token_exchange_failed`);
+    }
+
+    await prisma.clubConfig.update({
+      where: { id: "main" },
+      data: { fbPageId: pageId, fbPageToken: pageToken },
+    });
+
+    await logAction({
+      adminId: session.user.userId,
+      actionType: "connect_facebook",
+      description: `Connected Facebook page: ${pageName} (id: ${pageId})`,
+      entityType: "club_config",
+      entityId: "main",
+      ipAddress: ip,
+    });
+
+    return NextResponse.redirect(`${redirectUri}?connected=true`);
+  }
+
   if (method !== "POST") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }

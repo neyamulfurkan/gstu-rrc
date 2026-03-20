@@ -125,6 +125,16 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         constitutionUrl: true,
         aiEnabled: true,
         aiChatHistory: true,
+        fbPageId: true,
+        fbUrl: true,
+        fbAutoPost: true,
+        fbAutoReplyComments: true,
+        fbCommentSystemPrompt: true,
+        fbCommentReplyDelay: true,
+        fbAutoReplyMessages: true,
+        fbMessageSystemPrompt: true,
+        fbGreetingMessage: true,
+        fbFallbackMessage: true,
       },
     });
 
@@ -185,6 +195,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       hero: ["heroType", "heroImages", "heroVideoUrl", "heroFallbackImg", "overlayOpacity", "heroCtaLabel1", "heroCtaUrl1", "heroCtaLabel2", "heroCtaUrl2", "particleEnabled", "particleCount", "particleSpeed", "particleColor"],
       navigation: ["footerCopyright", "constitutionUrl", "announcementTickerSpeed", "privacyPolicy", "termsOfUse"],
       email: ["resendApiKey", "resendFromEmail", "resendFromName", "welcomeEmailSubject", "welcomeEmailBody"],
+      facebook: ["fbPageId", "fbPageToken", "fbPageName", "fbAutoPost", "fbAutoReplyComments", "fbCommentSystemPrompt", "fbCommentReplyDelay", "fbAutoReplyMessages", "fbMessageSystemPrompt", "fbGreetingMessage", "fbFallbackMessage"],
     };
 
     const allowed = allowedFields[tab];

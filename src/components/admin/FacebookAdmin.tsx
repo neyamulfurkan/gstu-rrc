@@ -182,15 +182,15 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
   const isConnected = !!fbConfig?.fbPageId;
 
   const handleConnect = useCallback(() => {
-    const appId = process.env.NEXT_PUBLIC_FB_APP_ID ?? process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
+    const appId = process.env.NEXT_PUBLIC_FB_APP_ID ?? process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? (typeof window !== "undefined" ? (window as any).__NEXT_PUBLIC_FB_APP_ID : "") ?? "";
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     if (!appId) {
       toast("FB_APP_ID is not configured. Contact the developer.", "error");
       return;
     }
-    const redirectUri = encodeURIComponent(`${baseUrl.replace(/\/+$/, "")}/api/admin/facebook-oauth`);
+    const redirectUri = encodeURIComponent(`${baseUrl.replace(/\/+$/, "")}/admin/facebook`);
     const scope = "pages_manage_posts,pages_read_engagement,pages_messaging,pages_manage_metadata";
-    const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+    const oauthUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=fbconnect`;
     window.location.href = oauthUrl;
   }, []);
 
