@@ -1864,6 +1864,9 @@ async function handleCustomCards(
     if (!sectionId || isPublished === undefined) {
       return NextResponse.json({ error: "sectionId and isPublished are required" }, { status: 400 });
     }
+    if (sectionId.startsWith("temp_")) {
+      return NextResponse.json({ error: "Cannot publish a section that has not been saved yet. Please click 'Save All' first." }, { status: 400 });
+    }
     const section = await prisma.customCardSection.update({
       where: { id: sectionId },
       data: { isPublished },
