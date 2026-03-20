@@ -43,7 +43,9 @@ interface FacebookConfig {
   fbAutoReplyComments: boolean;
   fbAutoReplyMessages: boolean;
   fbCommentSystemPrompt: string | null;
+  fbCommentReplyPrompt: string | null;
   fbMessageSystemPrompt: string | null;
+  fbMessageReplyPrompt: string | null;
   fbCommentReplyDelay: number;
   fbPageId: string | null;
   fbPageToken: string | null;
@@ -125,7 +127,9 @@ async function getFacebookConfig(): Promise<FacebookConfig | null> {
       fbAutoReplyComments: config.fbAutoReplyComments ?? false,
       fbAutoReplyMessages: config.fbAutoReplyMessages ?? false,
       fbCommentSystemPrompt: config.fbCommentSystemPrompt ?? null,
+      fbCommentReplyPrompt: config.fbCommentSystemPrompt ?? null,
       fbMessageSystemPrompt: config.fbMessageSystemPrompt ?? null,
+      fbMessageReplyPrompt: config.fbMessageSystemPrompt ?? null,
       fbCommentReplyDelay: config.fbCommentReplyDelay ?? 2000,
       fbPageId: config.fbPageId ?? null,
       fbPageToken: config.fbPageToken ?? null,
@@ -151,6 +155,7 @@ async function processCommentEvent(
 
   const systemPrompt =
     config.fbCommentSystemPrompt ||
+    config.fbCommentReplyPrompt ||
     "You are a helpful assistant for a robotics and research club. Reply politely and helpfully to comments on the club's Facebook page.";
 
   const messages: GroqMessage[] = [
@@ -192,6 +197,7 @@ async function processMessageEvent(
 
   const systemPrompt =
     config.fbMessageSystemPrompt ||
+    config.fbMessageReplyPrompt ||
     "You are a helpful assistant for a robotics and research club. Answer questions from students about the club politely and informatively.";
 
   const messages: GroqMessage[] = [

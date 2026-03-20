@@ -47,9 +47,11 @@ interface FacebookConfig {
   };
   fbAutoReplyComments?: boolean;
   fbCommentReplyPrompt?: string;
+  fbCommentSystemPrompt?: string;
   fbCommentReplyDelay?: number;
   fbAutoReplyMessages?: boolean;
   fbMessageReplyPrompt?: string;
+  fbMessageSystemPrompt?: string;
   fbGreetingMessage?: string;
   fbFallbackMessage?: string;
 }
@@ -598,7 +600,7 @@ function CommentRepliesTab({ fbConfig, onMutate }: CommentRepliesTabProps): JSX.
     if (!fbConfig) return;
     setEnabled(fbConfig.fbAutoReplyComments ?? false);
     setPrompt(
-      fbConfig.fbCommentReplyPrompt ??
+      fbConfig.fbCommentSystemPrompt ?? fbConfig.fbCommentReplyPrompt ??
         "You are a helpful assistant for the GSTU Robotics & Research Club. Reply to comments on the club's Facebook page in a friendly, professional tone. Keep replies short (under 100 words)."
     );
     setDelay(String(fbConfig.fbCommentReplyDelay ?? 5));
@@ -618,7 +620,7 @@ function CommentRepliesTab({ fbConfig, onMutate }: CommentRepliesTabProps): JSX.
         body: JSON.stringify({
           tab: "facebook",
           fbAutoReplyComments: enabled,
-          fbCommentReplyPrompt: prompt,
+          fbCommentSystemPrompt: prompt,
           fbCommentReplyDelay: delayNum,
         }),
       });
@@ -757,7 +759,7 @@ function MessageRepliesTab({ fbConfig, onMutate }: MessageRepliesTabProps): JSX.
   const [saving, setSaving] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [prompt, setPrompt] = useState(
-    fbConfig?.fbMessageReplyPrompt ??
+    fbConfig?.fbMessageSystemPrompt ?? fbConfig?.fbMessageReplyPrompt ??
       "You are a helpful assistant for the GSTU Robotics & Research Club on Facebook Messenger. Answer questions about the club, membership, events, and projects. Be concise, friendly, and helpful."
   );
   const [greeting, setGreeting] = useState(
@@ -773,7 +775,7 @@ function MessageRepliesTab({ fbConfig, onMutate }: MessageRepliesTabProps): JSX.
     if (!fbConfig) return;
     setEnabled(fbConfig.fbAutoReplyMessages ?? false);
     setPrompt(
-      fbConfig.fbMessageReplyPrompt ??
+      fbConfig.fbMessageSystemPrompt ?? fbConfig.fbMessageReplyPrompt ??
         "You are a helpful assistant for the GSTU Robotics & Research Club on Facebook Messenger. Answer questions about the club, membership, events, and projects. Be concise, friendly, and helpful."
     );
     setGreeting(
@@ -795,7 +797,7 @@ function MessageRepliesTab({ fbConfig, onMutate }: MessageRepliesTabProps): JSX.
         body: JSON.stringify({
           tab: "facebook",
           fbAutoReplyMessages: enabled,
-          fbMessageReplyPrompt: prompt,
+          fbMessageSystemPrompt: prompt,
           fbGreetingMessage: greeting,
           fbFallbackMessage: fallback,
         }),
@@ -952,12 +954,12 @@ function TestTab({ fbConfig }: TestTabProps): JSX.Element {
   const getSystemPrompt = useCallback((): string => {
     if (mode === "comment") {
       return (
-        fbConfig?.fbCommentReplyPrompt ??
+        fbConfig?.fbCommentSystemPrompt ?? fbConfig?.fbCommentReplyPrompt ??
         "You are a helpful assistant for the GSTU Robotics & Research Club. Reply to comments in a friendly, professional tone."
       );
     }
     return (
-      fbConfig?.fbMessageReplyPrompt ??
+      fbConfig?.fbMessageSystemPrompt ?? fbConfig?.fbMessageReplyPrompt ??
       "You are a helpful assistant for the GSTU Robotics & Research Club on Facebook Messenger. Answer questions about the club."
     );
   }, [mode, fbConfig]);
