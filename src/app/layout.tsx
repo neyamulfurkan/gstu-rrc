@@ -14,6 +14,7 @@ import type { ClubConfigPublic, AnnouncementCard } from "@/types/index";
 import { NavBar } from "@/components/layout/NavBar";
 import { MobileNav } from "@/components/layout/MobileNav";
 import { Footer } from "@/components/layout/Footer";
+import { headers } from "next/headers";
 
 import "./globals.css";
 
@@ -214,6 +215,11 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }): Promise<JSX.Element> {
+  const headersList = await headers();
+  const xPathname = headersList.get("x-pathname") ?? "";
+  const isAuthPage =
+    xPathname === "/login" ||
+    xPathname.startsWith("/login/");
   const searchParams: { previewColors?: string } = {};
   // ── 1. Fetch ClubConfig ───────────────────────────────────────────────────
   let config: ClubConfigPublic = FALLBACK_CONFIG;
@@ -515,10 +521,10 @@ export default async function RootLayout({
           <CustomCursor />
 
           {/* Desktop navigation */}
-          <NavBar config={config} />
+          {!isAuthPage && <NavBar config={config} />}
 
           {/* Mobile navigation */}
-          <MobileNav config={config} />
+          {!isAuthPage && <MobileNav config={config} />}
 
           {/* Main content with page transitions */}
           <main id="main-content" style={{ overflowX: "hidden", width: "100%", minHeight: "100vh" }}>
@@ -528,7 +534,7 @@ export default async function RootLayout({
           </main>
 
           {/* Footer */}
-          <Footer config={config} announcements={announcements} />
+          {!isAuthPage && <Footer config={config} announcements={announcements} />}
 
           {/* AI Assistant — client only, conditionally rendered based on aiEnabled */}
           {config.aiEnabled && (

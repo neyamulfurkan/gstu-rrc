@@ -37,7 +37,9 @@ export default auth((req) => {
     return NextResponse.redirect(new URL(`/login?callbackUrl=${callbackUrl}`, nextUrl));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  response.headers.set("x-pathname", nextUrl.pathname);
+  return response;
 });
 
 export const config = {
@@ -48,5 +50,6 @@ export const config = {
     "/instruments/:path*",
     "/certificates/:path*",
     "/login",
+    "/login/:path*",
   ],
 };
