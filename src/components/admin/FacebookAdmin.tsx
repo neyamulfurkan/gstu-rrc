@@ -2,8 +2,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useSWRConfig } from "swr";
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import {
   Activity,
   AlertCircle,
@@ -20,7 +19,9 @@ import {
   Send,
   Settings,
   Share2,
+  Shield,
   Unlink,
+  XCircle,
   Zap,
 } from "lucide-react";
 
@@ -45,6 +46,7 @@ interface FacebookConfig {
     announcementTemplate?: string;
     galleryTemplate?: string;
   };
+  fbRequireApproval?: boolean;
   fbAutoReplyComments?: boolean;
   fbCommentReplyPrompt?: string;
   fbCommentSystemPrompt?: string;
@@ -61,11 +63,12 @@ interface TestMessage {
   content: string;
 }
 
-type TabId = "connection" | "auto-post" | "comment-replies" | "message-replies" | "test";
+type TabId = "connection" | "auto-post" | "pending-posts" | "comment-replies" | "message-replies" | "test";
 
 const TABS: Array<{ id: TabId; label: string; icon: React.ReactNode }> = [
   { id: "connection", label: "Connection", icon: <Link2 size={16} /> },
   { id: "auto-post", label: "Auto-Post", icon: <Share2 size={16} /> },
+  { id: "pending-posts", label: "Pending Posts", icon: <Clock size={16} /> },
   { id: "comment-replies", label: "Comment Replies", icon: <MessageCircle size={16} /> },
   { id: "message-replies", label: "Message Replies", icon: <MessageSquare size={16} /> },
   { id: "test", label: "Test AI Reply", icon: <Bot size={16} /> },
@@ -516,6 +519,7 @@ function AutoPostTab({ fbConfig, onMutate }: AutoPostTabProps): JSX.Element {
   const autoPost = fbConfig?.fbAutoPost ?? {};
 
   const [saving, setSaving] = useState(false);
+  const [requireApproval, setRequireApproval] = useState(fbConfig?.fbRequireApproval ?? false);
   const [values, setValues] = useState({
     eventsEnabled: autoPost.events ?? false,
     projectsEnabled: autoPost.projects ?? false,
@@ -527,10 +531,10 @@ function AutoPostTab({ fbConfig, onMutate }: AutoPostTabProps): JSX.Element {
     galleryTemplate: autoPost.galleryTemplate ?? DEFAULT_GALLERY_TEMPLATE,
   });
 
-  // Sync when config loads
   useEffect(() => {
     if (!fbConfig) return;
     const ap = fbConfig.fbAutoPost ?? {};
+    setRequireApproval(fbConfig.fbRequireApproval ?? false);
     setValues({
       eventsEnabled: ap.events ?? false,
       projectsEnabled: ap.projects ?? false,
@@ -551,6 +555,7 @@ function AutoPostTab({ fbConfig, onMutate }: AutoPostTabProps): JSX.Element {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tab: "facebook",
+          fbRequireApproval: requireApproval,
           fbAutoPost: {
             events: values.eventsEnabled,
             projects: values.projectsEnabled,
@@ -571,7 +576,7 @@ function AutoPostTab({ fbConfig, onMutate }: AutoPostTabProps): JSX.Element {
     } finally {
       setSaving(false);
     }
-  }, [values, onMutate]);
+  }, [values, requireApproval, onMutate]);
 
   const isConnected = !!fbConfig?.fbPageId;
 
@@ -626,6 +631,46 @@ function AutoPostTab({ fbConfig, onMutate }: AutoPostTabProps): JSX.Element {
           message="Connect a Facebook page first to enable auto-posting."
         />
       )}
+
+      {/* Require Approval Toggle */}
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-[var(--color-warning)]">
+              <Shield size={18} />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                Require Approval Before Posting
+              </p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                When enabled, posts go to the "Pending Posts" tab for review instead of publishing immediately
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {requireApproval ? (
+              <Badge variant="warning" size="sm">Review Mode</Badge>
+            ) : (
+              <Badge variant="success" size="sm">Auto-Publish</Badge>
+            )}
+            <Checkbox
+              checked={requireApproval}
+              onChange={(e) => setRequireApproval(e.target.checked)}
+              disabled={!isConnected}
+              aria-label="Require approval before posting to Facebook"
+            />
+          </div>
+        </div>
+        {requireApproval && (
+          <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+            <p className="text-xs text-[var(--color-warning)] flex items-center gap-1.5">
+              <Clock size={12} />
+              Posts will queue in the "Pending Posts" tab — approve each one manually before it goes live on Facebook.
+            </p>
+          </div>
+        )}
+      </div>
 
       {postTypes.map((pt) => (
         <div
@@ -705,6 +750,278 @@ function AutoPostTab({ fbConfig, onMutate }: AutoPostTabProps): JSX.Element {
           Save Auto-Post Settings
         </button>
       </div>
+    </div>
+  );
+}
+
+// ─── Pending Posts Tab ────────────────────────────────────────────────────────
+
+interface PendingPost {
+  id: string;
+  entityType: string;
+  entityTitle: string;
+  message: string;
+  imageUrl: string | null;
+  link: string;
+  status: string;
+  createdAt: string;
+  postedAt: string | null;
+  fbPostId: string | null;
+  adminNote: string | null;
+}
+
+interface PendingPostsTabProps {
+  isConnected: boolean;
+}
+
+function PendingPostsTab({ isConnected }: PendingPostsTabProps): JSX.Element {
+  const { data, isLoading, mutate: mutatePending } = useSWR<{ data: PendingPost[]; total: number }>(
+    "/api/admin/facebook-pending",
+    fetcher,
+    { revalidateOnFocus: true }
+  );
+
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const handleApprove = useCallback(async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/facebook-pending", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "approve" }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.success) {
+        throw new Error(json.error ?? "Failed to approve");
+      }
+      toast("Post approved and published to Facebook!", "success");
+      mutatePending();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to approve post.", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  }, [mutatePending]);
+
+  const handleReject = useCallback(async (id: string) => {
+    setActionLoading(id);
+    try {
+      const res = await fetch("/api/admin/facebook-pending", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action: "reject" }),
+      });
+      if (!res.ok) throw new Error("Failed to reject");
+      toast("Post rejected.", "success");
+      mutatePending();
+    } catch {
+      toast("Failed to reject post.", "error");
+    } finally {
+      setActionLoading(null);
+    }
+  }, [mutatePending]);
+
+  const posts = data?.data ?? [];
+  const pending = posts.filter((p) => p.status === "pending");
+  const others = posts.filter((p) => p.status !== "pending");
+
+  const statusBadge = (status: string) => {
+    if (status === "pending") return <Badge variant="warning" size="sm">Pending</Badge>;
+    if (status === "posted") return <Badge variant="success" size="sm">Posted</Badge>;
+    if (status === "rejected") return <Badge variant="error" size="sm">Rejected</Badge>;
+    return <Badge variant="neutral" size="sm">{status}</Badge>;
+  };
+
+  const entityBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      event: "text-[var(--color-accent)]",
+      project: "text-[var(--color-primary)]",
+      announcement: "text-[var(--color-warning)]",
+    };
+    return (
+      <span className={cn("text-xs font-semibold uppercase tracking-wider", colors[type] ?? "text-[var(--color-text-secondary)]")}>
+        {type}
+      </span>
+    );
+  };
+
+  return (
+    <div className="max-w-3xl space-y-6">
+      {!isConnected && (
+        <Alert
+          variant="warning"
+          title="Facebook Not Connected"
+          message="Connect a Facebook page first. Pending posts will be published once connected and approved."
+        />
+      )}
+
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Pending Posts</h3>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+            Review and approve queued Facebook posts before they go live
+          </p>
+        </div>
+        {pending.length > 0 && (
+          <Badge variant="warning" size="sm">{pending.length} awaiting review</Badge>
+        )}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Spinner size="lg" label="Loading pending posts..." />
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-12 text-center">
+          <CheckCircle size={32} className="mx-auto mb-3 text-[var(--color-success)]" />
+          <p className="text-sm font-medium text-[var(--color-text-primary)]">No pending posts</p>
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+            Posts queued for review will appear here when "Require Approval" is enabled in Auto-Post settings.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {[...pending, ...others].map((post) => (
+            <div
+              key={post.id}
+              className={cn(
+                "rounded-xl border bg-[var(--color-bg-surface)] overflow-hidden transition-all duration-200",
+                post.status === "pending"
+                  ? "border-[var(--color-warning)]/40"
+                  : "border-[var(--color-border)]"
+              )}
+            >
+              <div className="flex items-center gap-3 p-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    {entityBadge(post.entityType)}
+                    {statusBadge(post.status)}
+                    <span className="text-xs text-[var(--color-text-secondary)]">
+                      {new Date(post.createdAt).toLocaleDateString("en-BD", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+                    {post.entityTitle}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)] truncate mt-0.5">
+                    {post.message.split("\n")[0]}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(expandedId === post.id ? null : post.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-medium border",
+                      "text-[var(--color-text-secondary)] border-[var(--color-border)]",
+                      "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-elevated)]",
+                      "transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                    )}
+                  >
+                    {expandedId === post.id ? "Hide" : "Preview"}
+                  </button>
+
+                  {post.status === "pending" && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleReject(post.id)}
+                        disabled={actionLoading === post.id}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
+                          "bg-[var(--color-error)]/10 text-[var(--color-error)]",
+                          "border border-[var(--color-error)]/20 hover:bg-[var(--color-error)]/20",
+                          "transition-colors duration-150 disabled:opacity-60",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]"
+                        )}
+                      >
+                        {actionLoading === post.id ? <Spinner size="sm" /> : <XCircle size={13} />}
+                        Reject
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApprove(post.id)}
+                        disabled={actionLoading === post.id || !isConnected}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
+                          "bg-[var(--color-success)]/10 text-[var(--color-success)]",
+                          "border border-[var(--color-success)]/20 hover:bg-[var(--color-success)]/20",
+                          "transition-colors duration-150 disabled:opacity-60",
+                          "focus:outline-none focus:ring-2 focus:ring-[var(--color-success)]"
+                        )}
+                      >
+                        {actionLoading === post.id ? <Spinner size="sm" /> : <CheckCircle size={13} />}
+                        Approve & Post
+                      </button>
+                    </>
+                  )}
+
+                  {post.status === "posted" && post.fbPostId && (
+                    <a
+                      href={`https://www.facebook.com/${post.fbPostId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
+                        "text-[#1877F2] border border-[#1877F2]/20 bg-[#1877F2]/5",
+                        "hover:bg-[#1877F2]/10 transition-colors duration-150",
+                        "focus:outline-none focus:ring-2 focus:ring-[#1877F2]"
+                      )}
+                    >
+                      <Facebook size={12} />
+                      View Post
+                    </a>
+                  )}
+                </div>
+              </div>
+
+              {expandedId === post.id && (
+                <div className="px-4 pb-4 border-t border-[var(--color-border)] pt-4 space-y-3">
+                  {post.imageUrl && (
+                    <div className="relative w-full max-h-48 overflow-hidden rounded-lg bg-[var(--color-bg-elevated)]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={post.imageUrl}
+                        alt="Post image"
+                        className="w-full object-cover max-h-48"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  <div className="rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)] p-3">
+                    <p className="text-xs font-semibold text-[var(--color-text-secondary)] mb-2 uppercase tracking-wider">
+                      Post Message
+                    </p>
+                    <pre className="text-sm text-[var(--color-text-primary)] whitespace-pre-wrap font-sans leading-relaxed">
+                      {post.message}
+                    </pre>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-[var(--color-text-secondary)]">Link:</span>
+                    <a
+                      href={post.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[var(--color-accent)] hover:underline truncate"
+                    >
+                      {post.link}
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
