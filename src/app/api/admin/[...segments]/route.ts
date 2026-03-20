@@ -234,7 +234,7 @@ async function handleStats(
   if (method !== "GET") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
-  if (!hasPermission(session.user.permissions, "manage_members")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -326,7 +326,7 @@ async function handleAuditLog(
   ip: string
 ): Promise<NextResponse> {
   if (method === "GET") {
-    if (!hasPermission(session.user.permissions, "view_audit_logs")) {
+    if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "view_audit_logs")) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     const sp = req.nextUrl.searchParams;
@@ -544,7 +544,7 @@ async function handleDepartments(
   session: Session,
   method: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_members")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -646,7 +646,7 @@ async function handleAdminRoles(
   session: Session,
   method: string
 ): Promise<NextResponse> {
-  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_admins")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_admins") && !isAdmin(session)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -869,7 +869,7 @@ async function handleBroadcastEmail(
   if (method !== "POST") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
-  if (!hasPermission(session.user.permissions, "send_emails")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "send_emails")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   let body: Record<string, unknown>;
@@ -932,7 +932,7 @@ async function handleMilestones(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_club_config")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_club_config")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -1050,7 +1050,7 @@ async function handleAdvisors(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_members")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -1211,7 +1211,7 @@ async function handleCommittee(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_members")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -1411,7 +1411,7 @@ async function handleAchievements(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_club_config")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_club_config")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -1519,7 +1519,7 @@ async function handleWhyJoin(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_club_config")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_club_config")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -1624,7 +1624,7 @@ async function handleAlumniSpotlight(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_members")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -1739,7 +1739,7 @@ async function handleCustomCards(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_club_config")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_club_config")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -2093,7 +2093,7 @@ async function handleCertTemplates(
   method: string,
   ip: string
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "manage_certificates")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_certificates")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -2209,7 +2209,7 @@ async function handleInstrumentRequests(
   if (method !== "GET") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
-  if (!hasPermission(session.user.permissions, "manage_instruments")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_instruments")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -2443,7 +2443,7 @@ async function handleExport(
   req: NextRequest,
   session: Session
 ): Promise<NextResponse> {
-  if (!hasPermission(session.user.permissions, "view_audit_logs")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "view_audit_logs")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -3008,7 +3008,7 @@ async function handleEmailLogs(
   if (method !== "GET") {
     return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
   }
-  if (!hasPermission(session.user.permissions, "send_emails")) {
+  if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "send_emails")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

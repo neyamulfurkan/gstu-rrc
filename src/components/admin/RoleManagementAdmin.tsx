@@ -114,10 +114,10 @@ type Tab = "admin-users" | "role-requests" | "permission-matrix";
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export function RoleManagementAdmin(): JSX.Element {
-  const { isSuperAdmin } = usePermissions();
+  const { isSuperAdmin, isAdmin } = usePermissions();
   const [activeTab, setActiveTab] = useState<Tab>("admin-users");
 
-  if (!isSuperAdmin) {
+  if (!isSuperAdmin && !isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center px-6">
         <div
