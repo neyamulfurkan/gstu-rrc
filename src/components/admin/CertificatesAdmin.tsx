@@ -293,8 +293,14 @@ function TemplatesTab({ templates, isLoading, onRefresh }: TemplatesTabProps): J
                   />
                 </div>
               ) : (
-                <div className="h-32 bg-[var(--color-bg-elevated)] flex items-center justify-center">
-                  <Award size={40} className="text-[var(--color-text-secondary)] opacity-40" />
+                <div className="h-32 bg-[var(--color-bg-elevated)] overflow-hidden relative">
+                  <iframe
+                    srcDoc={`<!DOCTYPE html><html><head><style>${tmpl.cssContent} body{zoom:0.18;transform-origin:top left;} </style></head><body>${tmpl.htmlContent}</body></html>`}
+                    className="w-full border-0 pointer-events-none"
+                    style={{ height: "550px", transform: "scale(0.18)", transformOrigin: "top left", width: "555%" }}
+                    sandbox="allow-same-origin"
+                    title={tmpl.name}
+                  />
                 </div>
               )}
               <div className="p-4">

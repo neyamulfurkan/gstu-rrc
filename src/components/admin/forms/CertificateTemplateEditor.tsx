@@ -999,17 +999,28 @@ export function CertificateTemplateEditor({
   const [htmlContent, setHtmlContent] = useState(
     initialData?.htmlContent ?? DEFAULT_HTML
   );
-  const [cssContent, setCssContent] = useState(
-    initialData?.cssContent ?? DEFAULT_CSS
-  );
+  const [cssContent, setCssContent] = useState(() => {
+    const raw = initialData?.cssContent ?? DEFAULT_CSS;
+    // Strip auto-generated watermark CSS so it doesn't show in editor
+    const watermarkIndex = raw.indexOf("/* ── Logo Watermark (auto-generated) ── */");
+    return watermarkIndex > -1 ? raw.slice(0, watermarkIndex).trimEnd() : raw;
+  });
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewSrc, setPreviewSrc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
-  const [logoWatermark, setLogoWatermark] = useState(false);
-  const [watermarkOpacity, setWatermarkOpacity] = useState(8);
-  const [watermarkSize, setWatermarkSize] = useState(300);
+  const [logoWatermark, setLogoWatermark] = useState(() => {
+    return (initialData?.cssContent ?? "").includes("Logo Watermark (auto-generated)");
+  });
+  const [watermarkOpacity, setWatermarkOpacity] = useState(() => {
+    const match = (initialData?.cssContent ?? "").match(/opacity: ([\d.]+) !important/);
+    return match ? Math.round(parseFloat(match[1]) * 100) : 8;
+  });
+  const [watermarkSize, setWatermarkSize] = useState(() => {
+    const match = (initialData?.cssContent ?? "").match(/width: (\d+)px !important/);
+    return match ? parseInt(match[1]) : 300;
+  });
 
   const htmlRef = useRef<HTMLTextAreaElement>(null);
   const cssRef = useRef<HTMLTextAreaElement>(null);
