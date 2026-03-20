@@ -5,11 +5,8 @@ import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { AdminSidebar } from "@/components/layout/AdminSidebar";
-import { ScrollProgress } from "@/components/layout/ScrollProgress";
 import { ToastProvider } from "@/components/ui/Feedback";
-import { AdminTopBar } from "@/app/admin/_components/AdminTopBar";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- created below
+import { AdminShell } from "@/app/admin/_components/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -63,33 +60,14 @@ export default async function AdminLayout({
 
   return (
     <ToastProvider>
-        <div className="fixed inset-0 flex overflow-hidden bg-[var(--color-bg-base)] z-[50]">
-          {/* ── Sidebar ── */}
-          <AdminSidebar />
-
-          {/* ── Right column ── */}
-          <div className="flex flex-1 flex-col overflow-hidden">
-            {/* Top bar — client component, receives serializable props */}
-            <AdminTopBar
-              clubName={clubName}
-              clubShortName={clubShortName}
-              logoUrl={logoUrl}
-              user={userProps}
-            />
-
-            {/* Scroll progress indicator */}
-            <ScrollProgress />
-
-            {/* Page content */}
-            <main
-              id="admin-main-content"
-              tabIndex={-1}
-              className="flex-1 overflow-y-auto bg-[var(--color-bg-base)] p-6 focus:outline-none"
-            >
-              {children}
-            </main>
-          </div>
-        </div>
-      </ToastProvider>
+      <AdminShell
+        clubName={clubName}
+        clubShortName={clubShortName}
+        logoUrl={logoUrl}
+        user={userProps}
+      >
+        {children}
+      </AdminShell>
+    </ToastProvider>
   );
 }

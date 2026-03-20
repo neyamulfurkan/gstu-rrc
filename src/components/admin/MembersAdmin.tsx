@@ -1343,9 +1343,9 @@ export function MembersAdmin(): JSX.Element {
       {activeTab === "members" && (
         <div className="space-y-4">
           {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
             {/* Search */}
-            <div className="relative flex-1 min-w-[200px]">
+            <div className="relative w-full sm:flex-1 sm:min-w-[200px]">
               <Search
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none"
@@ -1367,6 +1367,8 @@ export function MembersAdmin(): JSX.Element {
               />
             </div>
 
+            {/* Filters row — 2-column grid on mobile, inline on sm+ */}
+            <div className="grid grid-cols-2 gap-2 sm:contents">
             {/* Role filter */}
             <select
               value={filterState.roleId}
@@ -1374,7 +1376,7 @@ export function MembersAdmin(): JSX.Element {
                 setFilterState((p) => ({ ...p, roleId: e.target.value }))
               }
               className={cn(
-                "px-3 py-2 rounded-lg text-sm",
+                "w-full px-3 py-2 rounded-lg text-sm",
                 "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
                 "text-[var(--color-text-primary)]",
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
@@ -1396,7 +1398,7 @@ export function MembersAdmin(): JSX.Element {
                 setFilterState((p) => ({ ...p, departmentId: e.target.value }))
               }
               className={cn(
-                "px-3 py-2 rounded-lg text-sm",
+                "w-full px-3 py-2 rounded-lg text-sm",
                 "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
                 "text-[var(--color-text-primary)]",
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
@@ -1418,7 +1420,7 @@ export function MembersAdmin(): JSX.Element {
                 setFilterState((p) => ({ ...p, status: e.target.value }))
               }
               className={cn(
-                "px-3 py-2 rounded-lg text-sm",
+                "w-full px-3 py-2 rounded-lg text-sm",
                 "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
                 "text-[var(--color-text-primary)]",
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
@@ -1438,7 +1440,7 @@ export function MembersAdmin(): JSX.Element {
                 setFilterState((p) => ({ ...p, memberType: e.target.value }))
               }
               className={cn(
-                "px-3 py-2 rounded-lg text-sm",
+                "w-full px-3 py-2 rounded-lg text-sm",
                 "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
                 "text-[var(--color-text-primary)]",
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
@@ -1449,6 +1451,7 @@ export function MembersAdmin(): JSX.Element {
               <option value="member">Member</option>
               <option value="alumni">Alumni</option>
             </select>
+            </div>
 
             {/* Clear filters */}
             {(filterState.search ||

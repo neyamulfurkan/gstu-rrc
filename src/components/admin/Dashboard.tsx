@@ -808,7 +808,7 @@ export function AdminDashboard(): JSX.Element {
   ];
 
   return (
-    <div className="space-y-8 p-6 max-w-screen-xl mx-auto">
+    <div className="space-y-6 p-3 sm:p-6 max-w-screen-xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -821,7 +821,7 @@ export function AdminDashboard(): JSX.Element {
         </div>
         <time
           dateTime={new Date().toISOString()}
-          className="text-xs font-[var(--font-mono)] text-[var(--color-text-secondary)] hidden sm:block"
+          className="text-xs font-[var(--font-mono)] text-[var(--color-text-secondary)] hidden md:block"
         >
           {formatDate(new Date(), "full")}
         </time>
@@ -874,7 +874,7 @@ export function AdminDashboard(): JSX.Element {
       </section>
 
       {/* Bottom Grid: Audit Log + Pending + Quick Actions */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6">
         {/* Recent Activity */}
         <section
           className={cn(

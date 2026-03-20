@@ -348,7 +348,8 @@ export function AdminSidebar(): JSX.Element {
     <aside
       className={cn(
         "relative flex h-full flex-col border-r border-[var(--color-border)] bg-[var(--color-bg-surface)] transition-all duration-200",
-        collapsed ? "w-16" : "w-64"
+        "md:w-auto w-full",
+        collapsed ? "md:w-16" : "md:w-64"
       )}
       aria-label="Admin navigation"
     >

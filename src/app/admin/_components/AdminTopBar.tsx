@@ -20,6 +20,7 @@ interface AdminTopBarProps {
   clubName: string;
   clubShortName: string;
   logoUrl: string;
+  onMenuClick?: () => void;
   user: {
     displayName: string;
     username: string;
@@ -34,6 +35,7 @@ export function AdminTopBar({
   clubShortName,
   logoUrl,
   user,
+  onMenuClick,
 }: AdminTopBarProps): JSX.Element {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -52,8 +54,22 @@ export function AdminTopBar({
         "z-30"
       )}
     >
-      {/* Left: logo + name */}
+      {/* Left: hamburger (mobile) + logo + name */}
       <div className="flex items-center gap-3">
+        {/* Hamburger — only visible on mobile */}
+        <button
+          type="button"
+          onClick={onMenuClick}
+          aria-label="Open navigation menu"
+          className={cn(
+            "md:hidden flex items-center justify-center w-8 h-8 rounded-lg",
+            "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
+            "hover:bg-[var(--color-bg-elevated)] transition-colors duration-150",
+            "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+          )}
+        >
+          <Menu size={18} aria-hidden="true" />
+        </button>
         {logoUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
