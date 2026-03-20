@@ -19,6 +19,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const cursorParam = searchParams.get("cursor");
     const takeParam = searchParams.get("take");
 
+    // categoriesOnly — public endpoint for upload form
+    const categoriesOnly = searchParams.get("categoriesOnly") === "true";
+    if (categoriesOnly) {
+      const cats = await prisma.galleryCategory.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
+      });
+      return NextResponse.json({ categories: cats }, { status: 200 });
+    }
+
     const paginationResult = paginationSchema.safeParse({
       cursor: cursorParam ?? undefined,
       take: takeParam ? parseInt(takeParam, 10) : 30,
