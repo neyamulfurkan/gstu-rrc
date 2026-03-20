@@ -521,7 +521,7 @@ export default async function RootLayout({
           <MobileNav config={config} />
 
           {/* Main content with page transitions */}
-          <main id="main-content" style={{ overflowX: "hidden", width: "100%" }}>
+          <main id="main-content" style={{ overflowX: "hidden", width: "100%", minHeight: "100vh" }}>
             <PageTransition>
               {children}
             </PageTransition>
