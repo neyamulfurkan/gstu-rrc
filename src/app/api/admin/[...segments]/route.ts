@@ -199,6 +199,8 @@ async function handleRequest(
         return await handleEmailLogs(req, session, method);
       case "export":
         return await handleExport(req, session);
+      case "facebook-pending":
+        return await handleFacebookPending(req, session, method);
       case "facebook-oauth":
         return await handleFacebookOAuth(req, session, method, ip);
       case "event-categories":
@@ -2500,6 +2502,69 @@ async function handleExport(
       "Content-Disposition": `attachment; filename="audit-log-${Date.now()}.csv"`,
     },
   });
+}
+
+// ─── facebook-pending ─────────────────────────────────────────────────────────
+
+async function handleFacebookPending(
+  req: NextRequest,
+  session: Session,
+  method: string
+): Promise<NextResponse> {
+  if (!isAdmin(session)) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const fbModel = (prisma as unknown as {
+    facebookPendingPost: {
+      findMany: (args: unknown) => Promise<unknown[]>;
+      count: (args?: unknown) => Promise<number>;
+    };
+  }).facebookPendingPost;
+
+  if (method === "GET") {
+    try {
+      const [data, total] = await Promise.all([
+        fbModel.findMany({
+          orderBy: { createdAt: "desc" },
+        }),
+        fbModel.count(),
+      ]);
+      return NextResponse.json({ data, total });
+    } catch (err) {
+      console.error("[facebook-pending] GET error:", err);
+      return NextResponse.json({ data: [], total: 0 });
+    }
+  }
+
+  if (method === "PATCH") {
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    const { id, action } = body as { id?: string; action?: string };
+    if (!id || !action) {
+      return NextResponse.json({ error: "id and action are required" }, { status: 400 });
+    }
+    if (action === "approve") {
+      const { approvePendingPost } = await import("@/lib/facebook");
+      const result = await approvePendingPost(id);
+      if (!result.success) {
+        return NextResponse.json({ success: false, error: result.error }, { status: 400 });
+      }
+      return NextResponse.json({ success: true, fbPostId: result.fbPostId });
+    }
+    if (action === "reject") {
+      const { rejectPendingPost } = await import("@/lib/facebook");
+      await rejectPendingPost(id);
+      return NextResponse.json({ success: true });
+    }
+    return NextResponse.json({ error: "Invalid action" }, { status: 400 });
+  }
+
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
 
 // ─── facebook-oauth ───────────────────────────────────────────────────────────
