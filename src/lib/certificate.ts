@@ -135,7 +135,7 @@ export async function generateCertificatePdf(
       },
     });
 
-    await browser.close();
+    await browser!.close();
     browser = null;
 
     return Buffer.from(pdfBuffer);
