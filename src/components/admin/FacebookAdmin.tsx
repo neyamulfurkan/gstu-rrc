@@ -185,7 +185,7 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
     const appId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID ?? "";
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     if (!appId) {
-      toast("FACEBOOK_APP_ID is not configured. Contact the developer.", "error");
+      toast("FB_APP_ID is not configured. Contact the developer.", "error");
       return;
     }
     const redirectUri = encodeURIComponent(`${baseUrl}/api/admin/facebook-oauth`);
