@@ -31,11 +31,11 @@ try {
     family: "NotoSans",
     fonts: [
       {
-        src: "https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNr5TRA.woff",
+        src: "https://fonts.gstatic.com/s/notosans/v28/o-0IIpQlx3QUlC5A4PNr4ARXQ_m8.ttf",
         fontWeight: 400,
       },
       {
-        src: "https://fonts.gstatic.com/s/notosans/v36/o-0NIpQlx3QUlC5A4PNjXhFVadyBx8pqow.woff",
+        src: "https://fonts.gstatic.com/s/notosans/v28/o-0NIpQlx3QUlC5A4PNjXhFlZQ.ttf",
         fontWeight: 700,
       },
     ],
@@ -48,7 +48,6 @@ const S = StyleSheet.create({
   page: {
     backgroundColor: "#FFFFFF",
     flexDirection: "column",
-    fontFamily: "NotoSans",
   },
   topBand: {
     height: 12,
