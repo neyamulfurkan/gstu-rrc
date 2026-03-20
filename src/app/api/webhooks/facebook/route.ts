@@ -233,22 +233,61 @@ async function processMessageEvent(
     config.fbMessageSystemPrompt ||
     "You are a helpful assistant for a robotics and research club. Answer questions from students about the club politely and informatively.";
 
-  // Replace placeholders with actual club data
+  
+
+  // Fetch full club context to inject into the prompt
+  let clubContext = "";
   try {
-    const clubConfig = await prisma.clubConfig.findUnique({
-      where: { id: "main" },
-      select: {
-        clubName: true,
-        clubShortName: true,
-        universityName: true,
-        clubMotto: true,
-        email: true,
-        phone: true,
-        membershipFee: true,
-        regStatus: true,
-        foundedYear: true,
-      },
-    });
+    const [
+      clubConfig,
+      upcomingEvents,
+      recentProjects,
+      committeeMembers,
+      memberCount,
+      membershipInfo,
+    ] = await Promise.all([
+      prisma.clubConfig.findUnique({
+        where: { id: "main" },
+        select: {
+          clubName: true,
+          clubShortName: true,
+          universityName: true,
+          departmentName: true,
+          clubMotto: true,
+          clubDescription: true,
+          email: true,
+          phone: true,
+          address: true,
+          foundedYear: true,
+          membershipFee: true,
+          regStatus: true,
+        },
+      }),
+      prisma.event.findMany({
+        where: { isPublished: true, startDate: { gte: new Date() } },
+        orderBy: { startDate: "asc" },
+        take: 5,
+        select: { title: true, startDate: true, venue: true },
+      }),
+      prisma.project.findMany({
+        where: { isPublished: true },
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        select: { title: true, status: true, technologies: true },
+      }),
+      prisma.committeeMember.findMany({
+        where: { session: null },
+        orderBy: { sortOrder: "asc" },
+        take: 5,
+        select: { memberName: true, designation: true },
+      }),
+      prisma.member.count({ where: { status: "active" } }),
+      prisma.clubConfig.findUnique({
+        where: { id: "main" },
+        select: { membershipFee: true, regStatus: true, bkashNumber: true, nagadNumber: true },
+      }),
+    ]);
+
     if (clubConfig) {
       rawPrompt = rawPrompt
         .replace(/\{\{clubName\}\}/g, clubConfig.clubName || "GSTU Robotics & Research Club")
@@ -260,10 +299,44 @@ async function processMessageEvent(
         .replace(/\{\{membershipFee\}\}/g, String(clubConfig.membershipFee || ""))
         .replace(/\{\{regStatus\}\}/g, clubConfig.regStatus || "")
         .replace(/\{\{foundedYear\}\}/g, String(clubConfig.foundedYear || ""));
+
+      clubContext = `
+=== CLUB INFORMATION ===
+Name: ${clubConfig.clubName}
+Short Name: ${clubConfig.clubShortName}
+University: ${clubConfig.universityName}
+Department: ${clubConfig.departmentName}
+Location: Gopalganj, Bangladesh
+Address: ${clubConfig.address}
+Founded: ${clubConfig.foundedYear}
+Motto: ${clubConfig.clubMotto}
+Description: ${clubConfig.clubDescription}
+Email: ${clubConfig.email}
+Phone: ${clubConfig.phone}
+
+=== MEMBERSHIP ===
+Fee: BDT ${membershipInfo?.membershipFee}
+Registration: ${membershipInfo?.regStatus}
+bKash: ${membershipInfo?.bkashNumber}
+Nagad: ${membershipInfo?.nagadNumber}
+Total Active Members: ${memberCount}
+
+=== UPCOMING EVENTS ===
+${upcomingEvents.length > 0 ? upcomingEvents.map(e => `- ${e.title} on ${new Date(e.startDate).toLocaleDateString("en-BD")} at ${e.venue}`).join("\n") : "No upcoming events."}
+
+=== RECENT PROJECTS ===
+${recentProjects.length > 0 ? recentProjects.map(p => `- ${p.title} (${p.status})`).join("\n") : "No projects."}
+
+=== CURRENT COMMITTEE ===
+${committeeMembers.length > 0 ? committeeMembers.map(c => `- ${c.designation}: ${c.memberName}`).join("\n") : "Not available."}
+
+Use ONLY this information to answer questions. Never guess or use outside knowledge about the club's location or details.`;
     }
   } catch {
-    // use raw prompt with unresolved placeholders as fallback
+    // continue without context
   }
+
+  const finalPrompt = rawPrompt + "\n\n" + clubContext;
 
   const messages: GroqMessage[] = [
     {
@@ -272,7 +345,7 @@ async function processMessageEvent(
     },
   ];
 
-  const replyText = await callGroq(messages, rawPrompt);
+  const replyText = await callGroq(messages, finalPrompt);
 
   await sendMessage(senderPsid, replyText, config.fbPageId!, config.fbPageToken!);
 }
