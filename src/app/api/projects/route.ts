@@ -312,6 +312,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
     }
 
+    if (data.isPublished) {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/projects");
+      revalidatePath(`/projects/${project.slug}`);
+    }
     return NextResponse.json(
       { data: { id: project.id, slug: project.slug } },
       { status: 201 }

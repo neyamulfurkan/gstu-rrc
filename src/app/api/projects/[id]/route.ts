@@ -254,6 +254,9 @@ export async function PUT(
         entityId: existing2.id,
         ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? request.headers.get("x-real-ip") ?? undefined,
       });
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/projects");
+      revalidatePath(`/projects/${existing2.slug}`);
       return NextResponse.json({ data: updated2, message: "Project updated successfully" });
     }
 
@@ -419,6 +422,9 @@ export async function PUT(
         undefined,
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${updatedProject.slug}`);
     return NextResponse.json({
       data: updatedProject,
       message: "Project updated successfully",
@@ -489,6 +495,9 @@ export async function DELETE(
         undefined,
     });
 
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${existing.slug}`);
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("[DELETE /api/projects/[id]] Error:", error);
