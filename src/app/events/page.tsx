@@ -7,7 +7,8 @@ import { Calendar } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { generateBaseMetadata } from "@/lib/seo";
 import { EventsGrid } from "@/components/events/index";
-import type { EventCard, ClubConfigPublic } from "@/types/index";
+import type { EventCard, ClubConfigPublic, CustomCardSection } from "@/types/index";
+import { CustomCardSections } from "@/components/home/CustomCardSections";
 
 export const revalidate = 60;
 
@@ -468,12 +469,28 @@ export default async function EventsPage({
   let events: EventCard[] = [];
   let categories: Array<{ id: string; name: string; color: string }> = [];
   let clubName = "GSTU Robotics & Research Club";
+  let customCardSections: CustomCardSection[] = [];
 
   try {
-    const data = await fetchPageData(initialTab);
+    const [data, rawSections] = await Promise.all([
+      fetchPageData(initialTab),
+      prisma.customCardSection.findMany({
+        where: { targetPage: "events", isPublished: true },
+        select: {
+          id: true, targetPage: true, heading: true, subtitle: true,
+          position: true, isPublished: true, sortOrder: true,
+          cards: {
+            select: { id: true, heading: true, description: true, imageUrl: true, buttonLabel: true, buttonUrl: true, buttonStyle: true, sortOrder: true },
+            orderBy: { sortOrder: "asc" },
+          },
+        },
+        orderBy: { sortOrder: "asc" },
+      }),
+    ]);
     events = data.events;
     categories = data.categories;
     clubName = data.config.clubName;
+    customCardSections = rawSections as CustomCardSection[];
   } catch (err) {
     console.error("[EventsPage] data fetch error:", err);
     // Render with empty state — EventsGrid handles it gracefully
@@ -532,6 +549,10 @@ export default async function EventsPage({
       </section>
 
       {/* ── Main Content ── */}
+      {customCardSections.filter(s => s.position === "after_main").length > 0 && (
+        <CustomCardSections sections={customCardSections.filter(s => s.position === "after_main")} />
+      )}
+
       <section className="px-4 md:px-6 lg:px-8 pb-24">
         <div className="max-w-7xl mx-auto">
           <Suspense
@@ -556,6 +577,10 @@ export default async function EventsPage({
           </Suspense>
         </div>
       </section>
+
+      {customCardSections.filter(s => s.position === "before_footer").length > 0 && (
+        <CustomCardSections sections={customCardSections.filter(s => s.position === "before_footer")} />
+      )}
     </main>
   );
 }
