@@ -57,35 +57,15 @@ export async function generateCertificatePdf(
   templateCss: string,
   data: CertificateData
 ): Promise<Buffer> {
-  // Replace all placeholders in the HTML template
   const populatedHtml = replacePlaceholders(templateHtml, data);
+  const fullHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><style>* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; } ${templateCss}</style></head><body>${populatedHtml}</body></html>`;
+  return Buffer.from(fullHtml, "utf-8");
+}
 
-  // Build the full HTML document
-  const fullHtml = `<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color-adjust: exact !important;
-      }
-      ${templateCss}
-    </style>
-  </head>
-  <body>
-    ${populatedHtml}
-  </body>
-</html>`;
-
-  // Skip Puppeteer on Vercel free tier — return HTML buffer instead
-  const populatedHtmlFallback = replacePlaceholders(templateHtml, data);
-  const fallbackHtml = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><style>* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } ${templateCss}</style></head><body>${populatedHtmlFallback}</body></html>`;
-  return Buffer.from(fallbackHtml, "utf-8");
-
-  // eslint-disable-next-line no-unreachable
+async function _unusedPuppeteerPath(
+  fullHtml: string,
+  data: CertificateData
+): Promise<Buffer> {
   let browser: import("puppeteer-core").Browser | null = null;
 
   try {
@@ -165,4 +145,5 @@ export async function generateCertificatePdf(
       }`
     );
   }
+  return Buffer.from(fullHtml);
 }
