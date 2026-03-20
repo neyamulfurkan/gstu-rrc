@@ -2514,7 +2514,7 @@ async function handleFacebookOAuth(
     const code = req.nextUrl.searchParams.get("code");
     const error = req.nextUrl.searchParams.get("error");
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
-    const redirectUri = `${baseUrl.replace(/\/+$/, "")}/admin/facebook`;
+    const redirectUri = `${baseUrl.replace(/\/+$/, "")}/api/admin/facebook-oauth`;
 
     if (error || !code) {
       return NextResponse.redirect(`${redirectUri}?error=oauth_denied`);
