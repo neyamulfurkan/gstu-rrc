@@ -46,7 +46,6 @@ async function uploadPdfToCloudinary(
   const timestamp = Math.round(Date.now() / 1000);
   const paramsToSign: Record<string, string | number> = {
     public_id: publicId,
-    resource_type: "raw",
     timestamp,
   };
 
