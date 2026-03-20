@@ -370,8 +370,8 @@ export async function generateCertificatePdf(
   data: CertificateData
 ): Promise<Buffer> {
   try {
-    const element = React.createElement(CertificateDoc, { data });
-    const uint8 = await renderToBuffer(element);
+    const docElement = CertificateDoc({ data });
+    const uint8 = await renderToBuffer(docElement);
     return Buffer.from(uint8);
   } catch (err) {
     console.error(
