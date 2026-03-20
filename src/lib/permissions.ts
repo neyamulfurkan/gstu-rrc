@@ -75,11 +75,16 @@ export function isSuperAdmin(session: Session | null): boolean {
   if (!session?.user) return false;
   const user = session.user as {
     isAdmin?: boolean;
-    adminRole?: string;
+    adminRole?: string | null;
     permissions?: Record<string, boolean>;
   };
+  // Super admin if: adminRole name is "super_admin", OR has super_admin permission,
+  // OR is an admin with no adminRoleId (seed admin — has isAdmin=true but no role assigned)
   if (user.adminRole === "super_admin") return true;
-  return hasPermission(user.permissions ?? null, "super_admin");
+  if (hasPermission(user.permissions ?? null, "super_admin")) return true;
+  // Seed admin: isAdmin=true but adminRole is null (no role assigned yet)
+  if (user.isAdmin === true && (user.adminRole === null || user.adminRole === undefined)) return true;
+  return false;
 }
 
 export function canAccess(
