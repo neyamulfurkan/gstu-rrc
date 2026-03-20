@@ -41,6 +41,20 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
       if (!adminConfig) {
         return NextResponse.json({ error: "Configuration not found." }, { status: 404 });
       }
+      const aiFields = url.searchParams.get("fields") === "ai" ? await prisma.clubConfig.findUnique({
+        where: { id: "main" },
+        select: {
+          aiEnabled: true,
+          groqModel: true,
+          groqTemperature: true,
+          aiSystemPrompt: true,
+          aiContextItems: true,
+          aiChatHistory: true,
+        },
+      }) : null;
+      if (url.searchParams.get("fields") === "ai") {
+        return NextResponse.json({ data: aiFields }, { headers: { "Cache-Control": "no-store" } });
+      }
       return NextResponse.json({
         resendApiKey: adminConfig.resendApiKey ? "masked" : "",
         resendFromEmail: adminConfig.resendFromEmail ?? "",
@@ -163,6 +177,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const allowedFields: Record<string, string[]> = {
       branding: ["clubName", "clubShortName", "clubMotto", "clubDescription", "universityName", "departmentName", "foundedYear", "logoUrl", "faviconUrl"],
+      ai: ["aiEnabled", "groqApiKey", "groqModel", "groqTemperature", "groqMaxTokens", "aiSystemPrompt", "aiContextItems", "aiChatHistory"],
       contact: ["email", "phone", "address", "fbUrl", "ytUrl", "igUrl", "liUrl", "ghUrl", "twitterUrl", "extraSocialLinks"],
       seo: ["metaDescription", "seoKeywords", "gscVerifyTag", "ogImageUrl"],
       membership: ["regStatus", "membershipFee", "bkashNumber", "nagadNumber", "bkashName", "nagadName", "autoApprove", "requireScreenshot"],
