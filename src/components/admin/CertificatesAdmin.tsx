@@ -282,69 +282,69 @@ function TemplatesTab({ templates, isLoading, onRefresh }: TemplatesTabProps): J
                 "transition-all duration-200"
               )}
             >
-              {tmpl.previewUrl ? (
-                <div className="relative h-32 bg-[var(--color-bg-elevated)] overflow-hidden">
-                  <Image
-                    src={cloudinaryUrl(tmpl.previewUrl, { width: 400, height: 200 })}
-                    alt={tmpl.name}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
-                </div>
-              ) : (
-                <div className="h-32 bg-[var(--color-bg-elevated)] overflow-hidden relative">
+              {/* Full-card certificate preview */}
+              <div className="relative overflow-hidden" style={{ paddingBottom: "70%" }}>
+                <div className="absolute inset-0">
                   <iframe
-                    srcDoc={`<!DOCTYPE html><html><head><style>${tmpl.cssContent} body{zoom:0.18;transform-origin:top left;} </style></head><body>${tmpl.htmlContent}</body></html>`}
-                    className="w-full border-0 pointer-events-none"
-                    style={{ height: "550px", transform: "scale(0.18)", transformOrigin: "top left", width: "555%" }}
+                    srcDoc={tmpl.previewUrl ? undefined : `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}html,body{width:100%;height:100%;overflow:hidden;}${tmpl.cssContent}</style></head><body>${tmpl.htmlContent}</body></html>`}
+                    src={tmpl.previewUrl ?? undefined}
+                    className="w-full h-full border-0 pointer-events-none"
+                    style={{ transform: "scale(1)", transformOrigin: "top left", width: "100%", height: "100%" }}
                     sandbox="allow-same-origin allow-scripts"
                     title={tmpl.name}
                   />
                 </div>
-              )}
-              <div className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <h3 className="text-sm font-semibold text-[var(--color-text-primary)] font-[var(--font-heading)] leading-tight">
-                    {tmpl.name}
-                  </h3>
-                  <Badge variant={typeColorMap[tmpl.type.toLowerCase()] ?? "neutral"} size="sm">
-                    {tmpl.type}
-                  </Badge>
-                </div>
-                <p className="text-xs text-[var(--color-text-secondary)] mb-3">
-                  Created {formatDate(tmpl.createdAt, "short")}
-                </p>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleEdit(tmpl)}
-                    aria-label={`Edit ${tmpl.name}`}
-                    className={cn(
-                      "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
-                      "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
-                      "hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]",
-                      "transition-colors duration-150",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                    )}
+                {/* Overlay: name, type, actions — sits on top of the certificate */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  {/* Top bar */}
+                  <div className="flex items-start justify-between p-3">
+                    <Badge variant={typeColorMap[tmpl.type.toLowerCase()] ?? "neutral"} size="sm">
+                      {tmpl.type}
+                    </Badge>
+                  </div>
+                  {/* Bottom bar */}
+                  <div
+                    className="flex items-end justify-between px-3 pb-3 pt-8"
+                    style={{ background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%)" }}
                   >
-                    <Pencil size={12} />
-                    Edit
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget(tmpl)}
-                    aria-label={`Delete ${tmpl.name}`}
-                    className={cn(
-                      "inline-flex items-center justify-center w-8 h-8 rounded-lg",
-                      "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
-                      "hover:border-[var(--color-error)] hover:text-[var(--color-error)]",
-                      "transition-colors duration-150",
-                      "focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]"
-                    )}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-bold text-white leading-tight truncate drop-shadow">
+                        {tmpl.name}
+                      </h3>
+                      <p className="text-xs text-white/60 mt-0.5">
+                        Created {formatDate(tmpl.createdAt, "short")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1.5 pointer-events-auto shrink-0 ml-2">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(tmpl)}
+                        aria-label={`Edit ${tmpl.name}`}
+                        className={cn(
+                          "inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium",
+                          "bg-white/20 backdrop-blur-sm text-white border border-white/30",
+                          "hover:bg-white/30 transition-colors duration-150",
+                          "focus:outline-none focus:ring-2 focus:ring-white/50"
+                        )}
+                      >
+                        <Pencil size={11} />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(tmpl)}
+                        aria-label={`Delete ${tmpl.name}`}
+                        className={cn(
+                          "inline-flex items-center justify-center w-7 h-7 rounded-lg",
+                          "bg-white/20 backdrop-blur-sm text-white border border-white/30",
+                          "hover:bg-red-500/60 transition-colors duration-150",
+                          "focus:outline-none focus:ring-2 focus:ring-white/50"
+                        )}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

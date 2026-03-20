@@ -681,22 +681,27 @@ footer { display: flex; justify-content: space-between; align-items: flex-end; b
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function buildPreviewHtml(htmlContent: string, cssContent: string): string {
+function buildPreviewHtml(htmlContent: string, cssContent: string, logoUrl?: string): string {
   let filled = htmlContent;
   for (const [placeholder, sample] of Object.entries(SAMPLE_DATA)) {
     filled = filled.split(placeholder).join(sample);
   }
 
-  // Inject CSS into head if it contains a <head> tag
+  const hasWatermark = cssContent.includes("__wm__");
+  const wmDiv = hasWatermark && logoUrl
+    ? `<div id="__wm__" style="background-image:url('${logoUrl}')"></div>`
+    : "";
+
   const hasHead = /<head[\s>]/i.test(filled);
   const styleTag = `<style>\n${cssContent}\n</style>`;
 
   if (hasHead) {
-    return filled.replace(/<\/head>/i, `${styleTag}\n</head>`);
+    return filled
+      .replace(/<\/head>/i, `${styleTag}\n</head>`)
+      .replace(/<\/body>/i, `${wmDiv}</body>`);
   }
 
-  // Wrap in a full document if no head
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">${styleTag}</head><body>${filled}</body></html>`;
+  return `<!DOCTYPE html><html><head><meta charset="UTF-8">${styleTag}</head><body>${filled}${wmDiv}</body></html>`;
 }
 
 function insertAtCursor(
@@ -1027,30 +1032,23 @@ export function CertificateTemplateEditor({
   const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── buildFinalCss must be declared BEFORE hooks that depend on it ──
-  const buildFinalCss = useCallback((baseCss: string, resolvedLogoUrl?: string): string => {
+  const buildFinalCss = useCallback((baseCss: string, _resolvedLogoUrl?: string): string => {
     if (!logoWatermark) return baseCss;
-    // Use the resolved logo URL if provided (for preview), otherwise keep the placeholder (for saved CSS)
-    const logoValue = resolvedLogoUrl ?? "{{logo_url}}";
     const watermarkCss = `
 /* ── Logo Watermark (auto-generated) ── */
-body, .certificate, .cert, body > div:first-of-type {
-  position: relative !important;
-}
-body::after, .certificate::before, .cert::before, body > div:first-of-type::before {
-  content: "" !important;
-  position: absolute !important;
+#__wm__ {
+  position: fixed !important;
   top: 50% !important;
   left: 50% !important;
   transform: translate(-50%, -50%) !important;
   width: ${watermarkSize}px !important;
   height: ${watermarkSize}px !important;
-  background-image: url("${logoValue}") !important;
   background-size: contain !important;
   background-repeat: no-repeat !important;
   background-position: center !important;
   opacity: ${watermarkOpacity / 100} !important;
   pointer-events: none !important;
-  z-index: 0 !important;
+  z-index: 9999 !important;
 }`;
     return baseCss + watermarkCss;
   }, [logoWatermark, watermarkOpacity, watermarkSize]);
@@ -1064,7 +1062,7 @@ body::after, .certificate::before, .cert::before, body > div:first-of-type::befo
     }
 
     previewDebounceRef.current = setTimeout(() => {
-      setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent, SAMPLE_DATA["{{logo_url}}"])));
+      setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent), SAMPLE_DATA["{{logo_url}}"]));
     }, 500);
 
     return () => {
@@ -1078,7 +1076,7 @@ body::after, .certificate::before, .cert::before, body > div:first-of-type::befo
   const handleTogglePreview = useCallback(() => {
     setPreviewVisible((prev) => {
       if (!prev) {
-        setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent, SAMPLE_DATA["{{logo_url}}"])));
+        setPreviewSrc(buildPreviewHtml(htmlContent, buildFinalCss(cssContent), SAMPLE_DATA["{{logo_url}}"]));
       }
       return !prev;
     });
@@ -1129,11 +1127,16 @@ body::after, .certificate::before, .cert::before, body > div:first-of-type::befo
 
     setIsSubmitting(true);
     try {
+      const finalCss = buildFinalCss(cssContent);
+      const hasWatermarkDiv = finalCss.includes("__wm__");
+      const finalHtml = hasWatermarkDiv
+        ? htmlContent.replace(/<\/body>/i, `<div id="__wm__" style="background-image:url('{{logo_url}}')"></div></body>`)
+        : htmlContent;
       await onSubmit({
         name: name.trim(),
         type,
-        htmlContent,
-        cssContent: buildFinalCss(cssContent),
+        htmlContent: finalHtml,
+        cssContent: finalCss,
       });
     } catch (err) {
       const message =
@@ -1142,7 +1145,7 @@ body::after, .certificate::before, .cert::before, body > div:first-of-type::befo
     } finally {
       setIsSubmitting(false);
     }
-  }, [name, type, htmlContent, cssContent, onSubmit]);
+  }, [name, type, htmlContent, cssContent, onSubmit, buildFinalCss]);
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg-surface)] rounded-xl overflow-hidden">
@@ -1222,7 +1225,7 @@ setType(t.type);
 setHtmlContent(t.htmlContent);
 setCssContent(t.cssContent);
 if (previewVisible) {
-setPreviewSrc(buildPreviewHtml(t.htmlContent, buildFinalCss(t.cssContent, SAMPLE_DATA["{{logo_url}}"])));
+setPreviewSrc(buildPreviewHtml(t.htmlContent, buildFinalCss(t.cssContent), SAMPLE_DATA["{{logo_url}}"]));
 }
 }}
                   className={cn(
