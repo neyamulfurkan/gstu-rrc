@@ -180,6 +180,39 @@ interface ConnectionTabProps {
 
 function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element {
   const [disconnecting, setDisconnecting] = useState(false);
+  const [showManual, setShowManual] = useState(false);
+  const [manualPageId, setManualPageId] = useState("");
+  const [manualToken, setManualToken] = useState("");
+  const [manualSaving, setManualSaving] = useState(false);
+
+  const handleManualSave = useCallback(async () => {
+    if (!manualPageId.trim() || !manualToken.trim()) {
+      toast("Both Page ID and Access Token are required.", "error");
+      return;
+    }
+    setManualSaving(true);
+    try {
+      const res = await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tab: "facebook",
+          fbPageId: manualPageId.trim(),
+          fbPageToken: manualToken.trim(),
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to save");
+      toast("Facebook page connected successfully.", "success");
+      setManualPageId("");
+      setManualToken("");
+      setShowManual(false);
+      onMutate();
+    } catch {
+      toast("Failed to connect. Please check your credentials.", "error");
+    } finally {
+      setManualSaving(false);
+    }
+  }, [manualPageId, manualToken, onMutate]);
 
   const isConnected = !!fbConfig?.fbPageId;
 
@@ -325,6 +358,87 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
             </button>
           )}
         </div>
+      </div>
+
+      {/* Manual Token Input */}
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-sm font-semibold text-[var(--color-text-primary)] flex items-center gap-2">
+            <Settings size={15} />
+            Manual Connection
+          </h4>
+          <button
+            type="button"
+            onClick={() => setShowManual((v) => !v)}
+            className={cn(
+              "text-xs px-3 py-1.5 rounded-lg border transition-colors duration-150",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+              showManual
+                ? "bg-[var(--color-bg-elevated)] border-[var(--color-border)] text-[var(--color-text-secondary)]"
+                : "bg-[var(--color-accent)]/10 border-[var(--color-accent)]/30 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/20"
+            )}
+          >
+            {showManual ? "Cancel" : "Enter Token Manually"}
+          </button>
+        </div>
+        <p className="text-xs text-[var(--color-text-secondary)] mb-3">
+          Use this if the OAuth flow is blocked. Generate a Page Access Token from{" "}
+          <a
+            href="https://developers.facebook.com/tools/explorer/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--color-accent)] hover:underline"
+          >
+            Graph API Explorer
+          </a>{" "}
+          and paste it here.
+        </p>
+        {showManual && (
+          <div className="space-y-3 pt-2 border-t border-[var(--color-border)]">
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                Page ID
+              </label>
+              <Input
+                type="text"
+                value={manualPageId}
+                onChange={(e) => setManualPageId(e.target.value)}
+                placeholder="e.g. 123456789012345"
+              />
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                Find your Page ID at facebook.com/your-page → About → Page transparency
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                Page Access Token
+              </label>
+              <Input
+                type="password"
+                value={manualToken}
+                onChange={(e) => setManualToken(e.target.value)}
+                placeholder="Paste your Page Access Token here"
+              />
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                ⚠️ Never share this token with anyone. It gives full access to your page.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleManualSave}
+              disabled={manualSaving || !manualPageId.trim() || !manualToken.trim()}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold w-full justify-center",
+                "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]",
+                "transition-colors duration-150 disabled:opacity-60 disabled:cursor-not-allowed",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              )}
+            >
+              {manualSaving ? <Spinner size="sm" /> : <CheckCircle size={15} />}
+              Save & Connect
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Permissions Info */}
