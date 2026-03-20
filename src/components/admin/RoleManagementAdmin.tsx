@@ -1149,7 +1149,7 @@ function PermissionMatrixTab(): JSX.Element {
     }
   }, [adminRoles, localPermissions, mutate]);
 
-  const handleReset = useCallback(() => {
+const handleReset = useCallback(() => {
     const initial: Record<string, Record<string, boolean>> = {};
     for (const role of adminRoles) {
       initial[role.id] = { ...role.permissions };
@@ -1159,6 +1159,27 @@ function PermissionMatrixTab(): JSX.Element {
     setSaveSuccess(false);
     setSaveError(null);
   }, [adminRoles]);
+
+  const handleDeleteRole = useCallback(async (roleId: string, roleName: string) => {
+    if (!window.confirm(`Delete role "${roleName}"? This cannot be undone. Members assigned this role will lose it.`)) {
+      return;
+    }
+    try {
+      const res = await fetch("/api/admin/admin-roles", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: roleId }),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error ?? "Failed to delete role");
+      }
+      toast(`Role "${roleName}" deleted`, "success");
+      await mutate();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to delete role");
+    }
+  }, [mutate]);
 
   if (error) {
     return (
@@ -1387,8 +1408,22 @@ function PermissionMatrixTab(): JSX.Element {
                       {role.name}
                     </span>
                     <span className="text-[var(--color-text-secondary)] font-normal normal-case">
-                      {Object.values(localPermissions[role.id] ?? {}).filter(Boolean).length} active
+                      {PERMISSION_LIST.filter((p) => localPermissions[role.id]?.[p] === true).length} active
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => void handleDeleteRole(role.id, role.name)}
+                      className={cn(
+                        "mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium",
+                        "text-[var(--color-error)] border border-[var(--color-error)]/30",
+                        "hover:bg-[var(--color-error)]/10 transition-colors",
+                        "focus:outline-none focus:ring-1 focus:ring-[var(--color-error)]"
+                      )}
+                      aria-label={`Delete role ${role.name}`}
+                    >
+                      <X size={9} aria-hidden="true" />
+                      Delete
+                    </button>
                   </div>
                 </th>
               ))}
