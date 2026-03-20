@@ -522,7 +522,10 @@ export async function DELETE(
     }
 
     if (isUserAdmin && !isAuthor) {
-      // Admin hard-delete
+      // Admin hard-delete: delete likes, comments, then post
+      await prisma.like.deleteMany({ where: { postId } });
+      await prisma.like.deleteMany({ where: { comment: { postId } } });
+      await prisma.comment.deleteMany({ where: { postId } });
       await prisma.post.delete({ where: { id: postId } });
       await logActionSafe({
         adminId: currentUserId,
