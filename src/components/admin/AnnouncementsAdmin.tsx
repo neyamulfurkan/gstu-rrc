@@ -186,7 +186,7 @@ const TipTapEditor = dynamic(
                   editor.isActive("blockquote") ? btnActive : btnBase
                 }
               >
-                " Quote
+                &quot; Quote
               </button>
             </div>
             {/* Editor Content */}
@@ -992,7 +992,7 @@ function DeleteConfirmModal({
         <p className="text-sm text-[var(--color-text-secondary)]">
           Are you sure you want to permanently delete{" "}
           <strong className="text-[var(--color-text-primary)]">
-            "{announcement?.title}"
+            &quot;{announcement?.title}&quot;
           </strong>
           ? This action cannot be undone.
         </p>

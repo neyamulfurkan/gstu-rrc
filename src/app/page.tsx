@@ -401,7 +401,7 @@ function MilestonesSection({ milestones }: MilestonesSectionProps): JSX.Element 
             Our Milestones
           </h2>
           <p className="mt-4 text-[var(--color-text-secondary)] text-base max-w-xl mx-auto">
-            Key moments that shaped our club's history.
+            Key moments that shaped our club&apos;s history.
           </p>
         </div>
         <Timeline items={timelineItems} />

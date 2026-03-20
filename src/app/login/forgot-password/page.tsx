@@ -120,7 +120,7 @@ export default function ForgotPasswordPage(): JSX.Element {
                   className="text-sm leading-relaxed"
                   style={{ color: "var(--color-text-secondary)" }}
                 >
-                  No worries. Enter your registered email address and we'll send
+                  No worries. Enter your registered email address and we&apos;ll send
                   you a link to reset your password.
                 </p>
               </div>
@@ -246,7 +246,7 @@ export default function ForgotPasswordPage(): JSX.Element {
                 style={{ color: "var(--color-text-secondary)" }}
               >
                 The link will expire in <strong>1 hour</strong>. Check your
-                spam folder if you don't see it.
+                spam folder if you don&apos;t see it.
               </p>
 
               <div className="space-y-3">

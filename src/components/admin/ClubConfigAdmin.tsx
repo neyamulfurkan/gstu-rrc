@@ -1301,7 +1301,7 @@ function NavigationTab({ config }: NavigationTabProps): JSX.Element {
             label="Footer Copyright Text"
             value={form.footerCopyright}
             onChange={set("footerCopyright")}
-            placeholder={`© ${new Date().getFullYear()} GSTU Robotics & Research Club`}
+            placeholder={`\u00A9 ${new Date().getFullYear()} GSTU Robotics & Research Club`}
           />
           <Input
             label="Constitution / Rules Document URL"

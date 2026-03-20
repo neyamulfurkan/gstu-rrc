@@ -67,7 +67,7 @@ function UpcomingEmpty(): JSX.Element {
         No upcoming events at the moment
       </p>
       <p className="text-[var(--color-text-secondary)] text-xs max-w-xs">
-        Check back soon — new events are added regularly.
+        Check back soon &mdash; new events are added regularly.
       </p>
       <Link
         href="/events"

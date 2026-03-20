@@ -564,7 +564,7 @@ function SectionCard({
                 No cards yet
               </p>
               <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                Click "Add Card" to add content to this section.
+                Click &quot;Add Card&quot; to add content to this section.
               </p>
             </div>
           ) : (

@@ -543,7 +543,7 @@ export default async function EventsPage({
           {/* Subheading */}
           <p className="text-base text-[var(--color-text-secondary)] max-w-xl">
             Workshops, competitions, seminars, and club gatherings — discover
-            what's happening in the robotics and research community.
+            what&apos;s happening in the robotics and research community.
           </p>
         </div>
       </section>

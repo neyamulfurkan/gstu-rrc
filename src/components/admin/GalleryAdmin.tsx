@@ -207,7 +207,7 @@ function DeleteConfirmModal({
           </div>
           <div>
             <p className="text-sm text-[var(--color-text-primary)] font-medium">
-              Delete "{truncateText(itemTitle || "this item", 40)}"?
+              Delete &quot;{truncateText(itemTitle || "this item", 40)}&quot;?
             </p>
             <p className="text-sm text-[var(--color-text-secondary)] mt-1">
               This action cannot be undone. The item will be permanently removed from the gallery and Cloudinary.

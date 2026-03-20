@@ -178,7 +178,7 @@ export function WhyJoinSection({ cards }: WhyJoinSectionProps): JSX.Element {
             Why Join the Club?
           </h2>
           <p className="mt-4 text-[var(--color-text-secondary)] text-base max-w-xl mx-auto leading-relaxed">
-            Be part of a community that builds, researches, and innovates. Here's what you gain.
+            Be part of a community that builds, researches, and innovates. Here&apos;s what you gain.
           </p>
         </motion.div>
 
