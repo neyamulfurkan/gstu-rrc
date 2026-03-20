@@ -183,6 +183,7 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
   const [showManual, setShowManual] = useState(false);
   const [manualPageId, setManualPageId] = useState("");
   const [manualToken, setManualToken] = useState("");
+  const [manualWebhookToken, setManualWebhookToken] = useState("gstu-rrc-webhook-2026");
   const [manualSaving, setManualSaving] = useState(false);
 
   const handleManualSave = useCallback(async () => {
@@ -199,6 +200,7 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
           tab: "facebook",
           fbPageId: manualPageId.trim(),
           fbPageToken: manualToken.trim(),
+          fbWebhookToken: manualWebhookToken.trim() || "gstu-rrc-webhook-2026",
         }),
       });
       if (!res.ok) throw new Error("Failed to save");
@@ -421,6 +423,20 @@ function ConnectionTab({ fbConfig, onMutate }: ConnectionTabProps): JSX.Element 
               />
               <p className="text-xs text-[var(--color-text-secondary)] mt-1">
                 ⚠️ Never share this token with anyone. It gives full access to your page.
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+                Webhook Verify Token
+              </label>
+              <Input
+                type="text"
+                value={manualWebhookToken}
+                onChange={(e) => setManualWebhookToken(e.target.value)}
+                placeholder="e.g. gstu-rrc-webhook-2026"
+              />
+              <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+                This must exactly match the Verify Token you set in Meta Webhooks dashboard.
               </p>
             </div>
             <button
