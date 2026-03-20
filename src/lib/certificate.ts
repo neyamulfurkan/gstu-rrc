@@ -118,7 +118,7 @@ export async function generateCertificatePdf(
       defaultViewport: { width: 1200, height: 850 },
     });
 
-    const page = await browser.newPage();
+    const page = await browser!.newPage();
 
     // Set content and wait for all network resources (fonts, images) to load
     await page.setContent(fullHtml, { waitUntil: "networkidle0" });
