@@ -177,17 +177,24 @@ async function processMessageEvent(
   const senderPsid = entry.sender?.id;
   const messageText = entry.message?.text;
 
+  console.log("[DEBUG] processMessageEvent called", { senderPsid, messageText });
+
   if (!senderPsid || !messageText) {
+    console.log("[DEBUG] Skipping — missing senderPsid or messageText");
     return;
   }
 
   if (!config.fbPageToken || !config.fbPageId) {
-    console.error("[facebook/webhook] No page token or page ID for message reply.");
+    console.error("[DEBUG] Missing pageToken or pageId", {
+      hasToken: !!config.fbPageToken,
+      hasPageId: !!config.fbPageId,
+    });
     return;
   }
 
   // Don't reply to the page's own messages
   if (senderPsid === config.fbPageId) {
+    console.log("[DEBUG] Skipping — sender is the page itself");
     return;
   }
 
@@ -208,6 +215,9 @@ async function processMessageEvent(
 }
 
 async function processWebhookBody(body: FacebookWebhookBody): Promise<void> {
+  console.log("[DEBUG] processWebhookBody called, object:", body.object);
+  console.log("[DEBUG] entry count:", body.entry?.length);
+
   const config = await getFacebookConfig();
 
   if (!config) {
@@ -215,11 +225,25 @@ async function processWebhookBody(body: FacebookWebhookBody): Promise<void> {
     return;
   }
 
+  console.log("[DEBUG] config loaded", {
+    fbAutoReplyMessages: config.fbAutoReplyMessages,
+    fbAutoReplyComments: config.fbAutoReplyComments,
+    hasPageId: !!config.fbPageId,
+    hasPageToken: !!config.fbPageToken,
+  });
+
   if (!Array.isArray(body.entry)) {
+    console.log("[DEBUG] body.entry is not an array");
     return;
   }
 
   for (const entry of body.entry) {
+    console.log("[DEBUG] processing entry", {
+      hasChanges: Array.isArray(entry.changes),
+      hasMessaging: Array.isArray(entry.messaging),
+      messagingCount: entry.messaging?.length,
+    });
+
     // Handle "page" comment changes
     if (Array.isArray(entry.changes) && config.fbAutoReplyComments) {
       for (const change of entry.changes) {
@@ -244,10 +268,17 @@ async function processWebhookBody(body: FacebookWebhookBody): Promise<void> {
     }
 
     // Handle Messenger messages
-    if (Array.isArray(entry.messaging) && config.fbAutoReplyMessages) {
+    if (Array.isArray(entry.messaging)) {
+      console.log("[DEBUG] messaging array found, fbAutoReplyMessages:", config.fbAutoReplyMessages);
       for (const messagingEntry of entry.messaging) {
+        console.log("[DEBUG] messagingEntry keys:", Object.keys(messagingEntry));
+        console.log("[DEBUG] has message:", !!messagingEntry.message, "has text:", !!messagingEntry.message?.text);
         // Only process standard messages (not deliveries, reads, etc.)
         if (messagingEntry.message && messagingEntry.message.text) {
+          if (!config.fbAutoReplyMessages) {
+            console.log("[DEBUG] fbAutoReplyMessages is false — skipping");
+            continue;
+          }
           try {
             await processMessageEvent(messagingEntry, config);
           } catch (error) {
