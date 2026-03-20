@@ -139,7 +139,7 @@ export async function generateCertificatePdf(
     browser = null;
 
     return Buffer.from(pdfBuffer);
-  } catch (error) {
+  } catch (err: unknown) {
     // Ensure the browser is always closed even if an error occurs mid-render
     if (browser !== null) {
       try {
@@ -154,14 +154,14 @@ export async function generateCertificatePdf(
 
     console.error(
       `[certificate.ts] generateCertificatePdf failed for serial "${data.serial}" (recipient: "${data.memberName}"):`,
-      error
+      err
     );
 
     // Re-throw so the certificates API route can handle per-recipient failures
     // and continue issuing certificates to the remaining recipients
     throw new Error(
       `PDF generation failed for certificate ${data.serial}: ${
-        error instanceof Error ? error.message : String(error)
+        err instanceof Error ? err.message : String(err)
       }`
     );
   }
