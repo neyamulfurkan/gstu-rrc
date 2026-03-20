@@ -355,6 +355,7 @@ function TemplatesTab({ templates, isLoading, onRefresh }: TemplatesTabProps): J
       >
         <div className="p-6">
           <CertificateTemplateEditor
+            key={editingTemplate?.id ?? "new"}
             initialData={editingTemplate ?? undefined}
             onSubmit={async (data) => {
               const method = editingTemplate?.id ? "PUT" : "POST";
@@ -696,8 +697,8 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
         throw new Error(result.message ?? "Failed to issue certificates");
       }
 
-      const issued = result.issued ?? recipients.length;
-      const failed = result.failed ?? 0;
+      const issued = result.data?.successCount ?? result.issued ?? recipients.length;
+      const failed = result.data?.failureCount ?? result.failed ?? 0;
 
       if (failed > 0) {
         toast(
@@ -1049,7 +1050,7 @@ function IssuedTab({ shouldRefresh }: IssuedTabProps): JSX.Element {
     isLoading,
     mutate,
   } = useSWR<{ data: IssuedCertificate[]; total: number }>(
-    `/api/certificates?all=true&take=${PAGE_SIZE}&skip=${(page - 1) * PAGE_SIZE}`,
+    `/api/certificates?take=${PAGE_SIZE}&cursor=${page > 1 ? "use-offset" : ""}`,
     fetcher,
     { revalidateOnFocus: false }
   );
