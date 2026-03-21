@@ -174,23 +174,8 @@ export default function LoginPage({ searchParams }: LoginPageProps): JSX.Element
         />
 
         {/* Left panel content */}
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div className="flex items-center gap-3">
-            {config?.logoUrl && (
-              <Image
-                src={config.logoUrl}
-                alt={config.clubName ?? "Club Logo"}
-                width={40}
-                height={40}
-                className="rounded-lg object-contain"
-              />
-            )}
-            {config?.clubName && (
-              <span className="font-display text-lg font-bold text-[var(--color-text-primary)] tracking-wider">
-                {config.clubName}
-              </span>
-            )}
-          </div>
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full pt-24">
+          <div />
 
           <div className="space-y-4">
             <h2 className="font-display text-4xl font-bold text-[var(--color-text-primary)] leading-tight">
