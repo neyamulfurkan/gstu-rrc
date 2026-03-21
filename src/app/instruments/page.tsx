@@ -174,7 +174,6 @@ export default async function InstrumentsPageRoute(): Promise<JSX.Element> {
           }
         : undefined,
     borrowDate: inst.borrowDate ?? null,
-    borrowDate: inst.borrowDate ?? null,
     returnDate: inst.returnDate ?? null,
   }));
 
