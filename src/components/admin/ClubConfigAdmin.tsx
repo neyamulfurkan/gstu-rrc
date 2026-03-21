@@ -310,8 +310,7 @@ function BrandingTab({ config }: BrandingTabProps): JSX.Element {
     clubMotto: config.clubMotto ?? "",
     clubDescription: config.clubDescription ?? "",
     universityName: config.universityName ?? "",
-    universityLogoUrl: (config as any).universityLogoUrl ?? "",
-    universityWebUrl: (config as any).universityWebUrl ?? "",
+
     departmentName: config.departmentName ?? "",
     foundedYear: String(config.foundedYear ?? new Date().getFullYear()),
     logoUrl: config.logoUrl ?? "",
@@ -379,13 +378,7 @@ function BrandingTab({ config }: BrandingTabProps): JSX.Element {
             onChange={(e) => set("universityName")(e.target.value)}
             placeholder="Gopalganj Science and Technology University"
           />
-          <Input
-            label="University Website URL"
-            value={form.universityWebUrl}
-            onChange={(e) => set("universityWebUrl")(e.target.value)}
-            placeholder="https://gstu.edu.bd"
-            type="url"
-          />
+
           <Input
             label="Department Name"
             value={form.departmentName}
@@ -412,15 +405,7 @@ function BrandingTab({ config }: BrandingTabProps): JSX.Element {
         />
       </Section>
 
-      <Section title="University Logo" description="Upload the university logo shown in the footer next to the university name.">
-        <CloudinaryWidget
-          folder="admin/branding"
-          value={form.universityLogoUrl}
-          onChange={set("universityLogoUrl")}
-          label="University Logo"
-          accept="image/*"
-        />
-      </Section>
+
 
       <Section title="Club Logo & Favicon" description="Upload optimized assets for the club logo and browser favicon.">
         <div className="flex flex-wrap gap-8">
