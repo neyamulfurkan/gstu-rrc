@@ -394,44 +394,7 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                   </li>
                 )}
 
-                {/* University Logo (below club branding) */}
-              {(config.universityLogoUrl || config.universityName) && (
-                <div className="flex items-center gap-2 pt-1">
-                  {config.universityLogoUrl ? (
-                    <div className="relative w-8 h-8 flex-shrink-0">
-                      <Image
-                        src={config.universityLogoUrl}
-                        alt={config.universityName || "University logo"}
-                        fill
-                        sizes="32px"
-                        className="object-contain"
-                      />
-                    </div>
-                  ) : null}
-                  {config.universityName && (
-                    config.universityWebUrl ? (
-                      <a
-                        href={config.universityWebUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs leading-tight transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        {config.universityName}
-                      </a>
-                    ) : (
-                      <span
-                        className="text-xs leading-tight"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        {config.universityName}
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-
-              {config.universityName && (
+                {config.universityName && (
                   <li className="flex items-start gap-2">
                     {config.universityLogoUrl ? (
                       <div className="relative w-5 h-5 flex-shrink-0 mt-0.5 overflow-hidden rounded-sm">
