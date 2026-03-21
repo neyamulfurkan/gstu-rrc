@@ -742,6 +742,8 @@ export default async function HomePage(): Promise<JSX.Element> {
     clubMotto: "Innovate. Build. Inspire.",
     clubDescription: "",
     universityName: "Gopalganj Science and Technology University",
+    universityLogoUrl: "",
+    universityWebUrl: "",
     departmentName: "",
     foundedYear: 2020,
     address: "Gopalganj, Bangladesh",

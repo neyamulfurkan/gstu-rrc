@@ -77,6 +77,8 @@ async function getConfig(): Promise<ClubConfigPublic> {
       clubMotto: "",
       clubDescription: "",
       universityName: "Gopalganj Science and Technology University",
+      universityLogoUrl: "",
+      universityWebUrl: "",
       departmentName: "",
       foundedYear: 2020,
       address: "",

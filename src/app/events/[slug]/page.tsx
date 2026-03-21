@@ -160,6 +160,8 @@ export async function generateMetadata({
 
   const config = {
     ...configRow,
+    universityLogoUrl: "",
+    universityWebUrl: "",
     extraSocialLinks: Array.isArray(configRow.extraSocialLinks)
       ? (configRow.extraSocialLinks as Array<{ label: string; url: string }>)
       : [],

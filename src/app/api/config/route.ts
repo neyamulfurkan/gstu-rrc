@@ -76,8 +76,6 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         clubMotto: true,
         clubDescription: true,
         universityName: true,
-        universityLogoUrl: true,
-        universityWebUrl: true,
         departmentName: true,
         foundedYear: true,
         address: true,

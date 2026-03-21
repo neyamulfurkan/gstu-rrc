@@ -241,6 +241,8 @@ export async function generateMetadata({
     ...config,
     clubMotto: "",
     clubDescription: config.metaDescription,
+    universityLogoUrl: "",
+    universityWebUrl: "",
     departmentName: "",
     regStatus: "open",
     membershipFee: 200,
