@@ -140,6 +140,7 @@ export interface InstrumentCard {
   imageUrl: string;
   status: string;
   borrower?: { username: string; fullName: string; avatarUrl: string } | null;
+  borrowDate?: Date | string | null;
   returnDate?: Date | string | null;
 }
 
