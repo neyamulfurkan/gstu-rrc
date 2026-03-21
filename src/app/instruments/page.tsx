@@ -133,6 +133,12 @@ export default async function InstrumentsPageRoute(): Promise<JSX.Element> {
         status: true,
         borrowDate: true,
         returnDate: true,
+        requests: {
+          where: { status: "approved" },
+          select: { borrowDate: true },
+          take: 1,
+          orderBy: { createdAt: "desc" },
+        },
         borrower: {
           select: {
             username: true,
@@ -173,7 +179,7 @@ export default async function InstrumentsPageRoute(): Promise<JSX.Element> {
             avatarUrl: inst.borrower.avatarUrl ?? "",
           }
         : undefined,
-    borrowDate: inst.borrowDate ?? null,
+    borrowDate: inst.borrowDate ?? (inst.requests && inst.requests.length > 0 ? inst.requests[0].borrowDate : null) ?? null,
     returnDate: inst.returnDate ?? null,
   }));
 
