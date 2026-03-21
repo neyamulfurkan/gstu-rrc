@@ -159,6 +159,9 @@ export function FacebookAdmin(): JSX.Element {
           {activeTab === "auto-post" && (
             <AutoPostTab fbConfig={fbConfig} onMutate={() => mutate("/api/config")} />
           )}
+          {activeTab === "pending-posts" && (
+            <PendingPostsTab isConnected={!!fbConfig?.fbPageId} />
+          )}
           {activeTab === "comment-replies" && (
             <CommentRepliesTab fbConfig={fbConfig} onMutate={() => mutate("/api/config")} />
           )}

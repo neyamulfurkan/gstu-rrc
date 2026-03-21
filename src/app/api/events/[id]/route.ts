@@ -288,11 +288,24 @@ export async function PUT(
         try {
           const clubConfig2 = await prisma.clubConfig.findUnique({
             where: { id: "main" },
-            select: { fbAutoPost: true },
+            select: { fbAutoPost: true, fbPageId: true, fbPageToken: true, fbRequireApproval: true },
           });
           const fbAutoPost2 = clubConfig2?.fbAutoPost as Record<string, boolean> | null;
           if (fbAutoPost2?.events === true) {
-            void postToFacebook(existingEvent2.title, existingEvent2.venue, existingEvent2.startDate, existingEvent2.coverUrl ?? null);
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+            const eventUrl = `${baseUrl}/events/${existingEvent2.slug}`;
+            const message = `📅 New Event: ${existingEvent2.title}
+
+        📍 Venue: ${existingEvent2.venue}
+
+        🔗 ${eventUrl}`;
+            const requiresApproval = (clubConfig2 as any)?.fbRequireApproval === true;
+            if (requiresApproval) {
+              const { queuePostForReview } = await import("@/lib/facebook");
+              await queuePostForReview({ entityType: "event", entityId: existingEvent2.id, entityTitle: existingEvent2.title, message, imageUrl: existingEvent2.coverUrl ?? null, link: eventUrl });
+            } else {
+              void postToFacebook(existingEvent2.title, existingEvent2.venue, existingEvent2.startDate, existingEvent2.coverUrl ?? null);
+            }
           }
         } catch {}
       }
@@ -381,17 +394,28 @@ export async function PUT(
       try {
         const clubConfig = await prisma.clubConfig.findUnique({
           where: { id: "main" },
-          select: { fbAutoPost: true },
+          select: { fbAutoPost: true, fbPageId: true, fbPageToken: true, fbRequireApproval: true },
         });
 
         const fbAutoPost = clubConfig?.fbAutoPost as Record<string, boolean> | null;
         if (fbAutoPost?.events === true) {
-          void postToFacebook(
-            updatedEvent.title,
-            updatedEvent.venue,
-            updatedEvent.startDate,
-            updatedEvent.coverUrl ?? null
-          );
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+          const eventUrl = `${baseUrl}/events/${updatedEvent.slug}`;
+          const eventDate = new Date(updatedEvent.startDate).toLocaleDateString("en-BD", { dateStyle: "long" });
+          const message = `📅 New Event: ${updatedEvent.title}
+
+📍 Venue: ${updatedEvent.venue}
+🗓 Date: ${eventDate}
+
+🔗 ${eventUrl}`;
+          const requiresApproval = (clubConfig as any)?.fbRequireApproval === true;
+          if (requiresApproval) {
+            const { queuePostForReview } = await import("@/lib/facebook");
+            await queuePostForReview({ entityType: "event", entityId: updatedEvent.id, entityTitle: updatedEvent.title, message, imageUrl: updatedEvent.coverUrl ?? null, link: eventUrl });
+          } else if (clubConfig?.fbPageId && clubConfig?.fbPageToken) {
+            const { postToPage } = await import("@/lib/facebook");
+            await postToPage({ message, link: eventUrl, imageUrl: updatedEvent.coverUrl ?? null, name: updatedEvent.title, description: `📍 ${updatedEvent.venue} | 🗓 ${eventDate}` });
+          }
         }
       } catch (fbErr) {
         console.error("[PUT /api/events/[id]] Facebook config fetch error:", fbErr);
