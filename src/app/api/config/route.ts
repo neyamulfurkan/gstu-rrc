@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { buildCssVariableBlock, DEFAULT_COLORS } from "@/lib/colorSystem";
+import { DEFAULT_COLORS } from "@/lib/colorSystem";
 
 export async function GET(_request: NextRequest): Promise<NextResponse> {
   // Handle previewColors override for ColorEditor iframe preview
