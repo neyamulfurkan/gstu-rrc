@@ -268,14 +268,20 @@ async function handleStats(
   const summary = {
     totalMembers,
     pendingApplications,
-    totalEvents,
-    activeInstruments,
+    upcomingEvents: totalEvents,
+    onLoanInstruments: activeInstruments,
     feedPostsToday,
-    pendingGallery,
+    pendingGalleryItems: pendingGallery,
+    memberSparkline: [],
+    applicationsSparkline: [],
+    eventsSparkline: [],
+    instrumentsSparkline: [],
+    postsSparkline: [],
+    gallerySparkline: [],
   };
 
   if (!detailed) {
-    return NextResponse.json({ data: summary });
+    return NextResponse.json(summary);
   }
 
   // Last 7 days data for charts
