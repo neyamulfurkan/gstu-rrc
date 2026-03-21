@@ -359,10 +359,10 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
 
                 {config.universityName && (
                   <li className="flex items-start gap-2">
-                    {(config as any).universityLogoUrl ? (
+                    {config.universityLogoUrl ? (
                       <div className="relative w-5 h-5 flex-shrink-0 mt-0.5 overflow-hidden rounded-sm">
                         <Image
-                          src={(config as any).universityLogoUrl}
+                          src={config.universityLogoUrl}
                           alt={config.universityName}
                           fill
                           sizes="20px"
@@ -376,9 +376,9 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                         aria-hidden="true"
                       />
                     )}
-                    {(config as any).universityWebUrl ? (
+                    {config.universityWebUrl ? (
                       <a
-                        href={(config as any).universityWebUrl}
+                        href={config.universityWebUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm leading-relaxed transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
