@@ -371,7 +371,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
           "hidden lg:block fixed top-0 left-0 right-0 z-40 w-full",
           "transition-all duration-300 ease-in-out",
           // Glass effect
-          "bg-[var(--color-bg-base)]/80 backdrop-blur-xl",
+          "bg-[var(--color-bg-base)]/95 backdrop-blur-xl",
           "border-b border-[var(--color-border)]",
           isScrolled ? "py-2 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.6)]" : "py-0"
         )}
