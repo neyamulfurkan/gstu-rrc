@@ -221,9 +221,9 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                 </div>
               </div>
 
-              {/* University Logo (below club branding) */}
-              {(config.universityLogoUrl || config.universityName) && (
-                <div className="flex items-center gap-2 pt-1 border-t border-[var(--color-border)] mt-1">
+              {/* University block moved to below motto — removed from here */}
+              {false && (
+                <div className="hidden">
                   {config.universityLogoUrl ? (
                     <div className="relative w-8 h-8 flex-shrink-0">
                       <Image
@@ -266,6 +266,43 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                 >
                   &ldquo;{config.clubMotto}&rdquo;
                 </p>
+              )}
+
+              {/* University Logo + Name — below motto */}
+              {(config.universityLogoUrl || config.universityName) && (
+                <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-border)]">
+                  {config.universityLogoUrl ? (
+                    <div className="relative w-8 h-8 flex-shrink-0">
+                      <Image
+                        src={config.universityLogoUrl}
+                        alt={config.universityName || "University logo"}
+                        fill
+                        sizes="32px"
+                        className="object-contain"
+                      />
+                    </div>
+                  ) : null}
+                  {config.universityName && (
+                    config.universityWebUrl ? (
+                      <a
+                        href={config.universityWebUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs leading-tight transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        {config.universityName}
+                      </a>
+                    ) : (
+                      <span
+                        className="text-xs leading-tight"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        {config.universityName}
+                      </span>
+                    )
+                  )}
+                </div>
               )}
 
               {/* Social Icons */}
