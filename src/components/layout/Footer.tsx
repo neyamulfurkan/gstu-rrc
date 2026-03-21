@@ -221,7 +221,7 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                 </div>
               </div>
 
-              {/* University block moved to below motto — removed from here */}
+              {/* University block moved to below socials — removed from here */}
               {false && (
                 <div className="hidden">
                   {config.universityLogoUrl ? (
@@ -268,7 +268,27 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                 </p>
               )}
 
-              {/* University Logo + Name — below motto */}
+
+
+              {/* Social Icons */}
+              {socialLinks.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {socialLinks.map((social) => (
+                    <a
+                      key={social.label}
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={social.label}
+                      className="inline-flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-transparent footer-social-icon"
+                    >
+                      {social.icon}
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {/* University Logo + Name — below social icons */}
               {(config.universityLogoUrl || config.universityName) && (
                 <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-border)]">
                   {config.universityLogoUrl ? (
@@ -302,24 +322,6 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                       </span>
                     )
                   )}
-                </div>
-              )}
-
-              {/* Social Icons */}
-              {socialLinks.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {socialLinks.map((social) => (
-                    <a
-                      key={social.label}
-                      href={social.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={social.label}
-                      className="inline-flex items-center justify-center w-8 h-8 rounded-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-1 focus:ring-offset-transparent footer-social-icon"
-                    >
-                      {social.icon}
-                    </a>
-                  ))}
                 </div>
               )}
             </div>
