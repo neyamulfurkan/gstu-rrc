@@ -263,13 +263,13 @@ export function InstrumentCard({
                   </Link>
                 </div>
               )}
-              {(instrument as any).borrowDate && (
+              {(instrument.borrowDate || (instrument as any).borrowDate) && (
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-[var(--color-text-secondary)]">
                     Borrowed:
                   </span>
                   <span className="text-xs font-medium text-[var(--color-text-primary)]">
-                    {formatDate((instrument as any).borrowDate, "short")}
+                    {formatDate((instrument.borrowDate || (instrument as any).borrowDate) as string, "short")}
                   </span>
                 </div>
               )}
