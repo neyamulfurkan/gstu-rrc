@@ -17,6 +17,8 @@ model ClubConfig {
   clubMotto                String   @default("Innovate. Build. Inspire.")
   clubDescription          String   @default("") @db.Text
   universityName           String   @default("Gopalganj Science and Technology University")
+  universityLogoUrl        String   @default("")
+  universityWebUrl         String   @default("")
   departmentName           String   @default("Computer Science & Engineering")
   foundedYear              Int      @default(2019)
   address                  String   @default("") @db.Text

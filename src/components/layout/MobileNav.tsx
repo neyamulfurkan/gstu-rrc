@@ -471,18 +471,34 @@ export function MobileNav({ config }: MobileNavProps) {
               <UserAvatar avatarUrl={avatarUrl} name={userName} size={30} />
             </Link>
           ) : (
-            <Link
-              href="/login"
-              aria-label="Login"
-              className={cn(
-                "p-2 rounded-xl text-[var(--color-text-secondary)]",
-                "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                "transition-colors duration-150"
-              )}
-            >
-              <LogIn className="w-5 h-5" />
-            </Link>
+            <div className="flex items-center gap-1">
+              <Link
+                href="/membership"
+                aria-label="Join Us"
+                className={cn(
+                  "flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold",
+                  "border border-[var(--color-accent)] text-[var(--color-accent)]",
+                  "hover:bg-[var(--color-accent)]/10",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                  "transition-colors duration-150"
+                )}
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Join</span>
+              </Link>
+              <Link
+                href="/login"
+                aria-label="Login"
+                className={cn(
+                  "p-2 rounded-xl text-[var(--color-text-secondary)]",
+                  "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                  "transition-colors duration-150"
+                )}
+              >
+                <LogIn className="w-5 h-5" />
+              </Link>
+            </div>
           )}
         </div>
       </header>

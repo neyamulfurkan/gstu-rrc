@@ -359,17 +359,41 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
 
                 {config.universityName && (
                   <li className="flex items-start gap-2">
-                    <Building2
-                      className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "var(--color-accent)" }}
-                      aria-hidden="true"
-                    />
-                    <span
-                      className="text-sm leading-relaxed"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
-                      {config.universityName}
-                    </span>
+                    {(config as any).universityLogoUrl ? (
+                      <div className="relative w-5 h-5 flex-shrink-0 mt-0.5 overflow-hidden rounded-sm">
+                        <Image
+                          src={(config as any).universityLogoUrl}
+                          alt={config.universityName}
+                          fill
+                          sizes="20px"
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
+                      <Building2
+                        className="w-4 h-4 flex-shrink-0 mt-0.5"
+                        style={{ color: "var(--color-accent)" }}
+                        aria-hidden="true"
+                      />
+                    )}
+                    {(config as any).universityWebUrl ? (
+                      <a
+                        href={(config as any).universityWebUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm leading-relaxed transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        {config.universityName}
+                      </a>
+                    ) : (
+                      <span
+                        className="text-sm leading-relaxed"
+                        style={{ color: "var(--color-text-secondary)" }}
+                      >
+                        {config.universityName}
+                      </span>
+                    )}
                   </li>
                 )}
               </ul>

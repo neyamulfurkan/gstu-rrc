@@ -197,7 +197,7 @@ export default async function ProjectsPage(): Promise<JSX.Element> {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
           <div>
             <h1 className="text-4xl md:text-5xl font-display font-black tracking-tight text-[var(--color-text-primary)] leading-none mb-3">
-              Projects
+              Projects & Research
             </h1>
             <p className="text-[var(--color-text-secondary)] text-base max-w-xl leading-relaxed">
               Innovations, research, and engineering solutions built by club
@@ -218,7 +218,7 @@ export default async function ProjectsPage(): Promise<JSX.Element> {
                   aria-hidden="true"
                 />
                 {initialProjects.length}
-                {initialProjects.length === 20 ? "+" : ""} projects
+                {initialProjects.length === 20 ? "+" : ""} projects & research
               </span>
             </div>
           )}

@@ -520,17 +520,7 @@ export function HeroSection({ config }: HeroSectionProps): JSX.Element {
           </motion.div>
         )}
 
-        {/* University / Department Label */}
-        <motion.p
-          variants={fadeVariants}
-          initial="hidden"
-          animate="visible"
-          transition={{ delay: 0.3 }}
-          className="text-xs md:text-sm font-mono tracking-[0.2em] uppercase text-[var(--color-accent)] mb-3 md:mb-4"
-        >
-          {config.universityName}
-          {config.departmentName ? ` · ${config.departmentName}` : ""}
-        </motion.p>
+
 
         {/* Club Name with Typing Effect */}
         <h1

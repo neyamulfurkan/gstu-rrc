@@ -242,6 +242,8 @@ export interface ClubConfigPublic {
   clubMotto: string;
   clubDescription: string;
   universityName: string;
+  universityLogoUrl: string;
+  universityWebUrl: string;
   departmentName: string;
   foundedYear: number;
   address: string;

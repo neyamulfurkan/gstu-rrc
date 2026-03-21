@@ -598,19 +598,34 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                 </DropdownMenuItem>
               </DropdownMenu>
             ) : (
-              <Link
-                href="/login"
-                className={cn(
-                  "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
-                  "bg-[var(--color-primary)] text-white",
-                  "hover:bg-[var(--color-primary)]/90",
-                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-base)]",
-                  "transition-colors duration-150"
-                )}
-              >
-                <LogIn size={15} aria-hidden="true" />
-                <span className="hidden sm:inline">Sign In</span>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/membership"
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
+                    "border border-[var(--color-accent)] text-[var(--color-accent)]",
+                    "hover:bg-[var(--color-accent)]/10",
+                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-base)]",
+                    "transition-colors duration-150"
+                  )}
+                >
+                  <UserPlus size={15} aria-hidden="true" />
+                  <span className="hidden sm:inline">Join Us</span>
+                </Link>
+                <Link
+                  href="/login"
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
+                    "bg-[var(--color-primary)] text-white",
+                    "hover:bg-[var(--color-primary)]/90",
+                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-base)]",
+                    "transition-colors duration-150"
+                  )}
+                >
+                  <LogIn size={15} aria-hidden="true" />
+                  <span className="hidden sm:inline">Sign In</span>
+                </Link>
+              </div>
             )}
           </div>
         </nav>
