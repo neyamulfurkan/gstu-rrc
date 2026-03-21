@@ -212,9 +212,9 @@ export default function LoginPage({ searchParams }: LoginPageProps): JSX.Element
       </div>
 
       {/* ── Right Panel ────────────────────────────────────── */}
-      <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-base)] px-4 py-12 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8">
-          {/* Mobile logo */}
+      <div className="flex-1 flex items-center justify-center bg-[var(--color-bg-base)] px-4 py-12 sm:px-6 lg:px-8 lg:max-w-[50%]">
+        <div className="w-full max-w-md space-y-8" suppressHydrationWarning>
+          {/* Mobile logo - only show when no left panel (small screens) */}
           <div className="flex flex-col items-center gap-3 lg:hidden">
             {config?.logoUrl && (
               <Image
