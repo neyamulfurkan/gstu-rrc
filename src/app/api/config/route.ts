@@ -76,8 +76,6 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         clubMotto: true,
         clubDescription: true,
         universityName: true,
-        universityLogoUrl: true,
-        universityWebUrl: true,
         departmentName: true,
         foundedYear: true,
         address: true,
@@ -186,7 +184,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const allowedFields: Record<string, string[]> = {
-      branding: ["clubName", "clubShortName", "clubMotto", "clubDescription", "universityName", "universityLogoUrl", "universityWebUrl", "departmentName", "foundedYear", "logoUrl", "faviconUrl"],
+      branding: ["clubName", "clubShortName", "clubMotto", "clubDescription", "universityName", "departmentName", "foundedYear", "logoUrl", "faviconUrl"],
       ai: ["aiEnabled", "groqApiKey", "groqModel", "groqTemperature", "aiSystemPrompt", "aiContextItems", "aiChatHistory"],
       contact: ["email", "phone", "address", "fbUrl", "ytUrl", "igUrl", "liUrl", "ghUrl", "twitterUrl", "extraSocialLinks"],
       seo: ["metaDescription", "seoKeywords", "gscVerifyTag", "ogImageUrl"],
