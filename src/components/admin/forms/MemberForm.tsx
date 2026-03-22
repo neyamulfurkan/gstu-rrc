@@ -495,26 +495,28 @@ export function MemberForm({
             <h3 className="text-sm font-semibold text-[var(--color-text-primary)] mb-3 pb-1 border-b border-[var(--color-border)]">
               {isEditing ? "Change Password" : "Password"}
             </h3>
+            {isEditing && (
+              <p className="mb-3 text-xs text-[var(--color-text-secondary)]">
+                Leave blank to keep the existing password.
+              </p>
+            )}
             <PasswordInput
               label={
                 isEditing
-                  ? "Password (leave blank to keep existing)"
+                  ? "New Password (leave blank to keep existing)"
                   : "Password"
               }
               required={!isEditing}
               placeholder={
                 isEditing ? "Leave blank to keep current password" : "Min 8 characters"
               }
-              autoComplete={isEditing ? "new-password" : "new-password"}
+              autoComplete="new-password"
               error={errors.password?.message}
               {...register("password")}
             />
-            {!isEditing && (
-              <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
-                Must contain at least one uppercase letter, one number, and one
-                special character.
-              </p>
-            )}
+            <p className="mt-1.5 text-xs text-[var(--color-text-secondary)]">
+              Must contain at least one uppercase letter, one number, and one special character.
+            </p>
           </section>
 
           {/* ── Admin Notes ────────────────────────────────────────── */}

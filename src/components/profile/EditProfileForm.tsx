@@ -117,6 +117,8 @@ interface SocialLinkEntry {
 
 interface FormState {
   fullName: string;
+  email: string;
+  username: string;
   phone: string;
   address: string;
   dob: string;
@@ -259,6 +261,8 @@ export function EditProfileForm({
 
   const [formState, setFormState] = useState<FormState>(() => ({
     fullName: member.fullName ?? "",
+    email: member.email ?? "",
+    username: member.username ?? "",
     phone: member.phone ?? "",
     address: member.address ?? "",
     dob: toISODateString(member.dob),
@@ -406,6 +410,14 @@ export function EditProfileForm({
       errors.phone = "Please enter a valid Bangladesh mobile number";
     }
 
+    if (formState.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (formState.username && !/^[a-zA-Z0-9_]{3,30}$/.test(formState.username)) {
+      errors.username = "Username must be 3-30 characters: letters, numbers, underscores only";
+    }
+
     if (passwordExpanded && passwordState.newPassword) {
       if (!passwordState.currentPassword) {
         errors.currentPassword = "Please enter your current password";
@@ -444,6 +456,12 @@ export function EditProfileForm({
 
         if (formState.fullName.trim() !== (member.fullName ?? "")) {
           payload.fullName = formState.fullName.trim();
+        }
+        if (formState.email.trim() !== (member.email ?? "")) {
+          payload.email = formState.email.trim();
+        }
+        if (formState.username.trim() !== (member.username ?? "")) {
+          payload.username = formState.username.trim();
         }
         if (formState.phone.trim() !== (member.phone ?? "")) {
           payload.phone = formState.phone.trim();
@@ -567,6 +585,23 @@ export function EditProfileForm({
               error={fieldErrors.fullName}
               placeholder="Your full name"
               autoComplete="name"
+            />
+            <Input
+              label="Email Address"
+              type="email"
+              value={formState.email}
+              onChange={(e) => setField("email", e.target.value)}
+              error={fieldErrors.email}
+              placeholder="your@email.com"
+              autoComplete="email"
+            />
+            <Input
+              label="Username"
+              value={formState.username}
+              onChange={(e) => setField("username", e.target.value)}
+              error={fieldErrors.username}
+              placeholder="your_username"
+              autoComplete="username"
             />
             <Input
               label="Phone Number"
