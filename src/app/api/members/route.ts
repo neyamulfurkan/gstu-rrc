@@ -330,7 +330,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ── Create member ─────────────────────────────────────────────────────
     const newMember = await prisma.member.create({
       data: {
-        username: accountData.username.toLowerCase().trim(),
+        username: accountData.username.toLowerCase().trim().replace(/\s+/g, ""),
         email: memberData.email.toLowerCase().trim(),
         passwordHash,
         fullName: memberData.fullName.trim(),

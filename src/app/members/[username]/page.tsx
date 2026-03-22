@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     const [member, config] = await Promise.all([
       prisma.member.findFirst({
         where: {
-          username: params.username,
+          username: { equals: params.username, mode: "insensitive" },
           status: "active",
         },
         select: {
@@ -163,7 +163,7 @@ export default async function MemberProfilePage({ params }: PageProps): Promise<
   const session = await auth();
 
   const isAdminViewer = session?.user?.isAdmin === true;
-  const isOwner = session?.user?.username === params.username;
+  const isOwner = session?.user?.username?.toLowerCase() === params.username?.toLowerCase();
 
   // Fetch member data
   let memberData: MemberPublic | MemberPrivate | null = null;
@@ -172,7 +172,7 @@ export default async function MemberProfilePage({ params }: PageProps): Promise<
     if (isOwner || isAdminViewer) {
       // Fetch private data for owner or admin
       const raw = await prisma.member.findFirst({
-        where: { username: params.username },
+        where: { username: { equals: params.username, mode: "insensitive" } },
         select: {
           id: true,
           username: true,
@@ -247,7 +247,7 @@ export default async function MemberProfilePage({ params }: PageProps): Promise<
       // Public fetch — active members only
       const raw = await prisma.member.findFirst({
         where: {
-          username: params.username,
+          username: { equals: params.username, mode: "insensitive" },
           status: "active",
         },
         select: {

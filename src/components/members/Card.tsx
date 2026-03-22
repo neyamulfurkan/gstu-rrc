@@ -301,7 +301,7 @@ export function MemberCard({ member, view }: MemberCardProps): JSX.Element {
   const router = useRouter();
 
   const handleClick = useCallback(() => {
-    router.push(`/members/${member.username}`);
+    router.push(`/members/${member.username.toLowerCase()}`);
   }, [router, member.username]);
 
   if (view === "list") {
