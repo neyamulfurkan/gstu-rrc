@@ -275,8 +275,7 @@ export async function PUT(
             `#GSTURobotics #GSTURRC #Announcement`,
           ]
             .filter((l) => l !== null)
-            .join("
-");
+            .join("\n");
           const requiresApproval = (fbConfig as any)?.fbRequireApproval === true;
           if (requiresApproval) {
             const { queuePostForReview } = await import("@/lib/facebook");

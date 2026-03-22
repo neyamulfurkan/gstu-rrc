@@ -358,8 +358,7 @@ async function postAnnouncementToFacebook(announcement: {
       `#GSTURobotics #GSTURRC #Announcement`,
     ]
       .filter((l) => l !== null)
-      .join("
-");
+.join("\n");
 
     const requiresApproval = (config as any).fbRequireApproval === true;
 

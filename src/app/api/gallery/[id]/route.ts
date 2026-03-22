@@ -283,6 +283,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
+  // Notify uploader on status change if they exist and status actually changed
+  const newStatus = updateData.status as string | undefined;
+
   // Facebook auto-post when gallery item is approved (fire-and-forget)
   if (
     newStatus === "approved" &&
@@ -312,8 +315,7 @@ export async function PATCH(
             `🔗 ${galleryUrl}`,
             ``,
             `#GSTURobotics #GSTURRC #Gallery`,
-          ].join("
-");
+          ].join("\n");
           const requiresApproval = (fbConfig as any)?.fbRequireApproval === true;
           if (requiresApproval) {
             const { queuePostForReview } = await import("@/lib/facebook");
@@ -342,7 +344,6 @@ export async function PATCH(
   }
 
   // Notify uploader on status change if they exist and status actually changed
-  const newStatus = updateData.status as string | undefined;
   if (
     newStatus &&
     newStatus !== existingItem.status &&
