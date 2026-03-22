@@ -144,9 +144,7 @@ export function MemberForm({
       email: initialData?.email ?? "",
       phone: initialData?.phone ?? "",
       studentId: initialData?.studentId ?? "",
-      departmentId: initialData?.department
-        ? (initialData as any).departmentId ?? ""
-        : "",
+      departmentId: (initialData as any)?.departmentId ?? "",
       session: initialData?.session ?? "",
       gender: initialData?.gender ?? "",
       dob: initialData?.dob
@@ -192,8 +190,13 @@ export function MemberForm({
         const payload = {
           ...data,
           avatarUrl: avatarUrl || data.avatarUrl,
-          // Strip empty password when editing
-          ...(isEditing && !data.password ? { password: undefined } : {}),
+          // Map password -> newPassword for API compatibility
+          ...(data.password ? { newPassword: data.password } : {}),
+          password: undefined,
+          // Strip empty roleId to avoid cuid validation failure
+          ...(data.roleId === "" ? { roleId: undefined } : {}),
+          // Strip empty departmentId to avoid cuid validation failure
+          ...(data.departmentId === "" ? { departmentId: undefined } : {}),
         };
         await onSubmit(payload);
       } catch (err) {
