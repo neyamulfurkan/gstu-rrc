@@ -78,10 +78,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // Status filter — non-admins can only see active members
     const allParam = searchParams.get("all");
-    if (statusParam && isAdminUser) {
-      (where as Record<string, unknown>).status = statusParam;
-    } else if (isAdminUser && allParam === "true") {
+    if (isAdminUser && allParam === "true") {
       // Admin requesting all members with no status filter — return all statuses
+      if (statusParam) {
+        (where as Record<string, unknown>).status = statusParam;
+      }
+    } else if (statusParam && isAdminUser) {
+      (where as Record<string, unknown>).status = statusParam;
     } else {
       (where as Record<string, unknown>).status = "active";
     }
@@ -151,7 +154,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             skip: 1,
           }
         : {}),
-      orderBy: [{ role: { category: "asc" } }, { fullName: "asc" }],
+      orderBy: [{ fullName: "asc" }],
     });
 
     let nextCursor: string | undefined;

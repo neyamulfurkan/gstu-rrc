@@ -924,7 +924,6 @@ export function MembersAdmin(): JSX.Element {
   const membersUrl = useMemo(() => {
     const params = new URLSearchParams();
     params.set("all", "true");
-    params.set("skip", String(page * PAGE_SIZE));
     params.set("take", String(PAGE_SIZE));
     if (debouncedSearch) params.set("search", debouncedSearch);
     if (filterState.roleId) params.set("roleId", filterState.roleId);
