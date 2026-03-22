@@ -142,6 +142,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         interests: true,
         createdAt: true,
         workplace: true,
+        status: true,
+        lastLogin: true,
+        phone: isAdminUser,
+        studentId: isAdminUser,
+        adminNotes: isAdminUser,
         isAdmin: isAdminUser,
         adminRole: isAdminUser
           ? { select: { id: true, name: true, permissions: true } }
@@ -171,6 +176,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         id: m.id,
         username: m.username,
         fullName: m.fullName,
+        status: (m as any).status ?? "active",
+        lastLogin: (m as any).lastLogin ?? null,
+        phone: (m as any).phone ?? "",
+        studentId: (m as any).studentId ?? "",
+        adminNotes: (m as any).adminNotes ?? null,
         avatarUrl: m.avatarUrl ?? "",
         coverUrl: m.coverUrl ?? "",
         department: { name: m.department?.name ?? "" },
