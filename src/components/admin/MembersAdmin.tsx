@@ -16,7 +16,6 @@ import {
   Search,
   MoreHorizontal,
   Edit2,
-  Trash2,
   UserCheck,
   UserX,
   ChevronLeft,
@@ -29,6 +28,7 @@ import {
   CheckSquare,
   Square,
   Eye,
+  Trash2,
 } from "lucide-react";
 import useSWR, { mutate as globalMutate } from "swr";
 
@@ -894,7 +894,7 @@ export function MembersAdmin(): JSX.Element {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editMember, setEditMember] = useState<AdminMember | null>(null);
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
-  const [bulkAction, setBulkAction] = useState<"activate" | "deactivate" | "delete" | null>(null);
+  const [bulkAction, setBulkAction] = useState<"activate" | "deactivate" | null>(null);
   const [actionSubmitting, setActionSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -1287,24 +1287,6 @@ export function MembersAdmin(): JSX.Element {
               </DropdownMenuItem>
             </>
           )}
-          <DropdownMenuDivider />
-          {row.status !== "inactive" && (
-            <DropdownMenuItem
-              icon={<Trash2 size={14} />}
-              variant="danger"
-              onClick={() => setDeleteMemberId(row.id)}
-            >
-              Archive Member
-            </DropdownMenuItem>
-          )}
-          {row.status === "inactive" && (
-            <DropdownMenuItem
-              icon={<UserCheck size={14} />}
-              onClick={() => handleStatusChange(row.id, "active")}
-            >
-              Restore from Archive
-            </DropdownMenuItem>
-          )}
         </DropdownMenu>
       ),
     },
@@ -1569,19 +1551,7 @@ export function MembersAdmin(): JSX.Element {
                   <UserX size={13} />
                   Deactivate
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setBulkAction("delete")}
-                  className={cn(
-                    "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium",
-                    "bg-[var(--color-error)]/10 text-[var(--color-error)]",
-                    "hover:bg-[var(--color-error)]/20 focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]",
-                    "transition-colors"
-                  )}
-                >
-                  <Trash2 size={13} />
-                  Archive
-                </button>
+
                 <button
                   type="button"
                   onClick={() => setSelectedIds(new Set())}
@@ -1896,24 +1866,7 @@ export function MembersAdmin(): JSX.Element {
                               </DropdownMenuItem>
                             </>
                           )}
-                          <DropdownMenuDivider />
-                          {member.status !== "inactive" && (
-                            <DropdownMenuItem
-                              icon={<Trash2 size={14} />}
-                              variant="danger"
-                              onClick={() => setDeleteMemberId(member.id)}
-                            >
-                              Archive Member
-                            </DropdownMenuItem>
-                          )}
-                          {member.status === "inactive" && (
-                            <DropdownMenuItem
-                              icon={<UserCheck size={14} />}
-                              onClick={() => handleStatusChange(member.id, "active")}
-                            >
-                              Restore from Archive
-                            </DropdownMenuItem>
-                          )}
+
                         </DropdownMenu>
                       </td>
                     </tr>
@@ -2095,56 +2048,7 @@ export function MembersAdmin(): JSX.Element {
         )}
       </Modal>
 
-      {/* Delete/Archive Confirmation Modal */}
-      <Modal
-        isOpen={!!deleteMemberId}
-        onClose={() => {
-          setDeleteMemberId(null);
-          setActionError(null);
-        }}
-        title="Archive Member"
-        size="sm"
-      >
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-[var(--color-text-secondary)]">
-            This will deactivate the member and prevent them from logging in.
-            Their data (posts, gallery items, certificates) will be preserved.
-            You can reactivate them later.
-          </p>
-          {actionError && <Alert variant="error" message={actionError} />}
-          <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setDeleteMemberId(null);
-                setActionError(null);
-              }}
-              className={cn(
-                "px-4 py-2 rounded-lg text-sm font-medium",
-                "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                "transition-colors"
-              )}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleDeleteMember}
-              disabled={actionSubmitting}
-              className={cn(
-                "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium",
-                "bg-[var(--color-error)] text-white hover:opacity-90",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]",
-                "disabled:opacity-60 transition-opacity"
-              )}
-            >
-              {actionSubmitting && <Spinner size="sm" />}
-              Archive Member
-            </button>
-          </div>
-        </div>
-      </Modal>
+
 
       {/* Bulk Action Confirmation Modal */}
       <Modal
@@ -2156,20 +2060,15 @@ export function MembersAdmin(): JSX.Element {
         title={
           bulkAction === "activate"
             ? "Activate Members"
-            : bulkAction === "deactivate"
-            ? "Deactivate Members"
-            : "Archive Members"
+            : "Deactivate Members"
         }
         size="sm"
       >
         <div className="p-6 space-y-4">
           <p className="text-sm text-[var(--color-text-secondary)]">
-            {bulkAction === "activate" &&
-              `Activate ${selectedIds.size} selected member(s)? They will regain access to the platform.`}
-            {bulkAction === "deactivate" &&
-              `Deactivate ${selectedIds.size} selected member(s)? They will lose platform access.`}
-            {bulkAction === "delete" &&
-              `Archive ${selectedIds.size} selected member(s)? Their data will be preserved but they will be deactivated.`}
+            {bulkAction === "activate"
+              ? `Activate ${selectedIds.size} selected member(s)? They will regain access to the platform.`
+              : `Deactivate ${selectedIds.size} selected member(s)? They will lose platform access.`}
           </p>
           {actionError && <Alert variant="error" message={actionError} />}
           <div className="flex justify-end gap-3">
@@ -2203,11 +2102,7 @@ export function MembersAdmin(): JSX.Element {
               )}
             >
               {actionSubmitting && <Spinner size="sm" />}
-              {bulkAction === "activate"
-                ? "Activate"
-                : bulkAction === "deactivate"
-                ? "Deactivate"
-                : "Archive"}{" "}
+              {bulkAction === "activate" ? "Activate" : "Deactivate"}{" "}
               {selectedIds.size} Member{selectedIds.size !== 1 ? "s" : ""}
             </button>
           </div>
