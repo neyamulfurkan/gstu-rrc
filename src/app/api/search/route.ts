@@ -1,177 +1,236 @@
-// src/app/api/search/route.ts
-
-import { NextRequest, NextResponse } from "next/server";
+// src/app/opengraph-image.tsx
+import { ImageResponse } from "next/og";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
-// ─── Rate Limiting ────────────────────────────────────────────────────────────
+export const runtime = "nodejs";
+export const revalidate = 3600;
+export const contentType = "image/png";
+export const size = { width: 1200, height: 630 };
 
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
-
-const rateLimitMap = new Map<string, RateLimitEntry>();
-
-function isRateLimited(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + 60_000 });
-    return false;
-  }
-
-  if (entry.count >= 10) {
-    return true;
-  }
-
-  entry.count += 1;
-  return false;
-}
-
-// ─── GET Handler ──────────────────────────────────────────────────────────────
-
-export async function GET(request: NextRequest): Promise<NextResponse> {
-  try {
-    const ip =
-      request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-      request.headers.get("x-real-ip") ??
-      "unknown";
-
-    if (isRateLimited(ip)) {
-      return NextResponse.json(
-        { error: "Too many requests. Please wait before searching again." },
-        { status: 429 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const q = searchParams.get("q")?.trim() ?? "";
-
-    if (q.length < 2) {
-      return NextResponse.json(
-        { error: "Search query must be at least 2 characters." },
-        { status: 400 }
-      );
-    }
-
-    const containsFilter = { contains: q, mode: "insensitive" as const };
-
-    const [members, events, projects, announcements] = await Promise.all([
-      prisma.member.findMany({
-        where: {
-          status: "active",
-          OR: [
-            { fullName: containsFilter },
-            { username: containsFilter },
-          ],
-        },
-        select: {
-          id: true,
-          fullName: true,
-          username: true,
-          avatarUrl: true,
-        },
-        take: 5,
-      }),
-
-      prisma.event.findMany({
-        where: {
-          isPublished: true,
-          title: containsFilter,
-        },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          coverUrl: true,
-        },
-        take: 5,
-      }),
-
-      prisma.project.findMany({
-        where: {
-          isPublished: true,
-          title: containsFilter,
-        },
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          coverUrl: true,
-        },
-        take: 5,
-      }),
-
-      prisma.announcement.findMany({
-        where: {
-          isPublished: true,
-          OR: [
-            { title: containsFilter },
-            { excerpt: containsFilter },
-          ],
-        },
-        select: {
-          id: true,
-          title: true,
-          excerpt: true,
-        },
-        take: 5,
-      }),
-    ]);
-
-    const formattedMembers = members.map((m) => ({
-      id: m.id,
-      name: m.fullName,
-      identifier: m.username,
-      avatarUrl: m.avatarUrl,
-      type: "member" as const,
-    }));
-
-    const formattedEvents = events.map((e) => ({
-      id: e.id,
-      name: e.title,
-      identifier: e.slug,
-      coverUrl: e.coverUrl,
-      type: "event" as const,
-    }));
-
-    const formattedProjects = projects.map((p) => ({
-      id: p.id,
-      name: p.title,
-      identifier: p.slug,
-      coverUrl: p.coverUrl,
-      type: "project" as const,
-    }));
-
-    const formattedAnnouncements = announcements.map((a) => ({
-      id: a.id,
-      name: a.title,
-      identifier: a.id,
-      excerpt: a.excerpt,
-      type: "announcement" as const,
-    }));
-
-    return NextResponse.json(
-      {
-        members: formattedMembers,
-        events: formattedEvents,
-        projects: formattedProjects,
-        announcements: formattedAnnouncements,
+export default async function OgImage(): Promise<ImageResponse> {
+  const config = await prisma.clubConfig
+    .findUnique({
+      where: { id: "main" },
+      select: {
+        clubName: true,
+        clubShortName: true,
+        clubMotto: true,
+        universityName: true,
+        ogImageUrl: true,
+        foundedYear: true,
       },
-      {
-        status: 200,
-        headers: {
-          "Cache-Control": "no-store",
-        },
-      }
-    );
-  } catch (error) {
-    console.error("[GET /api/search] Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error." },
-      { status: 500 }
-    );
-  }
+    })
+    .catch(() => null);
+
+  const clubName = config?.clubName ?? "GSTU Robotics & Research Club";
+  const clubShort = config?.clubShortName ?? "GSTU RRC";
+  const motto = config?.clubMotto ?? "Innovate. Build. Inspire.";
+  const university =
+    config?.universityName ?? "Gopalganj Science and Technology University";
+  const year = config?.foundedYear ?? 2020;
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: "1200px",
+          height: "630px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          backgroundColor: "#060B14",
+          padding: "80px",
+          fontFamily: "sans-serif",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        {/* top accent line */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "4px",
+            background:
+              "linear-gradient(to right, #0050FF, #00E5FF, transparent)",
+            display: "flex",
+          }}
+        />
+
+        {/* background glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-100px",
+            right: "-100px",
+            width: "400px",
+            height: "400px",
+            borderRadius: "50%",
+            background: "rgba(0,229,255,0.08)",
+            display: "flex",
+          }}
+        />
+
+        {/* main content column */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          {/* badge row */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "24px",
+            }}
+          >
+            <div
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                backgroundColor: "#00E5FF",
+                marginRight: "8px",
+                display: "flex",
+              }}
+            />
+            <span
+              style={{
+                fontSize: "14px",
+                color: "#00E5FF",
+                letterSpacing: "0.2em",
+                fontWeight: 600,
+              }}
+            >
+              Est. {year} · Robotics & Research
+            </span>
+          </div>
+
+          {/* short name */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: "72px",
+              fontWeight: 900,
+              color: "#F0F4FF",
+              lineHeight: 1.0,
+              letterSpacing: "-0.02em",
+              marginBottom: "12px",
+            }}
+          >
+            {clubShort}
+          </div>
+
+          {/* full name */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: "24px",
+              fontWeight: 600,
+              color: "#7B8DB0",
+              marginBottom: "20px",
+            }}
+          >
+            {clubName}
+          </div>
+
+          {/* motto */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: "18px",
+              color: "#00E5FF",
+              fontStyle: "italic",
+              marginBottom: "32px",
+            }}
+          >
+            {motto}
+          </div>
+
+          {/* university */}
+          <div
+            style={{
+              display: "flex",
+              fontSize: "14px",
+              color: "#4A5568",
+            }}
+          >
+            {university}
+          </div>
+        </div>
+
+        {/* bottom decoration */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "40px",
+            right: "80px",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: "6px",
+          }}
+        >
+          <div
+            style={{
+              width: "8px",
+              height: "3px",
+              borderRadius: "2px",
+              backgroundColor: "#00E5FF",
+              opacity: 0.3,
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              width: "20px",
+              height: "3px",
+              borderRadius: "2px",
+              backgroundColor: "#00E5FF",
+              opacity: 0.6,
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              width: "40px",
+              height: "3px",
+              borderRadius: "2px",
+              backgroundColor: "#00E5FF",
+              opacity: 1,
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              width: "20px",
+              height: "3px",
+              borderRadius: "2px",
+              backgroundColor: "#00E5FF",
+              opacity: 0.6,
+              display: "flex",
+            }}
+          />
+          <div
+            style={{
+              width: "8px",
+              height: "3px",
+              borderRadius: "2px",
+              backgroundColor: "#00E5FF",
+              opacity: 0.3,
+              display: "flex",
+            }}
+          />
+        </div>
+      </div>
+    ),
+    { width: 1200, height: 630 }
+  );
 }
