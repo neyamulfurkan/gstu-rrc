@@ -1791,33 +1791,66 @@ export function MembersAdmin(): JSX.Element {
                             Edit Member
                           </DropdownMenuItem>
                           <DropdownMenuDivider />
-                          {member.status === "active" ? (
-                            <DropdownMenuItem
-                              icon={<UserX size={14} />}
-                              onClick={() =>
-                                handleStatusChange(member.id, "inactive")
-                              }
-                            >
-                              Deactivate
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem
-                              icon={<UserCheck size={14} />}
-                              onClick={() =>
-                                handleStatusChange(member.id, "active")
-                              }
-                            >
-                              Activate
-                            </DropdownMenuItem>
+                          {member.status === "active" && (
+                            <>
+                              <DropdownMenuItem
+                                icon={<UserX size={14} />}
+                                onClick={() =>
+                                  handleStatusChange(member.id, "inactive")
+                                }
+                              >
+                                Deactivate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                icon={<Shield size={14} />}
+                                onClick={() =>
+                                  handleStatusChange(member.id, "suspended")
+                                }
+                              >
+                                Suspend
+                              </DropdownMenuItem>
+                            </>
                           )}
-                          <DropdownMenuItem
-                            icon={<Shield size={14} />}
-                            onClick={() =>
-                              handleStatusChange(member.id, "suspended")
-                            }
-                          >
-                            Suspend
-                          </DropdownMenuItem>
+                          {member.status === "inactive" && (
+                            <>
+                              <DropdownMenuItem
+                                icon={<UserCheck size={14} />}
+                                onClick={() =>
+                                  handleStatusChange(member.id, "active")
+                                }
+                              >
+                                Activate
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                icon={<Shield size={14} />}
+                                onClick={() =>
+                                  handleStatusChange(member.id, "suspended")
+                                }
+                              >
+                                Suspend
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {member.status === "suspended" && (
+                            <>
+                              <DropdownMenuItem
+                                icon={<UserCheck size={14} />}
+                                onClick={() =>
+                                  handleStatusChange(member.id, "active")
+                                }
+                              >
+                                Unsuspend (Activate)
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                icon={<UserX size={14} />}
+                                onClick={() =>
+                                  handleStatusChange(member.id, "inactive")
+                                }
+                              >
+                                Deactivate
+                              </DropdownMenuItem>
+                            </>
+                          )}
                           <DropdownMenuDivider />
                           <DropdownMenuItem
                             icon={<Trash2 size={14} />}
