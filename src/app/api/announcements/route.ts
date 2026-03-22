@@ -293,6 +293,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
   }
 
+  // Facebook auto-post (fire-and-forget)
+  if (isPublished) {
+    postAnnouncementToFacebook({
+      id: announcement.id,
+      title: announcement.title,
+      excerpt: finalExcerpt,
+    }).catch((err) => {
+      console.error("[POST /api/announcements] Facebook post error:", err);
+    });
+  }
+
   return NextResponse.json(
     {
       data: {
@@ -310,6 +321,71 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Posts an announcement to Facebook if auto-post is enabled.
+ */
+async function postAnnouncementToFacebook(announcement: {
+  id: string;
+  title: string;
+  excerpt: string;
+}): Promise<void> {
+  try {
+    const config = await prisma.clubConfig.findUnique({
+      where: { id: "main" },
+      select: {
+        fbAutoPost: true,
+        fbPageId: true,
+        fbPageToken: true,
+        fbRequireApproval: true,
+      },
+    });
+
+    if (!config) return;
+
+    const fbAutoPost = config.fbAutoPost as Record<string, boolean> | null;
+    if (!fbAutoPost?.announcements) return;
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+    const announcementUrl = `${baseUrl}/announcements/${announcement.id}`;
+    const message = [
+      `📢 ${announcement.title}`,
+      ``,
+      announcement.excerpt ? announcement.excerpt : null,
+      ``,
+      `🔗 ${announcementUrl}`,
+      ``,
+      `#GSTURobotics #GSTURRC #Announcement`,
+    ]
+      .filter((l) => l !== null)
+      .join("
+");
+
+    const requiresApproval = (config as any).fbRequireApproval === true;
+
+    if (requiresApproval) {
+      const { queuePostForReview } = await import("@/lib/facebook");
+      await queuePostForReview({
+        entityType: "announcement",
+        entityId: announcement.id,
+        entityTitle: announcement.title,
+        message,
+        imageUrl: null,
+        link: announcementUrl,
+      });
+    } else if (config.fbPageId && config.fbPageToken) {
+      const { postToPage } = await import("@/lib/facebook");
+      await postToPage({
+        message,
+        link: announcementUrl,
+        name: announcement.title,
+        description: announcement.excerpt,
+      });
+    }
+  } catch (err) {
+    console.error("[announcements] Facebook post error:", err);
+  }
+}
 
 /**
  * Extracts plain text from a TipTap JSON content node for use as excerpt.

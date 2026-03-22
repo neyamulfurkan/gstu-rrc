@@ -244,8 +244,37 @@ export async function PUT(
       const updated2 = await prisma.project.update({
         where: { id: existing2.id },
         data: { isPublished: willBePublished },
-        select: { id: true, slug: true, title: true, isPublished: true },
+        select: { id: true, slug: true, title: true, isPublished: true, coverUrl: true },
       });
+
+      // Facebook auto-post on publish toggle
+      if (!existing2.isPublished && willBePublished) {
+        try {
+          const fbConfig2 = await prisma.clubConfig.findUnique({
+            where: { id: "main" },
+            select: { fbAutoPost: true, fbPageId: true, fbPageToken: true, fbRequireApproval: true },
+          });
+          const fbAutoPost2 = fbConfig2?.fbAutoPost as Record<string, boolean> | null;
+          if (fbAutoPost2?.projects) {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+            const projectUrl = `${baseUrl}/projects/${existing2.slug}`;
+            const message = `🚀 New Project: ${existing2.title}
+
+🔗 ${projectUrl}
+
+#GSTURobotics #GSTURRC #Project`;
+            const requiresApproval2 = (fbConfig2 as any)?.fbRequireApproval === true;
+            if (requiresApproval2) {
+              const { queuePostForReview } = await import("@/lib/facebook");
+              await queuePostForReview({ entityType: "project", entityId: existing2.id, entityTitle: existing2.title, message, imageUrl: (updated2 as any).coverUrl || null, link: projectUrl });
+            } else if (fbConfig2?.fbPageId && fbConfig2?.fbPageToken) {
+              const { postToPage } = await import("@/lib/facebook");
+              await postToPage({ message, link: projectUrl, name: existing2.title });
+            }
+          }
+        } catch {}
+      }
+
       await logAction({
         adminId: (session.user as { userId?: string }).userId ?? session.user.email ?? "unknown",
         actionType: "UPDATE_PROJECT",

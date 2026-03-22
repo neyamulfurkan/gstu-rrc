@@ -224,6 +224,11 @@ export async function PUT(
       // sendEmail is a trigger flag, not a stored field — handled above the update
     }
 
+    const existingForFb = await prisma.announcement.findUnique({
+      where: { id },
+      select: { isPublished: true, excerpt: true },
+    });
+
     const updated = await prisma.announcement.update({
       where: { id },
       data: updateData,
@@ -242,6 +247,61 @@ export async function PUT(
         },
       },
     });
+
+    // Facebook auto-post if transitioning from unpublished to published
+    if (existingForFb && !existingForFb.isPublished && updated.isPublished) {
+      try {
+        const fbConfig = await prisma.clubConfig.findUnique({
+          where: { id: "main" },
+          select: {
+            fbAutoPost: true,
+            fbPageId: true,
+            fbPageToken: true,
+            fbRequireApproval: true,
+          },
+        });
+        const fbAutoPost = fbConfig?.fbAutoPost as Record<string, boolean> | null;
+        if (fbAutoPost?.announcements) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+          const announcementUrl = `${baseUrl}/announcements/${id}`;
+          const excerpt = updated.excerpt ?? existingForFb.excerpt ?? "";
+          const message = [
+            `📢 ${updated.title}`,
+            ``,
+            excerpt ? excerpt : null,
+            ``,
+            `🔗 ${announcementUrl}`,
+            ``,
+            `#GSTURobotics #GSTURRC #Announcement`,
+          ]
+            .filter((l) => l !== null)
+            .join("
+");
+          const requiresApproval = (fbConfig as any)?.fbRequireApproval === true;
+          if (requiresApproval) {
+            const { queuePostForReview } = await import("@/lib/facebook");
+            await queuePostForReview({
+              entityType: "announcement",
+              entityId: id,
+              entityTitle: updated.title,
+              message,
+              imageUrl: null,
+              link: announcementUrl,
+            });
+          } else if (fbConfig?.fbPageId && fbConfig?.fbPageToken) {
+            const { postToPage } = await import("@/lib/facebook");
+            await postToPage({
+              message,
+              link: announcementUrl,
+              name: updated.title,
+              description: excerpt,
+            });
+          }
+        }
+      } catch (fbErr) {
+        console.error("[PUT /api/announcements/[id]] Facebook post error:", fbErr);
+      }
+    }
 
     const adminId = (session.user as { userId?: string })?.userId ?? "unknown";
     const ipAddress =

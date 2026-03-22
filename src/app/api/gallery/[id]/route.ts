@@ -283,6 +283,64 @@ export async function PATCH(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
+  // Facebook auto-post when gallery item is approved (fire-and-forget)
+  if (
+    newStatus === "approved" &&
+    existingItem.status !== "approved"
+  ) {
+    (async () => {
+      try {
+        const fbConfig = await prisma.clubConfig.findUnique({
+          where: { id: "main" },
+          select: {
+            fbAutoPost: true,
+            fbPageId: true,
+            fbPageToken: true,
+            fbRequireApproval: true,
+          },
+        });
+        const fbAutoPost = fbConfig?.fbAutoPost as Record<string, boolean> | null;
+        if (fbAutoPost?.gallery) {
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+          const galleryUrl = `${baseUrl}/gallery`;
+          const itemLabel = existingItem.title ?? "New gallery item";
+          const message = [
+            `📸 New photo added to our gallery!`,
+            ``,
+            `${itemLabel}`,
+            ``,
+            `🔗 ${galleryUrl}`,
+            ``,
+            `#GSTURobotics #GSTURRC #Gallery`,
+          ].join("
+");
+          const requiresApproval = (fbConfig as any)?.fbRequireApproval === true;
+          if (requiresApproval) {
+            const { queuePostForReview } = await import("@/lib/facebook");
+            await queuePostForReview({
+              entityType: "gallery",
+              entityId: id,
+              entityTitle: itemLabel,
+              message,
+              imageUrl: updatedItem.url,
+              link: galleryUrl,
+            });
+          } else if (fbConfig?.fbPageId && fbConfig?.fbPageToken) {
+            const { postToPage } = await import("@/lib/facebook");
+            await postToPage({
+              message,
+              link: galleryUrl,
+              imageUrl: updatedItem.url,
+              name: itemLabel,
+            });
+          }
+        }
+      } catch (fbErr) {
+        console.error("[PATCH /api/gallery/[id]] Facebook post error:", fbErr);
+      }
+    })();
+  }
+
   // Notify uploader on status change if they exist and status actually changed
   const newStatus = updateData.status as string | undefined;
   if (
