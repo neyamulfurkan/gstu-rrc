@@ -980,9 +980,11 @@ export function MembersAdmin(): JSX.Element {
         throw new Error(body.error ?? "Failed to update member status");
       }
       await mutateMembers();
-      addToast(`Member ${status === "active" ? "activated" : "deactivated"}.`, "success");
+      const statusLabel = status === "active" ? "activated" : status === "suspended" ? "suspended" : "deactivated";
+      addToast(`Member ${statusLabel}.`, "success");
+      const actionLabel = status === "active" ? "activate_member" : status === "suspended" ? "suspend_member" : "deactivate_member";
       await log(
-        status === "active" ? "activate_member" : "deactivate_member",
+        actionLabel,
         `Set member ${memberId} status to ${status}`,
         "Member",
         memberId
@@ -1007,8 +1009,8 @@ export function MembersAdmin(): JSX.Element {
         throw new Error(body.error ?? "Failed to deactivate member");
       }
       await mutateMembers();
-      addToast("Member deactivated.", "success");
-      await log("deactivate_member", `Deactivated member ID: ${deleteMemberId}`, "Member", deleteMemberId);
+      addToast("Member archived.", "success");
+      await log("archive_member", `Archived member ID: ${deleteMemberId}`, "Member", deleteMemberId);
       setDeleteMemberId(null);
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -1041,7 +1043,7 @@ export function MembersAdmin(): JSX.Element {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    status: bulkAction === "activate" ? "active" : "inactive",
+                    status: bulkAction === "activate" ? "active" : bulkAction === "deactivate" ? "inactive" : "suspended",
                   }),
                 }
           );

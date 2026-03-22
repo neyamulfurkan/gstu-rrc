@@ -520,8 +520,8 @@ export async function DELETE(
 
     await logAction({
       adminId: session.user.userId,
-      actionType: "MEMBER_DEACTIVATE",
-      description: `Deactivated member: ${targetMember.username ?? targetMember.id}`,
+      actionType: "MEMBER_ARCHIVE",
+      description: `Archived member: ${targetMember.username ?? targetMember.id}`,
       entityType: "Member",
       entityId: targetMember.id,
       ipAddress,
