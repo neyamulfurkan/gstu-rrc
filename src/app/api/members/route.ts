@@ -271,10 +271,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Validate account fields (username + password) without requiring confirmPassword
-    const adminAccountSchema = accountSchema.innerType().omit({ confirmPassword: true } as any).extend({
-      username: accountSchema.innerType().shape.username,
-      password: accountSchema.innerType().shape.password,
-    });
     const simpleAccountSchema = z.object({
       username: z
         .string()
@@ -289,6 +285,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         .refine((val) => /[^a-zA-Z0-9]/.test(val), { message: "Password must contain at least one special character" }),
     });
     const accountResult = simpleAccountSchema.safeParse(body);
+    // clean up unused variable
+    void 0;
     if (!accountResult.success) {
       return NextResponse.json(
         {

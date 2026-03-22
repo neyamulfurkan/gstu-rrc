@@ -46,6 +46,7 @@ interface MemberFormProps {
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const baseMemberFormSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters").max(30).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional(),
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phone: z
@@ -157,6 +158,7 @@ export function MemberForm({
       memberType: (initialData?.memberType as "member" | "alumni") ?? "member",
       roleId: (initialData as any)?.roleId ?? "",
       status: (initialData?.status as "active" | "inactive" | "suspended") ?? "active",
+      username: "",
       avatarUrl: initialData?.avatarUrl ?? "",
       password: "",
       adminNotes: initialData?.adminNotes ?? "",
@@ -190,6 +192,7 @@ export function MemberForm({
         const payload: Record<string, unknown> = {};
 
         // Only include fields that have actual values (avoid sending empty strings that fail validation)
+        if (!isEditing && data.username) payload.username = data.username;
         if (data.fullName) payload.fullName = data.fullName;
         if (data.email) payload.email = data.email;
         if (data.phone) payload.phone = data.phone;
@@ -207,8 +210,11 @@ export function MemberForm({
         if (data.workplace !== undefined) payload.workplace = data.workplace;
         if (data.adminNotes !== undefined) payload.adminNotes = data.adminNotes;
         if (avatarUrl || data.avatarUrl) payload.avatarUrl = avatarUrl || data.avatarUrl;
-        // Map password -> newPassword for API compatibility
-        if (data.password && data.password.trim() !== "") payload.newPassword = data.password;
+        if (!isEditing) {
+          if (data.password && data.password.trim() !== "") payload.password = data.password;
+        } else {
+          if (data.password && data.password.trim() !== "") payload.newPassword = data.password;
+        }
         await onSubmit(payload as MemberFormValues);
       } catch (err) {
         const message =
@@ -344,6 +350,15 @@ export function MemberForm({
                 error={errors.session?.message}
                 {...register("session")}
               />
+              {!isEditing && (
+                <Input
+                  label="Username"
+                  required
+                  placeholder="e.g. rahim2021"
+                  error={(errors as any).username?.message}
+                  {...register("username")}
+                />
+              )}
               <div>
                 <Controller
                   name="gender"
