@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { prisma } from "@/lib/prisma";
-import { generateBaseMetadata } from "@/lib/seo";
+import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { MembersGrid } from "@/components/members/index";
 import type { MemberPublic, ClubConfigPublic } from "@/types/index";
 
@@ -84,18 +84,26 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const base = generateBaseMetadata(config as unknown as ClubConfigPublic);
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   return {
     ...base,
     title: `Members | ${config.clubName}`,
-    description: `Browse the members of ${config.clubName} at ${config.universityName}.`,
+    description: `Browse the student members and researchers of ${config.clubName} at ${config.universityName}. Discover talented engineers, developers, and robotics enthusiasts.`,
+    keywords: `members, ${config.clubName}, ${config.universityName}, robotics students, researchers, GSTU members, student directory, club members`,
+    alternates: {
+      canonical: `${BASE_URL}/members`,
+    },
     openGraph: {
       ...(base.openGraph ?? {}),
       title: `Members | ${config.clubName}`,
-      description: `Browse the members of ${config.clubName} at ${config.universityName}.`,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/members`,
+      description: `Meet the students and researchers of ${config.clubName} at ${config.universityName}.`,
+      type: "website",
+      url: `${BASE_URL}/members`,
     },
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/members`,
+    twitter: {
+      card: "summary_large_image",
+      title: `Members | ${config.clubName}`,
+      description: `Meet the students and researchers of ${config.clubName}.`,
     },
   };
 }
@@ -158,7 +166,15 @@ export default async function MembersPage(): Promise<JSX.Element> {
       ? membersRaw[membersRaw.length - 1].id
       : undefined;
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Members", url: `${BASE_URL}/members` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       {/* ── Page Header ── */}
       <section className="pt-24 pb-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -234,5 +250,6 @@ export default async function MembersPage(): Promise<JSX.Element> {
         </Suspense>
       </section>
     </main>
+    </>
   );
 }

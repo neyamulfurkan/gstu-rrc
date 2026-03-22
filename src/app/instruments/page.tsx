@@ -3,7 +3,7 @@
 import { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { generateBaseMetadata } from "@/lib/seo";
+import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { InstrumentsPage } from "@/components/instruments/index";
 import type { ClubConfigPublic, InstrumentCard } from "@/types/index";
 
@@ -106,15 +106,26 @@ export async function generateMetadata(): Promise<Metadata> {
 
   const base = generateBaseMetadata(config);
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   return {
     ...base,
     title: `Instruments | ${config.clubName}`,
-    description: `Browse and request to borrow instruments and equipment from ${config.clubName}. Check availability and submit borrow requests online.`,
+    description: `Browse and request to borrow scientific instruments and equipment from ${config.clubName} at ${config.universityName}. Check real-time availability and submit borrow requests online.`,
+    keywords: `instruments, equipment, borrow, ${config.clubName}, ${config.universityName}, scientific equipment, robotics tools, lab instruments, GSTU equipment`,
+    alternates: {
+      canonical: `${BASE_URL}/instruments`,
+    },
     openGraph: {
       ...(base.openGraph ?? {}),
-      title: `Instruments | ${config.clubName}`,
-      description: `Browse and request to borrow instruments and equipment from ${config.clubName}.`,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/instruments`,
+      title: `Instruments & Equipment | ${config.clubName}`,
+      description: `Browse and borrow scientific instruments and equipment from ${config.clubName} at ${config.universityName}.`,
+      type: "website",
+      url: `${BASE_URL}/instruments`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Instruments & Equipment | ${config.clubName}`,
+      description: `Browse and borrow scientific instruments and equipment from ${config.clubName}.`,
     },
   };
 }
@@ -190,7 +201,15 @@ export default async function InstrumentsPageRoute(): Promise<JSX.Element> {
 
   const currentMemberId = session?.user?.userId ?? null;
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Instruments", url: `${BASE_URL}/instruments` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       {/* Page Header */}
       <section className="relative pt-24 pb-12 px-4 sm:px-6 lg:px-8 border-b border-[var(--color-border)]">
@@ -238,5 +257,6 @@ export default async function InstrumentsPageRoute(): Promise<JSX.Element> {
         />
       </section>
     </main>
+    </>
   );
 }

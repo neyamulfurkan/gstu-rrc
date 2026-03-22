@@ -96,14 +96,23 @@ export async function generateMetadata(): Promise<Metadata> {
       { name: "About", url: "/about" },
     ]);
 
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     return {
       ...base,
       title: `About | ${config.clubName}`,
-      description: config.metaDescription ?? undefined,
-      other: {
-        "application/ld+json": breadcrumbJsonLd,
+      description: `Learn about ${config.clubName} at ${config.universityName}. Founded in ${config.foundedYear}, we are a student-led robotics and research club. Meet our team, advisors, and see our achievements.`,
+      keywords: `about ${config.clubName}, ${config.universityName}, robotics club, research club, student club, ${config.clubShortName}, Gopalganj, Bangladesh`,
+      alternates: {
+        canonical: `${BASE_URL}/about`,
       },
-    };
+      openGraph: {
+        ...(base.openGraph ?? {}),
+        title: `About ${config.clubName}`,
+        description: `Student-led robotics and research club at ${config.universityName}, founded ${config.foundedYear}.`,
+        url: `${BASE_URL}/about`,
+        type: "website",
+      },
+      };
   } catch (err) {
     console.error("[about/generateMetadata]", err);
     return { title: "About" };

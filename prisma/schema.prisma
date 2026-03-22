@@ -255,6 +255,7 @@ model Event {
   galleryItems         GalleryItem[]
   attendees            Member[]      @relation("EventAttendees")
   createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
 
   @@index([slug])
   @@index([startDate])
@@ -289,6 +290,7 @@ model Project {
   milestones   Json            @default("[]")
   isPublished  Boolean         @default(false)
   createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
 
   @@index([slug])
   @@index([status])

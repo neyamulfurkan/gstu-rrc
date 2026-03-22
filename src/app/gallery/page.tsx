@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { generateBaseMetadata } from "@/lib/seo";
+import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { GalleryGrid } from "@/components/gallery/index";
 import type { GalleryItemCard, ClubConfigPublic } from "@/types/index";
 
@@ -138,15 +138,26 @@ export async function generateMetadata(): Promise<Metadata> {
   const config = await getConfig();
   const base = generateBaseMetadata(config);
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   return {
     ...base,
     title: `Gallery | ${config.clubName}`,
-    description: `Browse photos and videos from ${config.clubName} events, projects, and activities.`,
+    description: `Browse photos and videos from ${config.clubName} events, projects, workshops, and club activities at ${config.universityName}.`,
+    keywords: `gallery, photos, videos, ${config.clubName}, ${config.universityName}, robotics events, club activities, GSTU gallery`,
+    alternates: {
+      canonical: `${BASE_URL}/gallery`,
+    },
     openGraph: {
       ...base.openGraph,
       title: `Gallery | ${config.clubName}`,
-      description: `Browse photos and videos from ${config.clubName} events, projects, and activities.`,
+      description: `Browse photos and videos from ${config.clubName} events and activities at ${config.universityName}.`,
       type: "website",
+      url: `${BASE_URL}/gallery`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Gallery | ${config.clubName}`,
+      description: `Browse photos and videos from ${config.clubName} events and activities.`,
     },
   };
 }
@@ -230,7 +241,15 @@ export default async function GalleryPage(): Promise<JSX.Element> {
     currentMemberId: session?.user?.userId ?? undefined,
   };
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Gallery", url: `${BASE_URL}/gallery` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       {/* Page Header */}
       <section className="pt-28 pb-10 px-4 sm:px-6 lg:px-8 text-center">
@@ -265,5 +284,6 @@ export default async function GalleryPage(): Promise<JSX.Element> {
         />
       </section>
     </main>
+    </>
   );
 }

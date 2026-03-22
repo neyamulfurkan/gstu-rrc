@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { generateMemberMetadata, generateBaseMetadata } from "@/lib/seo";
+import { generateMemberMetadata, generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileTabs } from "@/components/profile/ProfileTabs";
 import type { MemberPublic, MemberPrivate, ClubConfigPublic } from "@/types/index";
@@ -148,7 +148,18 @@ export async function generateMetadata({
 
     const configPublic = config as unknown as ClubConfigPublic;
 
-    return generateMemberMetadata(memberPublic, configPublic);
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+    const meta = generateMemberMetadata(memberPublic, configPublic);
+    return {
+      ...meta,
+      alternates: {
+        canonical: `${BASE_URL}/alumni/${memberPublic.username}`,
+      },
+      openGraph: {
+        ...(typeof meta.openGraph === "object" && meta.openGraph !== null ? meta.openGraph : {}),
+        url: `${BASE_URL}/alumni/${memberPublic.username}`,
+      },
+    };
   } catch (error) {
     console.error("[alumni/[username]] generateMetadata error:", error);
     return { title: "Alumni Profile" };
@@ -329,7 +340,16 @@ export default async function AlumniProfilePage({
     workplace: member.workplace,
   };
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Alumni", url: `${BASE_URL}/alumni` },
+    { name: member.fullName, url: `${BASE_URL}/alumni/${member.username}` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
@@ -374,5 +394,6 @@ export default async function AlumniProfilePage({
         />
       </div>
     </main>
+    </>
   );
 }

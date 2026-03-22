@@ -101,18 +101,22 @@ export function generateEventMetadata(
   return {
     title: event.title,
     description,
+    keywords: `${event.title}, ${event.venue}, ${config.clubName}, ${config.universityName}, event, robotics`,
     openGraph: {
       title: event.title,
       description: description ?? undefined,
-      type: "website",
+      type: "article",
       url,
       siteName: config.clubName,
       locale: "en_BD",
       images: event.coverUrl
-        ? [{ url: event.coverUrl, alt: event.title }]
+        ? [{ url: event.coverUrl, width: 1200, height: 630, alt: event.title }]
         : config.ogImageUrl
-        ? [{ url: config.ogImageUrl, alt: config.clubName }]
+        ? [{ url: config.ogImageUrl, width: 1200, height: 630, alt: config.clubName }]
         : [],
+      publishedTime: event.startDate instanceof Date
+        ? event.startDate.toISOString()
+        : new Date(event.startDate).toISOString(),
     },
     twitter: {
       card: "summary_large_image",
@@ -162,9 +166,19 @@ export function generateMemberMetadata(
     ...(member.workplace ? { worksFor: { "@type": "Organization", name: member.workplace } } : {}),
   };
 
+  const memberKeywords = [
+    member.fullName,
+    member.role.name,
+    config.clubName,
+    config.universityName,
+    ...(Array.isArray(member.skills) ? member.skills.slice(0, 5) : []),
+    member.workplace ?? "",
+  ].filter(Boolean).join(", ");
+
   return {
     title: member.fullName,
     description,
+    keywords: memberKeywords,
     openGraph: {
       title: `${member.fullName} | ${config.clubName}`,
       description,
@@ -173,10 +187,12 @@ export function generateMemberMetadata(
       siteName: config.clubName,
       locale: "en_BD",
       images: member.avatarUrl
-        ? [{ url: member.avatarUrl, alt: member.fullName }]
+        ? [{ url: member.avatarUrl, width: 400, height: 400, alt: member.fullName }]
         : config.ogImageUrl
-        ? [{ url: config.ogImageUrl, alt: config.clubName }]
+        ? [{ url: config.ogImageUrl, width: 1200, height: 630, alt: config.clubName }]
         : [],
+      firstName: member.fullName.split(" ")[0],
+      lastName: member.fullName.split(" ").slice(1).join(" ") || undefined,
     },
     twitter: {
       card: "summary",
@@ -231,17 +247,18 @@ export function generateProjectMetadata(
   return {
     title: project.title,
     description,
+    keywords: `${project.title}, ${project.technologies.slice(0, 5).join(", ")}, ${config.clubName}, ${config.universityName}, robotics project, research`,
     openGraph: {
       title: `${project.title} | ${config.clubName}`,
       description,
-      type: "website",
+      type: "article",
       url,
       siteName: config.clubName,
       locale: "en_BD",
       images: project.coverUrl
-        ? [{ url: project.coverUrl, alt: project.title }]
+        ? [{ url: project.coverUrl, width: 1200, height: 630, alt: project.title }]
         : config.ogImageUrl
-        ? [{ url: config.ogImageUrl, alt: config.clubName }]
+        ? [{ url: config.ogImageUrl, width: 1200, height: 630, alt: config.clubName }]
         : [],
     },
     twitter: {

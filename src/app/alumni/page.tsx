@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 
 import { prisma } from "@/lib/prisma";
-import { generateBaseMetadata } from "@/lib/seo";
+import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { AlumniGrid } from "@/components/alumni/index";
 import { AlumniSpotlight } from "@/components/alumni/AlumniSpotlight";
 import type {
@@ -85,15 +85,26 @@ export async function generateMetadata(): Promise<Metadata> {
 
     const base = generateBaseMetadata(config as unknown as ClubConfigPublic);
 
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     return {
       ...base,
       title: `Alumni | ${config.clubName}`,
       description: `Meet the distinguished alumni of ${config.clubName} at ${config.universityName}. Connect with graduates who are making an impact across industry and research.`,
+      keywords: `alumni, ${config.clubName}, ${config.universityName}, graduates, robotics alumni, GSTU alumni, former members, student network`,
+      alternates: {
+        canonical: `${BASE_URL}/alumni`,
+      },
       openGraph: {
         ...(base.openGraph ?? {}),
         title: `Alumni | ${config.clubName}`,
         description: `Meet the distinguished alumni of ${config.clubName} at ${config.universityName}.`,
         type: "website",
+        url: `${BASE_URL}/alumni`,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `Alumni | ${config.clubName}`,
+        description: `Meet the distinguished alumni of ${config.clubName}.`,
       },
     };
   } catch (err) {
@@ -240,7 +251,15 @@ export default async function AlumniPage(): Promise<JSX.Element> {
   const { initialAlumni, spotlights, sessions, clubName, universityName } =
     data;
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Alumni", url: `${BASE_URL}/alumni` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       {/* ── Page Hero ── */}
       <section className="relative py-20 md:py-28 overflow-hidden bg-[var(--color-bg-surface)]">
@@ -418,5 +437,6 @@ export default async function AlumniPage(): Promise<JSX.Element> {
         </div>
       </section>
     </main>
+    </>
   );
 }

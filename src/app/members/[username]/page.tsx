@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { generateMemberMetadata, generateBaseMetadata } from "@/lib/seo";
+import { generateMemberMetadata, generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { MemberDetail } from "@/components/members/Detail";
 import type { MemberPublic, MemberPrivate, ClubConfigPublic } from "@/types/index";
 
@@ -307,7 +307,16 @@ export default async function MemberProfilePage({ params }: PageProps): Promise<
     notFound();
   }
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Members", url: `${BASE_URL}/members` },
+    { name: memberData.fullName, url: `${BASE_URL}/members/${memberData.username}` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)] py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
         <MemberDetail
@@ -316,5 +325,6 @@ export default async function MemberProfilePage({ params }: PageProps): Promise<
         />
       </div>
     </main>
+    </>
   );
 }

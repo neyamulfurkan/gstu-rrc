@@ -12,8 +12,17 @@ interface VerifyPageProps {
 
 export async function generateMetadata({ params }: VerifyPageProps): Promise<Metadata> {
   return {
-    title: `Verify Certificate | ${params.serial}`,
-    robots: { index: false, follow: false },
+    title: `Certificate Verification`,
+    description: "Verify the authenticity of a certificate issued by GSTU Robotics & Research Club.",
+    robots: {
+      index: false,
+      follow: false,
+      googleBot: {
+        index: false,
+        follow: false,
+      },
+    },
+    referrer: "no-referrer",
   };
 }
 

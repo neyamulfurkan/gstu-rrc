@@ -493,6 +493,24 @@ export default async function RootLayout({
           />
         )}
 
+        {/* Preconnect to Cloudinary CDN for faster LCP */}
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+
+        {/* Preconnect to Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+
+        {/* Theme color for mobile browsers */}
+        <meta name="theme-color" content="#060B14" />
+        <meta name="color-scheme" content="dark" />
+
+        {/* Mobile web app capability */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content={config.clubShortName || config.clubName} />
+
         {/* GSC verification if present */}
         {config.gscVerifyTag && (
           <meta name="google-site-verification" content={config.gscVerifyTag} />
@@ -502,6 +520,7 @@ export default async function RootLayout({
         {config.faviconUrl && (
           <>
             <link rel="icon" href={config.faviconUrl} />
+            <link rel="shortcut icon" href={config.faviconUrl} />
             <link rel="apple-touch-icon" href={config.faviconUrl} />
           </>
         )}

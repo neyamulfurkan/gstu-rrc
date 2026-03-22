@@ -163,15 +163,21 @@ export async function generateMetadata(): Promise<Metadata> {
 
     const base = generateBaseMetadata(config as unknown as ClubConfigPublic);
 
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     return {
       ...base,
       title: `Join ${config.clubName} — Membership Registration`,
-      description: `Apply to become a member of ${config.clubName} at ${config.universityName}. Fill out the registration form to get started.`,
+      description: `Apply to become a member of ${config.clubName} at ${config.universityName}. Open to all students. Membership fee: BDT ${config.membershipFee}. Fill out the registration form to get started.`,
+      keywords: `join ${config.clubName}, ${config.clubShortName} membership, robotics club registration, ${config.universityName} student club, apply membership, GSTU robotics`,
+      alternates: {
+        canonical: `${BASE_URL}/membership`,
+      },
       openGraph: {
         ...(base.openGraph ?? {}),
         title: `Join ${config.clubName}`,
-        description: `Apply to become a member of ${config.clubName} at ${config.universityName}.`,
-        url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/membership`,
+        description: `Apply to become a member of ${config.clubName} at ${config.universityName}. Open to all students.`,
+        url: `${BASE_URL}/membership`,
+        type: "website",
       },
     };
   } catch (err) {

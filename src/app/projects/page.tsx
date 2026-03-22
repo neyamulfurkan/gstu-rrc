@@ -3,7 +3,7 @@
 import type { Metadata } from "next";
 
 import { prisma } from "@/lib/prisma";
-import { generateBaseMetadata } from "@/lib/seo";
+import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { ProjectsGrid } from "@/components/projects/index";
 import type { ProjectCard, ClubConfigPublic } from "@/types/index";
 
@@ -79,18 +79,26 @@ export async function generateMetadata(): Promise<Metadata> {
   const publicConfig = config as unknown as ClubConfigPublic;
   const base = generateBaseMetadata(publicConfig);
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   return {
     ...base,
     title: "Projects",
-    description: `Explore research projects, innovations, and engineering work by ${config.clubName} members at ${config.universityName}.`,
+    description: `Explore research projects, robotics innovations, and engineering work by ${config.clubName} members at ${config.universityName}. From embedded systems to AI and automation.`,
+    keywords: `projects, research, robotics, ${config.clubName}, ${config.universityName}, engineering, innovation, GSTU projects, student research`,
+    alternates: {
+      canonical: `${BASE_URL}/projects`,
+    },
     openGraph: {
       ...base.openGraph,
-      title: `Projects | ${config.clubName}`,
-      description: `Explore research projects, innovations, and engineering work by ${config.clubName} members at ${config.universityName}.`,
-      url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/projects`,
+      title: `Projects & Research | ${config.clubName}`,
+      description: `Robotics innovations and engineering research by ${config.clubName} at ${config.universityName}.`,
+      type: "website",
+      url: `${BASE_URL}/projects`,
     },
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/projects`,
+    twitter: {
+      card: "summary_large_image",
+      title: `Projects & Research | ${config.clubName}`,
+      description: `Robotics innovations and engineering research by ${config.clubName}.`,
     },
   };
 }
@@ -185,7 +193,15 @@ export default async function ProjectsPage(): Promise<JSX.Element> {
     })),
   }));
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Projects", url: `${BASE_URL}/projects` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       {/* ── Page Header ── */}
       <section className="pt-28 pb-10 px-6 md:px-12 lg:px-20 max-w-7xl mx-auto">
@@ -243,5 +259,6 @@ export default async function ProjectsPage(): Promise<JSX.Element> {
         />
       </section>
     </main>
+    </>
   );
 }

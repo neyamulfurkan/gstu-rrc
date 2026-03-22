@@ -5,7 +5,7 @@ import type { Metadata } from "next";
 import { Calendar } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
-import { generateBaseMetadata } from "@/lib/seo";
+import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { EventsGrid } from "@/components/events/index";
 import type { EventCard, ClubConfigPublic, CustomCardSection } from "@/types/index";
 import { CustomCardSections } from "@/components/home/CustomCardSections";
@@ -443,15 +443,21 @@ export async function generateMetadata(): Promise<Metadata> {
 
     const base = generateBaseMetadata(config);
 
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     return {
       ...base,
       title: "Events",
-      description: `Explore upcoming, ongoing, and past events hosted by ${config.clubName} at ${config.universityName}.`,
+      description: `Explore upcoming, ongoing, and past events hosted by ${config.clubName} at ${config.universityName}. Workshops, competitions, seminars, and club gatherings.`,
+      keywords: `events, ${config.clubName}, ${config.universityName}, robotics events, workshops, competitions, seminars, student events, GSTU`,
+      alternates: {
+        canonical: `${BASE_URL}/events`,
+      },
       openGraph: {
         ...base.openGraph,
         title: `Events | ${config.clubName}`,
-        description: `Explore upcoming, ongoing, and past events hosted by ${config.clubName}.`,
+        description: `Explore upcoming, ongoing, and past events hosted by ${config.clubName} at ${config.universityName}.`,
         type: "website",
+        url: `${BASE_URL}/events`,
       },
       twitter: {
         ...base.twitter,
@@ -508,7 +514,15 @@ export default async function EventsPage({
     past: "Past Events",
   };
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+  const breadcrumbJsonLd = generateBreadcrumbJsonLd([
+    { name: "Home", url: `${BASE_URL}/` },
+    { name: "Events", url: `${BASE_URL}/events` },
+  ]);
+
   return (
+    <>
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: breadcrumbJsonLd }} />
     <main className="min-h-screen bg-[var(--color-bg-base)]">
       {/* ── Page Header ── */}
       <section className="relative pt-24 pb-10 px-4 md:px-6 lg:px-8 overflow-hidden">
@@ -588,5 +602,6 @@ export default async function EventsPage({
         <CustomCardSections sections={customCardSections.filter(s => s.position === "before_footer")} />
       )}
     </main>
+    </>
   );
 }

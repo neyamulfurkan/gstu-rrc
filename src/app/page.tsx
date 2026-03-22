@@ -116,13 +116,16 @@ export async function generateMetadata(): Promise<Metadata> {
       { name: "Home", url: "/" },
     ]);
 
+    const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
     return {
       ...base,
+      alternates: {
+        canonical: BASE_URL ? BASE_URL + "/" : "/",
+      },
       other: {
         ...(base.other ?? {}),
-        "application/ld+json": `${orgJsonLd}
-${breadcrumbJsonLd}`,
       } as unknown as Record<string, string>,
+      // JSON-LD scripts are injected directly in the page component via <script> tags
     };
   } catch {
     return {
@@ -945,8 +948,42 @@ export default async function HomePage(): Promise<JSX.Element> {
     sortOrder: a.sortOrder,
   }));
 
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "";
+
+  const websiteJsonLd = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: publicConfig.clubName,
+    url: BASE_URL,
+    description: publicConfig.metaDescription,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate: `${BASE_URL}/members?search={search_term_string}`,
+      },
+      "query-input": "required name=search_term_string",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: publicConfig.clubName,
+      url: BASE_URL,
+      logo: publicConfig.logoUrl,
+    },
+  });
+
+  const orgJsonLdStr = generateOrganizationJsonLd(publicConfig);
+
+  const homeBreadcrumb = generateBreadcrumbJsonLd([
+    { name: "Home", url: BASE_URL + "/" },
+  ]);
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: orgJsonLdStr }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: websiteJsonLd }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: homeBreadcrumb }} />
+
       {/* Hero */}
       <HeroSection config={publicConfig} />
 
