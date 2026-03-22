@@ -1036,13 +1036,11 @@ export function MembersAdmin(): JSX.Element {
         ids.map(async (id) => {
           const res = await fetch(
             `/api/members/${id}`,
-            bulkAction === "delete"
-              ? { method: "DELETE" }
-              : {
+            {
                   method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    status: bulkAction === "activate" ? "active" : bulkAction === "deactivate" ? "inactive" : "suspended",
+                    status: bulkAction === "activate" ? "active" : "inactive",
                   }),
                 }
           );
