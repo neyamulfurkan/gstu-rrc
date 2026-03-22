@@ -213,18 +213,11 @@ export default async function OgImage(): Promise<ImageResponse> {
             gap: "6px",
           }}
         >
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              style={{
-                width: i === 3 ? "40px" : i === 2 || i === 4 ? "20px" : "8px",
-                height: "3px",
-                borderRadius: "2px",
-                backgroundColor: "#00E5FF",
-                opacity: i === 3 ? 1 : i === 2 || i === 4 ? 0.6 : 0.3,
-              }}
-            />
-          ))}
+          <div style={{ width: "8px", height: "3px", borderRadius: "2px", backgroundColor: "#00E5FF", opacity: 0.3 }} />
+          <div style={{ width: "20px", height: "3px", borderRadius: "2px", backgroundColor: "#00E5FF", opacity: 0.6 }} />
+          <div style={{ width: "40px", height: "3px", borderRadius: "2px", backgroundColor: "#00E5FF", opacity: 1 }} />
+          <div style={{ width: "20px", height: "3px", borderRadius: "2px", backgroundColor: "#00E5FF", opacity: 0.6 }} />
+          <div style={{ width: "8px", height: "3px", borderRadius: "2px", backgroundColor: "#00E5FF", opacity: 0.3 }} />
         </div>
       </div>
     ),
