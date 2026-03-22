@@ -507,25 +507,72 @@ export async function DELETE(
       );
     }
 
-    // Soft delete — set status to "inactive"
-    await prisma.member.update({
-      where: { id: targetMember.id },
-      data: { status: "inactive" },
-    });
+    const { searchParams } = request.nextUrl;
+    const hardDelete = searchParams.get("hard") === "true";
 
     const ipAddress =
       request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       request.headers.get("x-real-ip") ??
       "unknown";
 
-    await logAction({
-      adminId: session.user.userId,
-      actionType: "MEMBER_ARCHIVE",
-      description: `Archived member: ${targetMember.username ?? targetMember.id}`,
-      entityType: "Member",
-      entityId: targetMember.id,
-      ipAddress,
-    });
+    if (hardDelete) {
+      // Hard delete — permanently remove member and all related data
+      await prisma.$transaction(async (tx) => {
+        // Delete notifications
+        await tx.notification.deleteMany({ where: { memberId: targetMember.id } });
+        // Delete likes
+        await tx.like.deleteMany({ where: { memberId: targetMember.id } });
+        // Delete comments (soft-mark)
+        await tx.comment.updateMany({ where: { authorId: targetMember.id }, data: { isDeleted: true } });
+        // Delete posts (soft-mark)
+        await tx.post.updateMany({ where: { authorId: targetMember.id }, data: { isDeleted: true } });
+        // Delete borrow requests
+        await tx.borrowRequest.deleteMany({ where: { requesterId: targetMember.id } });
+        await tx.borrowRequest.deleteMany({ where: { memberId: targetMember.id } });
+        // Clear borrowed instruments
+        await tx.instrument.updateMany({ where: { borrowerId: targetMember.id }, data: { borrowerId: null, borrowDate: null, returnDate: null, status: "available" } });
+        // Delete certificates
+        await tx.certificate.deleteMany({ where: { recipientId: targetMember.id } });
+        // Delete gallery uploads (nullify uploader)
+        await tx.galleryItem.updateMany({ where: { uploaderId: targetMember.id }, data: { uploaderId: null } });
+        // Remove from events and projects (many-to-many)
+        await tx.member.update({ where: { id: targetMember.id }, data: { eventsAttended: { set: [] }, projectsTeam: { set: [] } } });
+        // Delete committee entries
+        await tx.committeeMember.deleteMany({ where: { memberId: targetMember.id } });
+        // Delete password reset tokens
+        await tx.passwordResetToken.deleteMany({ where: { memberId: targetMember.id } });
+        // Delete admin role requests
+        await tx.adminRoleRequest.deleteMany({ where: { memberId: targetMember.id } });
+        // Delete applications linked to member
+        await tx.application.updateMany({ where: { memberId: targetMember.id }, data: { memberId: null } });
+        // Finally delete the member
+        await tx.member.delete({ where: { id: targetMember.id } });
+      });
+
+      await logAction({
+        adminId: session.user.userId,
+        actionType: "MEMBER_HARD_DELETE",
+        description: `Permanently deleted member: ${targetMember.username ?? targetMember.id}`,
+        entityType: "Member",
+        entityId: targetMember.id,
+        ipAddress,
+      });
+    } else {
+      // Soft delete — set status to "inactive"
+      await prisma.member.update({
+        where: { id: targetMember.id },
+        data: { status: "inactive" },
+      });
+
+      await logAction({
+        adminId: session.user.userId,
+        actionType: "MEMBER_ARCHIVE",
+        description: `Archived member: ${targetMember.username ?? targetMember.id}`,
+        entityType: "Member",
+        entityId: targetMember.id,
+        ipAddress,
+      });
+    }
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

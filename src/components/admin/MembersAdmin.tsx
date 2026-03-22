@@ -894,6 +894,8 @@ export function MembersAdmin(): JSX.Element {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editMember, setEditMember] = useState<AdminMember | null>(null);
   const [deleteMemberId, setDeleteMemberId] = useState<string | null>(null);
+  const [hardDeleteMemberId, setHardDeleteMemberId] = useState<string | null>(null);
+  const [hardDeleteConfirmText, setHardDeleteConfirmText] = useState("");
   const [bulkAction, setBulkAction] = useState<"activate" | "deactivate" | null>(null);
   const [actionSubmitting, setActionSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -1008,8 +1010,8 @@ export function MembersAdmin(): JSX.Element {
         throw new Error(body.error ?? "Failed to deactivate member");
       }
       await mutateMembers();
-      addToast("Member archived.", "success");
-      await log("archive_member", `Archived member ID: ${deleteMemberId}`, "Member", deleteMemberId);
+      addToast("Member deactivated.", "success");
+      await log("archive_member", `Deactivated member ID: ${deleteMemberId}`, "Member", deleteMemberId);
       setDeleteMemberId(null);
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -1018,6 +1020,35 @@ export function MembersAdmin(): JSX.Element {
       });
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : "Failed to deactivate member.");
+    } finally {
+      setActionSubmitting(false);
+    }
+  }
+
+  async function handleHardDeleteMember() {
+    if (!hardDeleteMemberId) return;
+    setActionSubmitting(true);
+    setActionError(null);
+    try {
+      const res = await fetch(`/api/members/${hardDeleteMemberId}?hard=true`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Failed to permanently delete member");
+      }
+      await mutateMembers();
+      addToast("Member permanently deleted.", "success");
+      await log("hard_delete_member", `Permanently deleted member ID: ${hardDeleteMemberId}`, "Member", hardDeleteMemberId);
+      setHardDeleteMemberId(null);
+      setHardDeleteConfirmText("");
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(hardDeleteMemberId);
+        return next;
+      });
+    } catch (err: unknown) {
+      setActionError(err instanceof Error ? err.message : "Failed to permanently delete member.");
     } finally {
       setActionSubmitting(false);
     }
@@ -1285,6 +1316,18 @@ export function MembersAdmin(): JSX.Element {
               </DropdownMenuItem>
             </>
           )}
+          <DropdownMenuDivider />
+          <DropdownMenuItem
+            icon={<Trash2 size={14} />}
+            variant="danger"
+            onClick={() => {
+              setHardDeleteMemberId(row.id);
+              setHardDeleteConfirmText("");
+              setActionError(null);
+            }}
+          >
+            Permanently Delete
+          </DropdownMenuItem>
         </DropdownMenu>
       ),
     },
@@ -1864,7 +1907,18 @@ export function MembersAdmin(): JSX.Element {
                               </DropdownMenuItem>
                             </>
                           )}
-
+                          <DropdownMenuDivider />
+                          <DropdownMenuItem
+                            icon={<Trash2 size={14} />}
+                            variant="danger"
+                            onClick={() => {
+                              setHardDeleteMemberId(member.id);
+                              setHardDeleteConfirmText("");
+                              setActionError(null);
+                            }}
+                          >
+                            Permanently Delete
+                          </DropdownMenuItem>
                         </DropdownMenu>
                       </td>
                     </tr>
@@ -2047,6 +2101,79 @@ export function MembersAdmin(): JSX.Element {
       </Modal>
 
 
+
+      {/* Hard Delete Confirmation Modal */}
+      <Modal
+        isOpen={!!hardDeleteMemberId}
+        onClose={() => {
+          setHardDeleteMemberId(null);
+          setHardDeleteConfirmText("");
+          setActionError(null);
+        }}
+        title="Permanently Delete Member"
+        size="sm"
+      >
+        <div className="p-6 space-y-4">
+          <div className={cn(
+            "flex items-start gap-3 p-3 rounded-lg",
+            "bg-[var(--color-error)]/10 border border-[var(--color-error)]/30"
+          )}>
+            <Trash2 size={18} className="text-[var(--color-error)] flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-[var(--color-error)]">
+              <p className="font-semibold mb-1">This action is irreversible.</p>
+              <p>All posts, comments, certificates, borrow requests, and notifications for this member will be permanently removed.</p>
+            </div>
+          </div>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Type <span className="font-mono font-semibold text-[var(--color-text-primary)]">DELETE</span> to confirm:
+          </p>
+          <input
+            type="text"
+            value={hardDeleteConfirmText}
+            onChange={(e) => setHardDeleteConfirmText(e.target.value)}
+            placeholder="Type DELETE to confirm"
+            className={cn(
+              "w-full px-3 py-2 rounded-lg text-sm font-mono",
+              "bg-[var(--color-bg-elevated)] border border-[var(--color-border)]",
+              "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]"
+            )}
+          />
+          {actionError && <Alert variant="error" message={actionError} />}
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setHardDeleteMemberId(null);
+                setHardDeleteConfirmText("");
+                setActionError(null);
+              }}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium",
+                "text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-surface)]",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                "transition-colors"
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleHardDeleteMember}
+              disabled={actionSubmitting || hardDeleteConfirmText !== "DELETE"}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium",
+                "bg-[var(--color-error)] text-white hover:opacity-90",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]",
+                "disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+              )}
+            >
+              {actionSubmitting && <Spinner size="sm" />}
+              Permanently Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Bulk Action Confirmation Modal */}
       <Modal
