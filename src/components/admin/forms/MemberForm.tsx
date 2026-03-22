@@ -209,7 +209,7 @@ export function MemberForm({
         if (avatarUrl || data.avatarUrl) payload.avatarUrl = avatarUrl || data.avatarUrl;
         // Map password -> newPassword for API compatibility
         if (data.password && data.password.trim() !== "") payload.newPassword = data.password;
-        await onSubmit(payload);
+        await onSubmit(payload as MemberFormValues);
       } catch (err) {
         const message =
           err instanceof Error
