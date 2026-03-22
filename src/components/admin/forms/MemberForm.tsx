@@ -187,17 +187,28 @@ export function MemberForm({
       setServerError(null);
       setIsSubmitting(true);
       try {
-        const payload = {
-          ...data,
-          avatarUrl: avatarUrl || data.avatarUrl,
-          // Map password -> newPassword for API compatibility
-          ...(data.password ? { newPassword: data.password } : {}),
-          password: undefined,
-          // Strip empty roleId to avoid cuid validation failure
-          ...(data.roleId === "" ? { roleId: undefined } : {}),
-          // Strip empty departmentId to avoid cuid validation failure
-          ...(data.departmentId === "" ? { departmentId: undefined } : {}),
-        };
+        const payload: Record<string, unknown> = {};
+
+        // Only include fields that have actual values (avoid sending empty strings that fail validation)
+        if (data.fullName) payload.fullName = data.fullName;
+        if (data.email) payload.email = data.email;
+        if (data.phone) payload.phone = data.phone;
+        if (data.studentId) payload.studentId = data.studentId;
+        if (data.session) payload.session = data.session;
+        if (data.memberType) payload.memberType = data.memberType;
+        if (data.status) payload.status = data.status;
+        if (data.roleId && data.roleId !== "") payload.roleId = data.roleId;
+        if (data.departmentId && data.departmentId !== "") payload.departmentId = data.departmentId;
+        if (data.gender !== undefined) payload.gender = data.gender || null;
+        if (data.dob !== undefined) payload.dob = data.dob || null;
+        if (data.address !== undefined) payload.address = data.address;
+        if (data.bio !== undefined) payload.bio = data.bio;
+        if (data.interests !== undefined) payload.interests = data.interests;
+        if (data.workplace !== undefined) payload.workplace = data.workplace;
+        if (data.adminNotes !== undefined) payload.adminNotes = data.adminNotes;
+        if (avatarUrl || data.avatarUrl) payload.avatarUrl = avatarUrl || data.avatarUrl;
+        // Map password -> newPassword for API compatibility
+        if (data.password && data.password.trim() !== "") payload.newPassword = data.password;
         await onSubmit(payload);
       } catch (err) {
         const message =

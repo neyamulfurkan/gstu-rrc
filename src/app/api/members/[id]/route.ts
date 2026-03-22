@@ -197,7 +197,7 @@ export async function GET(
 
 const selfEditSchema = z.object({
   fullName: z.string().min(2).optional(),
-  phone: z.string().regex(/^01[3-9]\d{8}$/).optional(),
+  phone: z.string().regex(/^01[3-9]\d{8}$/).optional().or(z.literal("")).transform(v => v === "" ? undefined : v),
   address: z.string().optional(),
   bio: z.string().optional(),
   interests: z.string().optional(),
