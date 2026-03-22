@@ -310,6 +310,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           where: { id: "main" },
           select: {
             fbAutoPost: true,
+            fbRequireApproval: true,
             fbPageId: true,
             fbPageToken: true,
           },

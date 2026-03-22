@@ -136,7 +136,7 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         fbMessageSystemPrompt: true,
         fbGreetingMessage: true,
         fbFallbackMessage: true,
-
+        fbRequireApproval: true,
       },
     });
 
