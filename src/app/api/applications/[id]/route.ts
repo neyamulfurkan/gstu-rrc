@@ -293,7 +293,7 @@ export async function PATCH(
         select: { username: true },
       });
 
-      const username = appWithUsername?.username ?? application.email.split("@")[0];
+      const username = (appWithUsername?.username ?? application.email.split("@")[0]).toLowerCase().trim();
 
       let newMemberId: string | null = null;
 
