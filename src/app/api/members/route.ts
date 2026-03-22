@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { hasPermission } from "@/lib/permissions";
 import { memberSchema, accountSchema } from "@/lib/validations";
+import { z } from "zod";
 import type { ApiListResponse, MemberPublic } from "@/types/index";
 import { generateSlug } from "@/lib/utils";
 
@@ -256,8 +257,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Validate account fields (username + password), skip confirmPassword requirement
-    const accountResult = accountSchema.safeParse(body);
+    // Validate account fields (username + password) without requiring confirmPassword
+    const adminAccountSchema = accountSchema.innerType().omit({ confirmPassword: true } as any).extend({
+      username: accountSchema.innerType().shape.username,
+      password: accountSchema.innerType().shape.password,
+    });
+    const simpleAccountSchema = z.object({
+      username: z
+        .string()
+        .min(3, "Username must be at least 3 characters")
+        .max(30, "Username must be at most 30 characters")
+        .regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores"),
+      password: z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .refine((val) => /[A-Z]/.test(val), { message: "Password must contain at least one uppercase letter" })
+        .refine((val) => /[0-9]/.test(val), { message: "Password must contain at least one number" })
+        .refine((val) => /[^a-zA-Z0-9]/.test(val), { message: "Password must contain at least one special character" }),
+    });
+    const accountResult = simpleAccountSchema.safeParse(body);
     if (!accountResult.success) {
       return NextResponse.json(
         {
