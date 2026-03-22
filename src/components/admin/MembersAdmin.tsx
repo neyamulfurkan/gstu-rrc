@@ -1240,27 +1240,61 @@ export function MembersAdmin(): JSX.Element {
             Edit Member
           </DropdownMenuItem>
           <DropdownMenuDivider />
-          {row.status === "active" ? (
-            <DropdownMenuItem
-              icon={<UserX size={14} />}
-              onClick={() => handleStatusChange(row.id, "inactive")}
-            >
-              Deactivate
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem
-              icon={<UserCheck size={14} />}
-              onClick={() => handleStatusChange(row.id, "active")}
-            >
-              Activate
-            </DropdownMenuItem>
+          {row.status === "active" && (
+            <>
+              <DropdownMenuItem
+                icon={<UserX size={14} />}
+                onClick={() => handleStatusChange(row.id, "inactive")}
+              >
+                Deactivate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                icon={<Shield size={14} />}
+                onClick={() => handleStatusChange(row.id, "suspended")}
+              >
+                Suspend
+              </DropdownMenuItem>
+            </>
           )}
+          {row.status === "inactive" && (
+            <>
+              <DropdownMenuItem
+                icon={<UserCheck size={14} />}
+                onClick={() => handleStatusChange(row.id, "active")}
+              >
+                Activate
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                icon={<Shield size={14} />}
+                onClick={() => handleStatusChange(row.id, "suspended")}
+              >
+                Suspend
+              </DropdownMenuItem>
+            </>
+          )}
+          {row.status === "suspended" && (
+            <>
+              <DropdownMenuItem
+                icon={<UserCheck size={14} />}
+                onClick={() => handleStatusChange(row.id, "active")}
+              >
+                Unsuspend (Activate)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                icon={<UserX size={14} />}
+                onClick={() => handleStatusChange(row.id, "inactive")}
+              >
+                Deactivate
+              </DropdownMenuItem>
+            </>
+          )}
+          <DropdownMenuDivider />
           <DropdownMenuItem
             icon={<Trash2 size={14} />}
             variant="danger"
             onClick={() => setDeleteMemberId(row.id)}
           >
-            Deactivate &amp; Archive
+            Archive Member
           </DropdownMenuItem>
         </DropdownMenu>
       ),
