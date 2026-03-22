@@ -76,8 +76,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const where: Record<string, unknown> = {};
 
     // Status filter — non-admins can only see active members
+    const allParam = searchParams.get("all");
     if (statusParam && isAdminUser) {
       (where as Record<string, unknown>).status = statusParam;
+    } else if (isAdminUser && allParam === "true") {
+      // Admin requesting all members with no status filter — return all statuses
     } else {
       (where as Record<string, unknown>).status = "active";
     }
