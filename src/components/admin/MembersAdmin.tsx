@@ -1289,13 +1289,23 @@ export function MembersAdmin(): JSX.Element {
             </>
           )}
           <DropdownMenuDivider />
-          <DropdownMenuItem
-            icon={<Trash2 size={14} />}
-            variant="danger"
-            onClick={() => setDeleteMemberId(row.id)}
-          >
-            Archive Member
-          </DropdownMenuItem>
+          {row.status !== "inactive" && (
+            <DropdownMenuItem
+              icon={<Trash2 size={14} />}
+              variant="danger"
+              onClick={() => setDeleteMemberId(row.id)}
+            >
+              Archive Member
+            </DropdownMenuItem>
+          )}
+          {row.status === "inactive" && (
+            <DropdownMenuItem
+              icon={<UserCheck size={14} />}
+              onClick={() => handleStatusChange(row.id, "active")}
+            >
+              Restore from Archive
+            </DropdownMenuItem>
+          )}
         </DropdownMenu>
       ),
     },
@@ -1888,13 +1898,23 @@ export function MembersAdmin(): JSX.Element {
                             </>
                           )}
                           <DropdownMenuDivider />
-                          <DropdownMenuItem
-                            icon={<Trash2 size={14} />}
-                            variant="danger"
-                            onClick={() => setDeleteMemberId(member.id)}
-                          >
-                            Archive Member
-                          </DropdownMenuItem>
+                          {member.status !== "inactive" && (
+                            <DropdownMenuItem
+                              icon={<Trash2 size={14} />}
+                              variant="danger"
+                              onClick={() => setDeleteMemberId(member.id)}
+                            >
+                              Archive Member
+                            </DropdownMenuItem>
+                          )}
+                          {member.status === "inactive" && (
+                            <DropdownMenuItem
+                              icon={<UserCheck size={14} />}
+                              onClick={() => handleStatusChange(member.id, "active")}
+                            >
+                              Restore from Archive
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenu>
                       </td>
                     </tr>
