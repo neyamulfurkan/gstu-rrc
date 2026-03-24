@@ -110,6 +110,7 @@ interface VideoBgProps {
 function VideoBg({ videoUrl, fallbackImg, overlayOpacity }: VideoBgProps): JSX.Element {
   const isYouTube =
     videoUrl.includes("youtube.com") || videoUrl.includes("youtu.be");
+  const isFacebook = videoUrl.includes("facebook.com");
 
   const getYouTubeEmbedUrl = (url: string): string => {
     let videoId = "";
@@ -131,15 +132,45 @@ function VideoBg({ videoUrl, fallbackImg, overlayOpacity }: VideoBgProps): JSX.E
   return (
     <>
       {isYouTube ? (
-        <iframe
-          src={getYouTubeEmbedUrl(videoUrl)}
-          className="absolute inset-0 w-full h-full pointer-events-none"
-          style={{ transform: "scale(1.1)" }}
-          allow="autoplay; encrypted-media"
-          sandbox="allow-scripts allow-same-origin"
-          title="Hero background video"
-          aria-hidden="true"
-        />
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+          <iframe
+            src={getYouTubeEmbedUrl(videoUrl)}
+            className="absolute pointer-events-none"
+            style={{
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "calc(max(100vw, 100vh * 16 / 9) + 200px)",
+              height: "calc(max(100vh, 100vw * 9 / 16) + 200px)",
+              minWidth: "100%",
+              minHeight: "100%",
+            }}
+            allow="autoplay; encrypted-media"
+            sandbox="allow-scripts allow-same-origin"
+            title="Hero background video"
+            aria-hidden="true"
+          />
+        </div>
+      ) : isFacebook ? (
+        <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
+          <iframe
+            src={videoUrl}
+            className="absolute pointer-events-none"
+            style={{
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: "calc(max(100vw, 100vh * 16 / 9) + 200px)",
+              height: "calc(max(100vh, 100vw * 9 / 16) + 200px)",
+              minWidth: "100%",
+              minHeight: "100%",
+            }}
+            allow="autoplay; encrypted-media"
+            sandbox="allow-scripts allow-same-origin"
+            title="Hero background video"
+            aria-hidden="true"
+          />
+        </div>
       ) : (
         <video
           src={videoUrl}
@@ -149,6 +180,7 @@ function VideoBg({ videoUrl, fallbackImg, overlayOpacity }: VideoBgProps): JSX.E
           playsInline
           poster={fallbackImg || undefined}
           className="absolute inset-0 w-full h-full object-cover object-center"
+          style={{ objectFit: "cover", objectPosition: "center" }}
           aria-hidden="true"
         />
       )}
