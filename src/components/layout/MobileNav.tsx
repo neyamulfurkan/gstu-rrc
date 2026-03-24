@@ -427,16 +427,18 @@ export function MobileNav({ config }: MobileNavProps) {
 
   return (
     <>
-      {/* Always-visible floating top bar — logo left, actions right */}
+      {/* Always-visible full-width transparent top bar */}
       <motion.header
-        className={cn(
-          "lg:hidden fixed top-0 left-0 right-0 z-50",
-          "flex items-center justify-between px-3",
-          "transition-all duration-300"
-        )}
+        className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4"
         style={{
-          paddingTop: "max(10px, env(safe-area-inset-top))",
-          paddingBottom: "10px",
+          height: "56px",
+          paddingTop: "env(safe-area-inset-top, 0px)",
+          background: isScrolled
+            ? "color-mix(in srgb, var(--color-bg-base) 85%, transparent)"
+            : "transparent",
+          backdropFilter: isScrolled ? "blur(20px) saturate(180%)" : "none",
+          borderBottom: isScrolled ? "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)" : "none",
+          transition: "background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease",
         }}
         aria-label="Mobile top bar"
       >
@@ -486,70 +488,40 @@ export function MobileNav({ config }: MobileNavProps) {
           </Link>
         </motion.div>
 
-        {/* Right: Notification + Avatar/Login pill */}
-        <motion.div
-          initial={{ opacity: 0, x: 16 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-          className={cn(
-            "flex items-center gap-1 px-2 py-1.5 rounded-2xl",
-            "bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl",
-            "border border-[var(--color-border)]",
-            "shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
-          )}
-        >
+        {/* Right: Notification + Avatar/Login */}
+        <div className="flex items-center gap-1">
           <NotificationBell
             unreadCount={unreadCount}
             href="/profile/notifications"
           />
 
           {!isMounted ? (
-            <div className="w-7 h-7 rounded-full bg-[var(--color-bg-surface)] animate-pulse" />
+            <div className="w-8 h-8 rounded-full bg-[var(--color-bg-surface)] animate-pulse" />
           ) : session ? (
             <Link
               href="/profile"
               aria-label="My profile"
-              className={cn(
-                "p-0.5 rounded-full",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                "transition-opacity hover:opacity-80"
-              )}
+              className="p-0.5 rounded-full focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] transition-opacity hover:opacity-80"
             >
-              <UserAvatar avatarUrl={avatarUrl} name={userName} size={28} />
+              <UserAvatar avatarUrl={avatarUrl} name={userName} size={32} />
             </Link>
           ) : (
-            <div className="flex items-center gap-1 ml-0.5">
-              <Link
-                href="/membership"
-                aria-label="Join Us"
-                className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-semibold",
-                  "border border-[var(--color-accent)]/70 text-[var(--color-accent)]",
-                  "hover:bg-[var(--color-accent)]/10",
-                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                  "transition-colors duration-150"
-                )}
-              >
-                <UserPlus className="w-3 h-3" />
-                <span>Join</span>
-              </Link>
-              <Link
-                href="/login"
-                aria-label="Login"
-                className={cn(
-                  "flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-semibold",
-                  "bg-[var(--color-primary)] text-white",
-                  "hover:opacity-90",
-                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                  "transition-opacity duration-150"
-                )}
-              >
-                <LogIn className="w-3 h-3" />
-                <span>Login</span>
-              </Link>
-            </div>
+            <Link
+              href="/login"
+              aria-label="Login"
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold",
+                "bg-[var(--color-primary)] text-white",
+                "hover:opacity-90",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                "transition-opacity duration-150"
+              )}
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Login</span>
+            </Link>
           )}
-        </motion.div>
+        </div>
       </motion.header>
 
       {/* Bottom Pill Nav */}
