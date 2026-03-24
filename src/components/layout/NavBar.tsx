@@ -368,15 +368,14 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
     <>
       <header
         className={cn(
-          "hidden lg:flex fixed z-40 w-full",
+          "hidden lg:flex fixed z-40 left-0 right-0",
           "transition-all duration-300 ease-in-out",
           isScrolled
-            ? "top-0 left-0 right-0 px-0"
-            : "top-3"
+            ? "top-0 px-0"
+            : "top-3 px-6"
         )}
         style={{
-          width: isScrolled ? "100%" : "calc(100% - 48px)",
-          maxWidth: isScrolled ? "100%" : "1200px",
+          width: "100%",
         }}
         role="banner"
       >
