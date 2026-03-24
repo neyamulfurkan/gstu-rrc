@@ -433,9 +433,7 @@ export function MobileNav({ config }: MobileNavProps) {
         style={{
           height: "56px",
           paddingTop: "env(safe-area-inset-top, 0px)",
-          background: isScrolled
-            ? "color-mix(in srgb, var(--color-bg-base) 85%, transparent)"
-            : "transparent",
+          background: "transparent",
           backdropFilter: isScrolled ? "blur(20px) saturate(180%)" : "none",
           borderBottom: isScrolled ? "1px solid color-mix(in srgb, var(--color-border) 60%, transparent)" : "none",
           transition: "background 0.3s ease, backdrop-filter 0.3s ease, border-color 0.3s ease",
