@@ -436,7 +436,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
           "transition-all duration-300 ease-in-out",
           isScrolled
             ? "top-0 px-0"
-            : "top-4 px-6"
+            : "top-3 px-6"
         )}
         style={{
           width: "100%",
@@ -446,20 +446,20 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
         <nav
           className="w-full flex items-center justify-between px-4 md:px-6 lg:px-8"
           style={{
-            height: isScrolled ? "54px" : "62px",
+            height: isScrolled ? "56px" : "60px",
             transition: "height 0.3s ease",
-            borderRadius: isScrolled ? "0" : "18px",
+            borderRadius: isScrolled ? "0" : "16px",
             background: isScrolled
-              ? "rgba(6, 11, 20, 0.95)"
-              : "rgba(13, 22, 38, 0.75)",
-            backdropFilter: "blur(32px) saturate(200%)",
+              ? "color-mix(in srgb, var(--color-bg-base) 97%, transparent)"
+              : "color-mix(in srgb, var(--color-bg-elevated) 80%, transparent)",
+            backdropFilter: "blur(24px) saturate(180%)",
             border: isScrolled
               ? "none"
-              : "1px solid rgba(255,255,255,0.09)",
+              : "1px solid color-mix(in srgb, var(--color-border) 100%, transparent)",
             borderBottom: isScrolled ? "1px solid var(--color-border)" : undefined,
             boxShadow: isScrolled
-              ? "0 1px 0 rgba(255,255,255,0.06), 0 4px 32px -4px rgba(0,0,0,0.7)"
-              : "0 8px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)",
+              ? "0 4px 24px -4px rgba(0,0,0,0.5)"
+              : "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
             padding: "0 20px",
           }}
           aria-label="Main navigation"
