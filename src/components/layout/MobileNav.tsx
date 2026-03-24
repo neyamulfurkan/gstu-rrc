@@ -1,7 +1,7 @@
 // src/components/layout/MobileNav.tsx
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
@@ -402,9 +402,22 @@ export function MobileNav({ config }: MobileNavProps) {
   const { data: session } = useSession();
   const { unreadCount } = useNotifications();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const openDrawer = useCallback(() => setIsDrawerOpen(true), []);
   const closeDrawer = useCallback(() => setIsDrawerOpen(false), []);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 80);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const avatarUrl =
     ((session?.user as { avatarUrl?: string } | undefined)?.avatarUrl ??
@@ -414,94 +427,93 @@ export function MobileNav({ config }: MobileNavProps) {
 
   return (
     <>
-      {/* Top Bar */}
-      <header
-        className={cn(
-          "lg:hidden fixed top-0 left-0 right-0 z-40",
-          "flex items-center justify-between px-4 py-2",
-          "bg-[var(--color-bg-base)]/90 backdrop-blur-md",
-          "border-b border-[var(--color-border)]",
-          "pt-[env(safe-area-inset-top,0px)]"
-        )}
-        style={{ paddingTop: "max(8px, env(safe-area-inset-top))" }}
-      >
-        {/* Logo + Short Name */}
-        <Link
-          href="/"
-          className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded-lg"
-          aria-label={`${config.clubName} Home`}
-        >
-          {config.logoUrl ? (
-            <div className="w-7 h-7 relative shrink-0 rounded-md overflow-hidden">
-              <Image
-                src={config.logoUrl}
-                alt={`${config.clubName} logo`}
-                fill
-                className="object-contain"
-                sizes="28px"
-              />
-            </div>
-          ) : (
-            <div className="w-7 h-7 rounded-md bg-[var(--color-accent)] flex items-center justify-center shrink-0">
-              <Cpu className="w-4 h-4 text-[var(--color-bg-base)]" />
-            </div>
-          )}
-          <span className="font-[var(--font-display)] text-sm font-bold text-[var(--color-text-primary)] tracking-wide">
-            {config.clubShortName}
-          </span>
-        </Link>
+      {/* Floating top-right actions — replaces old header bar */}
+      <AnimatePresence>
+        {(isScrolled || !isMounted) && (
+          <motion.div
+            key="floating-top"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className={cn(
+              "lg:hidden fixed top-3 right-3 z-50",
+              "flex items-center gap-1.5 px-2.5 py-2 rounded-2xl",
+              "bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl",
+              "border border-[var(--color-border)]",
+              "shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
+            )}
+            style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
+            aria-label="Quick actions"
+          >
+            <NotificationBell
+              unreadCount={unreadCount}
+              href="/profile/notifications"
+            />
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-1">
-          <NotificationBell
-            unreadCount={unreadCount}
-            href="/profile/notifications"
-          />
-
-          {session ? (
-            <Link
-              href="/profile"
-              aria-label="My profile"
-              className={cn(
-                "p-1 rounded-full",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                "transition-opacity hover:opacity-80"
-              )}
-            >
-              <UserAvatar avatarUrl={avatarUrl} name={userName} size={30} />
-            </Link>
-          ) : (
-            <div className="flex items-center gap-1">
+            {session ? (
               <Link
-                href="/membership"
-                aria-label="Join Us"
+                href="/profile"
+                aria-label="My profile"
                 className={cn(
-                  "flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold",
-                  "border border-[var(--color-accent)] text-[var(--color-accent)]",
-                  "hover:bg-[var(--color-accent)]/10",
+                  "p-0.5 rounded-full",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                  "transition-colors duration-150"
+                  "transition-opacity hover:opacity-80"
                 )}
               >
-                <UserPlus className="w-4 h-4" />
-                <span>Join</span>
+                <UserAvatar avatarUrl={avatarUrl} name={userName} size={28} />
               </Link>
+            ) : (
               <Link
                 href="/login"
                 aria-label="Login"
                 className={cn(
-                  "p-2 rounded-xl text-[var(--color-text-secondary)]",
-                  "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]",
+                  "flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-semibold",
+                  "bg-[var(--color-primary)] text-white",
+                  "hover:opacity-90",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                  "transition-colors duration-150"
+                  "transition-opacity duration-150"
                 )}
               >
-                <LogIn className="w-5 h-5" />
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Login</span>
               </Link>
-            </div>
-          )}
-        </div>
-      </header>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Join Us button — only when unauthenticated and scrolled */}
+      <AnimatePresence>
+        {isScrolled && !session && isMounted && (
+          <motion.div
+            key="join-fab"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.22, ease: "easeOut", delay: 0.05 }}
+            className="lg:hidden fixed top-3 left-3 z-50"
+            style={{ marginTop: "env(safe-area-inset-top, 0px)" }}
+          >
+            <Link
+              href="/membership"
+              aria-label="Join Us"
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-2 rounded-2xl text-xs font-semibold",
+                "bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl",
+                "border border-[var(--color-accent)]/60 text-[var(--color-accent)]",
+                "shadow-[0_4px_24px_rgba(0,0,0,0.4)]",
+                "hover:bg-[var(--color-accent)]/10",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                "transition-colors duration-150"
+              )}
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span>Join Us</span>
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Pill Nav */}
       <nav

@@ -548,7 +548,7 @@ export default async function RootLayout({
           {/* Desktop navigation */}
           {!isAuthPage && <NavBar config={config} />}
 
-          {/* Mobile navigation */}
+          {/* Mobile navigation — no top header, floating elements only */}
           {!isAuthPage && <MobileNav config={config} />}
 
           {/* Main content with page transitions */}
