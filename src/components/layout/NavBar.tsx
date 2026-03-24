@@ -318,7 +318,35 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMounted, setIsMounted] = useState(false);
+  const inlineSearchRef = useRef<HTMLInputElement>(null);
+  const debouncedInlineQuery = useLocalDebounce(searchQuery, SEARCH_DEBOUNCE_MS);
+  const router = useRouter();
+
+  const shouldFetchInline = debouncedInlineQuery.length >= 2;
+  const { data: inlineSearchData, isLoading: inlineSearchLoading } = useSWR<SearchApiResponse>(
+    shouldFetchInline ? `/api/search?q=${encodeURIComponent(debouncedInlineQuery)}` : null,
+    searchFetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const inlineResults: SearchResult[] = [];
+  if (inlineSearchData) {
+    inlineSearchData.members.forEach((m) =>
+      inlineResults.push({ id: m.id, name: m.fullName, href: `/members/${m.username}`, type: "member", subtitle: "@" + m.username })
+    );
+    inlineSearchData.events.forEach((e) =>
+      inlineResults.push({ id: e.id, name: e.title, href: `/events/${e.slug}`, type: "event" })
+    );
+    inlineSearchData.projects.forEach((p) =>
+      inlineResults.push({ id: p.id, name: p.title, href: `/projects/${p.slug}`, type: "project" })
+    );
+    inlineSearchData.announcements.forEach((a) =>
+      inlineResults.push({ id: a.id, name: a.title, href: "#", type: "announcement", subtitle: a.excerpt })
+    );
+  }
 
   // Avoid hydration mismatch for session-dependent UI
   useEffect(() => {
@@ -358,6 +386,30 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
 
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+
+  const openInlineSearch = useCallback(() => {
+    setIsSearchExpanded(true);
+    setTimeout(() => inlineSearchRef.current?.focus(), 50);
+  }, []);
+
+  const closeInlineSearch = useCallback(() => {
+    setIsSearchExpanded(false);
+    setSearchQuery("");
+  }, []);
+
+  function handleInlineResultClick(href: string) {
+    if (href !== "#") {
+      router.push(href);
+      closeInlineSearch();
+    }
+  }
+
+  const inlineTypeIcon: Record<SearchResult["type"], React.ReactNode> = {
+    member: <Users size={13} />,
+    event: <Calendar size={13} />,
+    project: <FolderOpen size={13} />,
+    announcement: <Bell size={13} />,
+  };
 
   function isActivePath(href: string): boolean {
     if (href === "/") return pathname === "/";
@@ -509,22 +561,104 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
           </div>
 
           {/* ── Right: Search + Bell + Auth ───────────────────────── */}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            {/* Search trigger */}
-            <button
-              onClick={openSearch}
-              aria-label="Open search (Ctrl+K)"
-              title="Search (Ctrl+K)"
-              className={cn(
-                "p-2 rounded-lg",
-                "hover:bg-white/5",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                "transition-colors duration-150"
+          <div className="flex items-center gap-1 flex-shrink-0" style={{ position: "relative" }}>
+            {/* Inline Search */}
+            <div className="relative flex items-center">
+              <div
+                className={cn(
+                  "flex items-center overflow-hidden transition-all duration-300 ease-in-out rounded-lg",
+                  isSearchExpanded
+                    ? "w-64 border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3"
+                    : "w-9"
+                )}
+                style={isSearchExpanded ? { boxShadow: "0 4px 24px rgba(0,0,0,0.4)" } : {}}
+              >
+                <button
+                  onClick={isSearchExpanded ? undefined : openInlineSearch}
+                  aria-label="Open search (Ctrl+K)"
+                  title="Search (Ctrl+K)"
+                  className={cn(
+                    "flex-shrink-0 p-2 rounded-lg",
+                    !isSearchExpanded && "hover:bg-white/5",
+                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                    "transition-colors duration-150"
+                  )}
+                  style={{ color: isSearchExpanded ? "var(--color-text-secondary)" : "var(--color-text-primary)" }}
+                  tabIndex={isSearchExpanded ? -1 : 0}
+                >
+                  <Search size={18} aria-hidden="true" />
+                </button>
+                {isSearchExpanded && (
+                  <>
+                    <input
+                      ref={inlineSearchRef}
+                      type="search"
+                      placeholder="Search…"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Escape") closeInlineSearch(); }}
+                      className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none border-none py-2"
+                      aria-label="Search"
+                    />
+                    {inlineSearchLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <button
+                        onClick={closeInlineSearch}
+                        aria-label="Close search"
+                        className="flex-shrink-0 p-1 rounded text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                      >
+                        <X size={15} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+
+              {/* Inline dropdown results */}
+              {isSearchExpanded && searchQuery.length >= 2 && (
+                <div
+                  className="absolute top-full right-0 mt-2 w-80 rounded-xl overflow-hidden z-50"
+                  style={{
+                    background: "var(--color-bg-elevated)",
+                    border: "1px solid var(--color-border)",
+                    boxShadow: "0 16px 40px -8px rgba(0,0,0,0.7)",
+                  }}
+                >
+                  {inlineResults.length === 0 && !inlineSearchLoading && (
+                    <div className="py-6 text-center text-sm text-[var(--color-text-secondary)]">
+                      No results for &ldquo;{debouncedInlineQuery}&rdquo;
+                    </div>
+                  )}
+                  {inlineResults.length > 0 && (
+                    <ul role="listbox" className="max-h-72 overflow-y-auto">
+                      {inlineResults.map((result) => (
+                        <li key={`${result.type}-${result.id}`}>
+                          <button
+                            onClick={() => handleInlineResultClick(result.href)}
+                            className={cn(
+                              "w-full flex items-center gap-3 px-4 py-2.5 text-left",
+                              "hover:bg-[var(--color-bg-surface)] transition-colors duration-100",
+                              "focus:outline-none focus:bg-[var(--color-bg-surface)]"
+                            )}
+                          >
+                            <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center bg-[var(--color-bg-surface)] text-[var(--color-text-secondary)]">
+                              {inlineTypeIcon[result.type]}
+                            </span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{result.name}</p>
+                              {result.subtitle && (
+                                <p className="text-xs text-[var(--color-text-secondary)] truncate">{result.subtitle}</p>
+                              )}
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               )}
-              style={{ color: "var(--color-text-primary)" }}
-            >
-              <Search size={18} aria-hidden="true" />
-            </button>
+            </div>
 
             {/* Notification bell */}
             {isMounted && sessionStatus === "authenticated" && (
@@ -656,8 +790,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
         </nav>
       </header>
 
-      {/* Search overlay */}
-      {isSearchOpen && <SearchOverlay onClose={closeSearch} />}
+
     </>
   );
 }
