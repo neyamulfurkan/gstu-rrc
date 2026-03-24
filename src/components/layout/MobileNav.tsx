@@ -557,14 +557,16 @@ export function MobileNav({ config }: MobileNavProps) {
         className={cn(
           "lg:hidden fixed bottom-4 left-1/2 -translate-x-1/2 z-40",
           "flex items-center gap-1 px-3 py-2",
-          "rounded-2xl glass",
-          "bg-[var(--color-bg-elevated)]/80 backdrop-blur-lg",
-          "border border-[var(--color-border)]",
-          "shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          "rounded-2xl",
+          "backdrop-blur-xl",
+          "border"
         )}
         aria-label="Primary navigation"
         style={{
           marginBottom: "env(safe-area-inset-bottom, 0px)",
+          backgroundColor: "color-mix(in srgb, var(--color-bg-elevated) 85%, transparent)",
+          borderColor: "var(--color-border)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
         }}
       >
         {PRIMARY_NAV_ITEMS.map((item) => {
@@ -589,27 +591,24 @@ export function MobileNav({ config }: MobileNavProps) {
                 className={cn(
                   "flex flex-col items-center justify-center gap-1",
                   "px-4 py-2 rounded-xl min-w-[52px]",
-                  "transition-colors duration-150",
-                  isActive
-                    ? "text-[var(--color-accent)]"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  "transition-all duration-200"
                 )}
                 animate={isActive ? { scale: 1.1 } : { scale: 1 }}
                 transition={{ type: "spring", damping: 20, stiffness: 400 }}
+                style={{
+                  color: isActive ? "var(--color-accent)" : "var(--color-text-secondary)",
+                  backgroundColor: isActive ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent",
+                }}
               >
                 <Icon
-                  className={cn(
-                    "w-5 h-5 transition-all duration-150",
-                    isActive && "drop-shadow-[0_0_6px_var(--color-accent)]"
-                  )}
+                  className="w-5 h-5 transition-all duration-150"
+                  style={{
+                    filter: isActive ? "drop-shadow(0 0 6px var(--color-accent))" : "none",
+                  }}
                 />
                 <span
-                  className={cn(
-                    "text-[10px] font-medium leading-none transition-colors duration-150",
-                    isActive
-                      ? "text-[var(--color-accent)]"
-                      : "text-[var(--color-text-secondary)]"
-                  )}
+                  className="text-[10px] font-medium leading-none transition-colors duration-150"
+                  style={{ color: isActive ? "var(--color-accent)" : "var(--color-text-secondary)" }}
                 >
                   {item.label}
                 </span>
@@ -628,12 +627,13 @@ export function MobileNav({ config }: MobileNavProps) {
           className={cn(
             "flex flex-col items-center justify-center gap-1",
             "px-4 py-2 rounded-xl min-w-[52px]",
-            "transition-colors duration-150",
-            "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-            isDrawerOpen
-              ? "text-[var(--color-accent)]"
-              : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+            "transition-all duration-200",
+            "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
           )}
+          style={{
+            color: isDrawerOpen ? "var(--color-accent)" : "var(--color-text-secondary)",
+            backgroundColor: isDrawerOpen ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent",
+          }}
         >
           <AnimatePresence mode="wait" initial={false}>
             {isDrawerOpen ? (
@@ -659,10 +659,8 @@ export function MobileNav({ config }: MobileNavProps) {
             )}
           </AnimatePresence>
           <span
-            className={cn(
-              "text-[10px] font-medium leading-none",
-              isDrawerOpen ? "text-[var(--color-accent)]" : "text-[var(--color-text-secondary)]"
-            )}
+            className="text-[10px] font-medium leading-none"
+            style={{ color: isDrawerOpen ? "var(--color-accent)" : "var(--color-text-secondary)" }}
           >
             More
           </span>
