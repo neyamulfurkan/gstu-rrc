@@ -561,62 +561,62 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
           </div>
 
           {/* ── Right: Search + Bell + Auth ───────────────────────── */}
-          <div className="flex items-center gap-1 flex-shrink-0" style={{ position: "relative" }}>
-            {/* Inline Search */}
+          <div className="flex items-center gap-1 flex-shrink-0">
+            {/* Inline Search — expands leftward over nav, icons stay fixed */}
             <div className="relative flex items-center">
-              <div
-                className={cn(
-                  "flex items-center overflow-hidden transition-all duration-300 ease-in-out rounded-lg",
-                  isSearchExpanded
-                    ? "w-64 border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-3"
-                    : "w-9"
-                )}
-                style={isSearchExpanded ? { boxShadow: "0 4px 24px rgba(0,0,0,0.4)" } : {}}
-              >
-                <button
-                  onClick={isSearchExpanded ? undefined : openInlineSearch}
-                  aria-label="Open search (Ctrl+K)"
-                  title="Search (Ctrl+K)"
-                  className={cn(
-                    "flex-shrink-0 p-2 rounded-lg",
-                    !isSearchExpanded && "hover:bg-white/5",
-                    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                    "transition-colors duration-150"
-                  )}
-                  style={{ color: isSearchExpanded ? "var(--color-text-secondary)" : "var(--color-text-primary)" }}
-                  tabIndex={isSearchExpanded ? -1 : 0}
+              {/* Expanded input layer — absolutely positioned, grows to the left */}
+              {isSearchExpanded && (
+                <div
+                  className="absolute right-8 flex items-center rounded-lg overflow-hidden"
+                  style={{
+                    width: "240px",
+                    background: "var(--color-bg-elevated)",
+                    border: "1px solid var(--color-border)",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
+                  }}
                 >
-                  <Search size={18} aria-hidden="true" />
-                </button>
-                {isSearchExpanded && (
-                  <>
-                    <input
-                      ref={inlineSearchRef}
-                      type="search"
-                      placeholder="Search…"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => { if (e.key === "Escape") closeInlineSearch(); }}
-                      className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none border-none py-2"
-                      aria-label="Search"
-                    />
-                    {inlineSearchLoading ? (
-                      <Spinner size="sm" />
-                    ) : (
-                      <button
-                        onClick={closeInlineSearch}
-                        aria-label="Close search"
-                        className="flex-shrink-0 p-1 rounded text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                      >
-                        <X size={15} />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
+                  <input
+                    ref={inlineSearchRef}
+                    type="search"
+                    placeholder="Search members, events…"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Escape") closeInlineSearch(); }}
+                    className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)] outline-none border-none px-3 py-2"
+                    aria-label="Search"
+                  />
+                  {inlineSearchLoading ? (
+                    <span className="pr-2"><Spinner size="sm" /></span>
+                  ) : searchQuery.length > 0 ? (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                      className="pr-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] focus:outline-none"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null}
+                </div>
+              )}
 
-              {/* Inline dropdown results */}
-              {isSearchExpanded && searchQuery.length >= 2 && (
+              {/* Search icon button — always in place */}
+              <button
+                onClick={isSearchExpanded ? closeInlineSearch : openInlineSearch}
+                aria-label={isSearchExpanded ? "Close search" : "Open search (Ctrl+K)"}
+                title="Search (Ctrl+K)"
+                className={cn(
+                  "relative z-10 p-2 rounded-lg",
+                  isSearchExpanded ? "bg-white/5" : "hover:bg-white/5",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                  "transition-colors duration-150"
+                )}
+                style={{ color: isSearchExpanded ? "var(--color-accent)" : "var(--color-text-primary)" }}
+              >
+                <Search size={18} aria-hidden="true" />
+              </button>
+
+              {/* Dropdown results */}
+              {isSearchExpanded && debouncedInlineQuery.length >= 2 && (
                 <div
                   className="absolute top-full right-0 mt-2 w-80 rounded-xl overflow-hidden z-50"
                   style={{
