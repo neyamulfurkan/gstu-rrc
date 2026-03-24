@@ -372,7 +372,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
           "transition-all duration-300 ease-in-out",
           isScrolled
             ? "top-0 left-0 right-0 px-0"
-            : "top-3 left-1/2 -translate-x-1/2"
+            : "top-3"
         )}
         style={{
           width: isScrolled ? "100%" : "calc(100% - 48px)",
@@ -381,7 +381,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
         role="banner"
       >
         <nav
-          className="mx-auto flex items-center justify-between px-4 md:px-6 lg:px-8"
+          className="w-full flex items-center justify-between px-4 md:px-6 lg:px-8"
           style={{
             height: isScrolled ? "56px" : "60px",
             transition: "height 0.3s ease",
