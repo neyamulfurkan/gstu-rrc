@@ -368,18 +368,37 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
     <>
       <header
         className={cn(
-          "hidden lg:block fixed top-0 left-0 right-0 z-40 w-full",
+          "hidden lg:flex fixed z-40 w-full",
           "transition-all duration-300 ease-in-out",
-          // Glass effect
-          "bg-[var(--color-bg-base)]/95 backdrop-blur-xl",
-          "border-b border-[var(--color-border)]",
-          isScrolled ? "py-2 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.6)]" : "py-0"
+          isScrolled
+            ? "top-0 left-0 right-0 px-0"
+            : "top-3 left-1/2 -translate-x-1/2"
         )}
+        style={{
+          width: isScrolled ? "100%" : "calc(100% - 48px)",
+          maxWidth: isScrolled ? "100%" : "1200px",
+        }}
         role="banner"
       >
         <nav
           className="mx-auto flex items-center justify-between px-4 md:px-6 lg:px-8"
-          style={{ height: isScrolled ? "56px" : "68px", transition: "height 0.3s ease" }}
+          style={{
+            height: isScrolled ? "56px" : "60px",
+            transition: "height 0.3s ease",
+            borderRadius: isScrolled ? "0" : "16px",
+            background: isScrolled
+              ? "color-mix(in srgb, var(--color-bg-base) 97%, transparent)"
+              : "color-mix(in srgb, var(--color-bg-elevated) 80%, transparent)",
+            backdropFilter: "blur(24px) saturate(180%)",
+            border: isScrolled
+              ? "none"
+              : "1px solid color-mix(in srgb, var(--color-border) 100%, transparent)",
+            borderBottom: isScrolled ? "1px solid var(--color-border)" : undefined,
+            boxShadow: isScrolled
+              ? "0 4px 24px -4px rgba(0,0,0,0.5)"
+              : "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06)",
+            padding: "0 20px",
+          }}
           aria-label="Main navigation"
         >
           {/* ── Left: Logo + Club Name ─────────────────────────────── */}
@@ -414,10 +433,11 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
               )}
               <span
                 className={cn(
-                  "font-[var(--font-display)] font-bold text-[var(--color-text-primary)]",
+                  "font-[var(--font-display)] font-bold",
                   "hidden sm:block transition-all duration-300",
                   isScrolled ? "text-sm" : "text-base"
                 )}
+                style={{ color: "var(--color-text-primary)" }}
               >
                 {config.clubShortName || config.clubName}
               </span>
@@ -437,10 +457,13 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                     "transition-colors duration-150",
                     "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
                     active
-                      ? "text-[var(--color-nav-active,var(--color-accent))] bg-[var(--color-accent)]/10"
-                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]"
+                      ? "bg-[var(--color-accent)]/15"
+                      : "hover:bg-white/5"
                   )}
                   aria-current={active ? "page" : undefined}
+                  style={{
+                    color: active ? "var(--color-accent)" : "var(--color-text-primary)",
+                  }}
                 >
                   <span aria-hidden="true">{link.icon}</span>
                   {link.label}
@@ -454,10 +477,11 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                 <button
                   className={cn(
                     "flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
-                    "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]",
+                    "hover:bg-white/5",
                     "transition-colors duration-150",
                     "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                   )}
+                  style={{ color: "var(--color-text-primary)" }}
                   aria-haspopup="menu"
                 >
                   <Menu size={15} aria-hidden="true" />
@@ -493,11 +517,12 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
               aria-label="Open search (Ctrl+K)"
               title="Search (Ctrl+K)"
               className={cn(
-                "p-2 rounded-lg text-[var(--color-text-secondary)]",
-                "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]",
+                "p-2 rounded-lg",
+                "hover:bg-white/5",
                 "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
                 "transition-colors duration-150"
               )}
+              style={{ color: "var(--color-text-primary)" }}
             >
               <Search size={18} aria-hidden="true" />
             </button>
@@ -507,11 +532,12 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
               <Link
                 href="/profile/notifications"
                 className={cn(
-                  "relative p-2 rounded-lg text-[var(--color-text-secondary)]",
-                  "hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-surface)]",
+                  "relative p-2 rounded-lg",
+                  "hover:bg-white/5",
                   "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
                   "transition-colors duration-150"
                 )}
+                style={{ color: "var(--color-text-primary)" }}
                 aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
               >
                 <Bell size={18} aria-hidden="true" />
@@ -541,7 +567,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                   <button
                     className={cn(
                       "flex items-center gap-2 rounded-lg p-1 pr-2",
-                      "hover:bg-[var(--color-bg-surface)] transition-colors duration-150",
+                      "hover:bg-white/5 transition-colors duration-150",
                       "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                     )}
                     aria-label="User menu"
@@ -560,7 +586,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                         <User size={16} className="text-[var(--color-primary)]" />
                       </div>
                     )}
-                    <span className="hidden md:block text-sm font-medium text-[var(--color-text-primary)] max-w-[100px] truncate">
+                    <span className="hidden md:block text-sm font-medium max-w-[100px] truncate" style={{ color: "var(--color-text-primary)" }}>
                       {(session.user as { username?: string }).username || session.user.name || "User"}
                     </span>
                     <ChevronDown size={13} className="text-[var(--color-text-secondary)] hidden md:block" aria-hidden="true" />
