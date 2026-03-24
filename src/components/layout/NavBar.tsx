@@ -344,7 +344,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
       inlineResults.push({ id: p.id, name: p.title, href: `/projects/${p.slug}`, type: "project" })
     );
     inlineSearchData.announcements.forEach((a) =>
-      inlineResults.push({ id: a.id, name: a.title, href: "#", type: "announcement", subtitle: a.excerpt })
+      inlineResults.push({ id: a.id, name: a.title, href: "/feed", type: "announcement", subtitle: a.excerpt })
     );
   }
 
@@ -398,11 +398,23 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
   }, []);
 
   function handleInlineResultClick(href: string) {
-    if (href !== "#") {
-      router.push(href);
-      closeInlineSearch();
-    }
+    router.push(href);
+    closeInlineSearch();
   }
+
+  // Close inline search when clicking outside
+  useEffect(() => {
+    if (!isSearchExpanded) return;
+    function handleClickOutside(e: MouseEvent) {
+      const target = e.target as Node;
+      const container = document.getElementById("inline-search-container");
+      if (container && !container.contains(target)) {
+        closeInlineSearch();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSearchExpanded, closeInlineSearch]);
 
   const inlineTypeIcon: Record<SearchResult["type"], React.ReactNode> = {
     member: <Users size={13} />,
@@ -563,7 +575,7 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
           {/* ── Right: Search + Bell + Auth ───────────────────────── */}
           <div className="flex items-center gap-1 flex-shrink-0">
             {/* Inline Search — expands leftward over nav, icons stay fixed */}
-            <div className="relative flex items-center">
+            <div id="inline-search-container" className="relative flex items-center">
               {/* Expanded input layer — absolutely positioned, grows to the left */}
               {isSearchExpanded && (
                 <div
