@@ -451,9 +451,7 @@ export function MobileNav({ config }: MobileNavProps) {
             aria-label={`${config.clubName} Home`}
             className={cn(
               "flex items-center gap-2 px-3 py-2 rounded-2xl",
-              "bg-[var(--color-bg-elevated)]/80 backdrop-blur-xl",
-              "border border-[var(--color-border)]",
-              "shadow-[0_4px_24px_rgba(0,0,0,0.4)]",
+              "bg-transparent",
               "hover:border-[var(--color-accent)]/40",
               "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
               "transition-colors duration-150"
