@@ -46,6 +46,8 @@ const SECTION_PERMISSION_MAP: Record<AdminSection, string> = {
   roles: "manage_roles",
   "audit-logs": "view_audit_logs",
   "club-config": "manage_club_config",
+  achievements: "manage_club_config",
+  milestones: "manage_club_config",
 };
 
 // ─── Permission Checks ────────────────────────────────────────────────────────
