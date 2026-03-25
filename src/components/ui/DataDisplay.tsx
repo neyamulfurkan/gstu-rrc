@@ -716,7 +716,7 @@ function TimelineCard({ item, align }: TimelineCardProps): JSX.Element {
           className={cn(
             "text-sm font-bold text-[var(--color-text-primary)] mb-1",
             "font-[var(--font-heading)] leading-snug",
-            align === "right" ? "text-right" : "text-left"
+            "text-left"
           )}
         >
           {item.title}
@@ -724,7 +724,7 @@ function TimelineCard({ item, align }: TimelineCardProps): JSX.Element {
         <p
           className={cn(
             "text-xs text-[var(--color-text-secondary)] leading-relaxed",
-            align === "right" ? "text-right" : "text-left"
+            "text-left"
           )}
         >
           {item.description}
