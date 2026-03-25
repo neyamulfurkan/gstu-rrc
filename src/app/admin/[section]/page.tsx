@@ -24,6 +24,8 @@ import { RoleManagementAdmin } from "@/components/admin/RoleManagementAdmin";
 import { AuditLogAdmin } from "@/components/admin/AuditLogAdmin";
 import { ClubConfigAdmin } from "@/components/admin/ClubConfigAdmin";
 import { CustomCardsAdmin } from "@/components/admin/CustomCardsAdmin";
+import { AchievementsAdmin } from "@/components/admin/AchievementsAdmin";
+import { MilestonesAdmin } from "@/components/admin/MilestonesAdmin";
 
 // ─── Lazy-loaded heavy components ─────────────────────────────────────────────
 
@@ -60,6 +62,8 @@ const ALL_ADMIN_SECTIONS: AdminSection[] = [
   "roles",
   "audit-logs",
   "club-config",
+  "achievements",
+  "milestones",
 ];
 
 // ─── Section Registry ─────────────────────────────────────────────────────────
@@ -85,6 +89,8 @@ const SECTION_REGISTRY: Partial<Record<AdminSection, SectionComponent>> = {
   roles: RoleManagementAdmin as SectionComponent,
   "audit-logs": AuditLogAdmin as SectionComponent,
   "club-config": ClubConfigAdmin as SectionComponent,
+  achievements: AchievementsAdmin as SectionComponent,
+  milestones: MilestonesAdmin as SectionComponent,
 };
 
 // ─── Loading Skeleton ─────────────────────────────────────────────────────────

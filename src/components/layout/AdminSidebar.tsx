@@ -152,6 +152,20 @@ const NAV_GROUPS: NavGroup[] = [
         Icon: LayoutTemplate,
         permission: "manage_club_config",
       },
+      {
+        label: "Achievements",
+        section: "achievements",
+        icon: "Trophy",
+        Icon: Award,
+        permission: "manage_club_config",
+      },
+      {
+        label: "Milestones",
+        section: "milestones",
+        icon: "Flag",
+        Icon: GraduationCap,
+        permission: "manage_club_config",
+      },
     ],
   },
   {

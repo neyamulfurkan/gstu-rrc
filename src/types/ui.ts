@@ -51,7 +51,9 @@ export type AdminSection =
   | "ai-config"
   | "roles"
   | "audit-logs"
-  | "club-config";
+  | "club-config"
+  | "achievements"
+  | "milestones";
 
 export interface SidebarNavItem {
   label: string;
