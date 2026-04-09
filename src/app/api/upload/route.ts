@@ -18,6 +18,7 @@ const ALLOWED_FOLDERS = [
   "admin/branding",
   "admin/seo",
   "admin/hero",
+  "admin/advisors",
 ] as const;
 
 type AllowedFolder = (typeof ALLOWED_FOLDERS)[number];

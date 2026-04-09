@@ -27,6 +27,7 @@ import {
 import useSWR, { mutate as globalMutate } from "swr";
 
 import { cn } from "@/lib/utils";
+import { CloudinaryWidget } from "@/components/ui/Media";
 import { Badge, Alert, Spinner, Skeleton, toast } from "@/components/ui/Feedback";
 import { EmptyState } from "@/components/ui/DataDisplay";
 import { useMemberSearch } from "@/hooks/useMemberSearch";
@@ -889,17 +890,16 @@ function AdvisorForm({ initial, onSave, onCancel, saving }: AdvisorFormProps): J
         </div>
       </div>
 
-      {/* Photo URL */}
+      {/* Photo Upload */}
       <div>
         <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
-          Photo URL
+          Photo
         </label>
-        <input
-          type="url"
-          value={form.photoUrl}
-          onChange={(e) => patch({ photoUrl: e.target.value })}
-          placeholder="https://res.cloudinary.com/..."
-          className={inputCls}
+        <CloudinaryWidget
+          folder="admin/gallery"
+          value={form.photoUrl || null}
+          onChange={(url) => patch({ photoUrl: url })}
+          label="Upload Photo"
         />
         {form.photoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
