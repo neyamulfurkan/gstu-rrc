@@ -323,8 +323,22 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                 className={cn(
                   "flex flex-col md:flex-row gap-6 rounded-xl border border-[var(--color-border)]",
                   "bg-[var(--color-bg-elevated)] p-6 transition-all duration-300",
-                  "hover:border-[var(--color-primary)]/40"
+                  "hover:border-[var(--color-primary)]/40",
+                  advisor.member?.username ? "cursor-pointer" : ""
                 )}
+                onClick={() => {
+                  if (advisor.member?.username) {
+                    window.location.href = `/members/${advisor.member.username}`;
+                  }
+                }}
+                role={advisor.member?.username ? "link" : undefined}
+                tabIndex={advisor.member?.username ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (advisor.member?.username && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    window.location.href = `/members/${advisor.member.username}`;
+                  }
+                }}
               >
                 {/* Photo */}
                 <div className="flex-shrink-0">
@@ -352,7 +366,17 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-start gap-2 mb-1">
                     <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
-                      {advisor.name}
+                      {advisor.member?.username ? (
+                        <Link
+                          href={`/members/${advisor.member.username}`}
+                          className="hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {advisor.name}
+                        </Link>
+                      ) : (
+                        advisor.name
+                      )}
                     </h3>
                     <Badge variant="accent" size="sm">
                       Current

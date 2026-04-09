@@ -467,19 +467,52 @@ function DraggableList({ rows, onChange, committeeType }: DraggableListProps): J
             />
 
             {/* Designation */}
-            <input
-              type="text"
-              value={row.designation}
-              onChange={(e) => updateRow(row.localId, { designation: e.target.value })}
-              placeholder="Designation"
-              className={cn(
-                "flex-1 min-w-0 px-3 py-2 text-sm rounded-md",
-                "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
-                "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
-                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent",
-                "transition-colors"
-              )}
-            />
+            <div className="relative flex-1 min-w-0">
+              <input
+                type="text"
+                list={`designations-${committeeType}`}
+                value={row.designation}
+                onChange={(e) => updateRow(row.localId, { designation: e.target.value })}
+                placeholder="Designation"
+                className={cn(
+                  "w-full px-3 py-2 text-sm rounded-md",
+                  "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
+                  "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent",
+                  "transition-colors"
+                )}
+              />
+              <datalist id={`designations-${committeeType}`}>
+                {committeeType === "executive" || committeeType === "sub_executive" ? (
+                  <>
+                    <option value="President" />
+                    <option value="Vice President" />
+                    <option value="General Secretary" />
+                    <option value="Joint Secretary" />
+                    <option value="Treasurer" />
+                    <option value="Assistant Treasurer" />
+                    <option value="Organizing Secretary" />
+                    <option value="Research Secretary" />
+                    <option value="Publication Secretary" />
+                    <option value="Cultural Secretary" />
+                    <option value="Sports Secretary" />
+                    <option value="IT Secretary" />
+                    <option value="Public Relations Officer" />
+                    <option value="Executive Member" />
+                    <option value="Sub-Executive Member" />
+                  </>
+                ) : (
+                  <>
+                    <option value="President" />
+                    <option value="Vice President" />
+                    <option value="General Secretary" />
+                    <option value="Treasurer" />
+                    <option value="Executive Member" />
+                    <option value="General Member" />
+                  </>
+                )}
+              </datalist>
+            </div>
 
             {/* Remove */}
             <button
