@@ -1077,6 +1077,19 @@ async function handleAdvisors(
         isCurrent: true,
         periodStart: true,
         periodEnd: true,
+        memberId: true,
+        isAdminGranted: true,
+        adminRoleId: true,
+        member: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatarUrl: true,
+            isAdmin: true,
+            adminRole: { select: { id: true, name: true } },
+          },
+        },
       },
       orderBy: [{ isCurrent: "desc" }, { periodStart: "desc" }],
     });
@@ -1102,6 +1115,7 @@ async function handleAdvisors(
       isCurrent,
       periodStart,
       periodEnd,
+      memberId,
     } = body as {
       name?: string;
       designation?: string;
@@ -1114,12 +1128,23 @@ async function handleAdvisors(
       isCurrent?: boolean;
       periodStart?: number;
       periodEnd?: number;
+      memberId?: string | null;
     };
     if (!name || !designation || !institution) {
       return NextResponse.json(
         { error: "name, designation, and institution are required" },
         { status: 400 }
       );
+    }
+    // If memberId provided, ensure it's not already linked to another advisor
+    if (memberId) {
+      const existing = await prisma.advisor.findFirst({ where: { memberId } });
+      if (existing) {
+        return NextResponse.json(
+          { error: "This member is already linked to another advisor profile" },
+          { status: 409 }
+        );
+      }
     }
     const advisor = await prisma.advisor.create({
       data: {
@@ -1134,6 +1159,7 @@ async function handleAdvisors(
         isCurrent: isCurrent ?? true,
         periodStart: periodStart ?? null,
         periodEnd: periodEnd ?? null,
+        memberId: memberId ?? null,
       },
       select: {
         id: true,
@@ -1148,6 +1174,10 @@ async function handleAdvisors(
         isCurrent: true,
         periodStart: true,
         periodEnd: true,
+        memberId: true,
+        isAdminGranted: true,
+        adminRoleId: true,
+        member: { select: { id: true, username: true, fullName: true, avatarUrl: true, isAdmin: true, adminRole: { select: { id: true, name: true } } } },
       },
     });
     await logAction({
@@ -1168,26 +1198,133 @@ async function handleAdvisors(
     } catch {
       return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
     }
-    const { id, ...rest } = body as { id?: string } & Record<string, unknown>;
+    const { id, action, adminRoleId: grantRoleId, ...rest } = body as { id?: string; action?: string; adminRoleId?: string } & Record<string, unknown>;
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
     }
+
+    // Special action: grant admin access to linked member
+    if (action === "grant_admin") {
+      if (!grantRoleId) {
+        return NextResponse.json({ error: "adminRoleId is required" }, { status: 400 });
+      }
+      const advisorRecord = await prisma.advisor.findUnique({ where: { id }, select: { memberId: true, name: true } });
+      if (!advisorRecord?.memberId) {
+        return NextResponse.json({ error: "Advisor must be linked to a member first" }, { status: 400 });
+      }
+      await prisma.$transaction([
+        prisma.member.update({
+          where: { id: advisorRecord.memberId },
+          data: { isAdmin: true, adminRoleId: grantRoleId },
+        }),
+        prisma.advisor.update({
+          where: { id },
+          data: { isAdminGranted: true, adminRoleId: grantRoleId },
+        }),
+      ]);
+      await logAction({
+        adminId: session.user.userId,
+        actionType: "grant_advisor_admin",
+        description: `Granted admin access to advisor: ${advisorRecord.name}`,
+        entityType: "advisor",
+        entityId: id,
+        ipAddress: ip,
+      });
+      const updated = await prisma.advisor.findUnique({
+        where: { id },
+        select: {
+          id: true, name: true, designation: true, institution: true, photoUrl: true,
+          bio: true, researchInterests: true, email: true, socialLinks: true,
+          isCurrent: true, periodStart: true, periodEnd: true, memberId: true,
+          isAdminGranted: true, adminRoleId: true,
+          member: { select: { id: true, username: true, fullName: true, avatarUrl: true, isAdmin: true, adminRole: { select: { id: true, name: true } } } },
+        },
+      });
+      return NextResponse.json({ data: updated });
+    }
+
+    // Special action: revoke admin access from linked member
+    if (action === "revoke_admin") {
+      const advisorRecord = await prisma.advisor.findUnique({ where: { id }, select: { memberId: true, name: true } });
+      if (!advisorRecord?.memberId) {
+        return NextResponse.json({ error: "Advisor must be linked to a member first" }, { status: 400 });
+      }
+      await prisma.$transaction([
+        prisma.member.update({
+          where: { id: advisorRecord.memberId },
+          data: { isAdmin: false, adminRoleId: null },
+        }),
+        prisma.advisor.update({
+          where: { id },
+          data: { isAdminGranted: false, adminRoleId: null },
+        }),
+      ]);
+      await logAction({
+        adminId: session.user.userId,
+        actionType: "revoke_advisor_admin",
+        description: `Revoked admin access from advisor: ${advisorRecord.name}`,
+        entityType: "advisor",
+        entityId: id,
+        ipAddress: ip,
+      });
+      const updated = await prisma.advisor.findUnique({
+        where: { id },
+        select: {
+          id: true, name: true, designation: true, institution: true, photoUrl: true,
+          bio: true, researchInterests: true, email: true, socialLinks: true,
+          isCurrent: true, periodStart: true, periodEnd: true, memberId: true,
+          isAdminGranted: true, adminRoleId: null,
+          member: { select: { id: true, username: true, fullName: true, avatarUrl: true, isAdmin: true, adminRole: { select: { id: true, name: true } } } },
+        },
+      });
+      return NextResponse.json({ data: updated });
+    }
+
+    // Special action: link/unlink member
+    if (action === "link_member" || action === "unlink_member") {
+      const linkMemberId = action === "link_member" ? (rest.memberId as string | undefined) : null;
+      if (action === "link_member" && !linkMemberId) {
+        return NextResponse.json({ error: "memberId is required for link_member action" }, { status: 400 });
+      }
+      if (action === "link_member" && linkMemberId) {
+        const existingLink = await prisma.advisor.findFirst({ where: { memberId: linkMemberId, id: { not: id } } });
+        if (existingLink) {
+          return NextResponse.json({ error: "This member is already linked to another advisor" }, { status: 409 });
+        }
+      }
+      const advisor = await prisma.advisor.update({
+        where: { id },
+        data: { memberId: linkMemberId, isAdminGranted: action === "unlink_member" ? false : undefined },
+        select: {
+          id: true, name: true, designation: true, institution: true, photoUrl: true,
+          bio: true, researchInterests: true, email: true, socialLinks: true,
+          isCurrent: true, periodStart: true, periodEnd: true, memberId: true,
+          isAdminGranted: true, adminRoleId: true,
+          member: { select: { id: true, username: true, fullName: true, avatarUrl: true, isAdmin: true, adminRole: { select: { id: true, name: true } } } },
+        },
+      });
+      await logAction({
+        adminId: session.user.userId,
+        actionType: action,
+        description: `${action === "link_member" ? "Linked" : "Unlinked"} member to advisor: ${advisor.name}`,
+        entityType: "advisor",
+        entityId: id,
+        ipAddress: ip,
+      });
+      return NextResponse.json({ data: advisor });
+    }
+
+    // Standard field update — exclude action and adminRoleId from rest since they were destructured
+    const { action: _a, adminRoleId: _r, ...updateData } = rest as Record<string, unknown>;
     const advisor = await prisma.advisor.update({
       where: { id },
-      data: rest as Parameters<typeof prisma.advisor.update>[0]["data"],
+      data: updateData as Parameters<typeof prisma.advisor.update>[0]["data"],
       select: {
-        id: true,
-        name: true,
-        designation: true,
-        institution: true,
-        photoUrl: true,
-        bio: true,
-        researchInterests: true,
-        email: true,
-        socialLinks: true,
-        isCurrent: true,
-        periodStart: true,
-        periodEnd: true,
+        id: true, name: true, designation: true, institution: true, photoUrl: true,
+        bio: true, researchInterests: true, email: true, socialLinks: true,
+        isCurrent: true, periodStart: true, periodEnd: true, memberId: true,
+        isAdminGranted: true, adminRoleId: true,
+        member: { select: { id: true, username: true, fullName: true, avatarUrl: true, isAdmin: true, adminRole: { select: { id: true, name: true } } } },
       },
     });
     return NextResponse.json({ data: advisor });
@@ -1203,6 +1340,14 @@ async function handleAdvisors(
     const { id } = body as { id?: string };
     if (!id) {
       return NextResponse.json({ error: "id is required" }, { status: 400 });
+    }
+    // If admin was granted, revoke it before deleting
+    const advisorRecord = await prisma.advisor.findUnique({ where: { id }, select: { memberId: true, isAdminGranted: true } });
+    if (advisorRecord?.memberId && advisorRecord.isAdminGranted) {
+      await prisma.member.update({
+        where: { id: advisorRecord.memberId },
+        data: { isAdmin: false, adminRoleId: null },
+      });
     }
     await prisma.advisor.delete({ where: { id } });
     return new NextResponse(null, { status: 204 });

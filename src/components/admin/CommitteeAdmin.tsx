@@ -23,6 +23,12 @@ import {
   Trash2,
   Pencil,
   Check,
+  Link,
+  Link2Off,
+  ShieldCheck,
+  ShieldOff,
+  ExternalLink,
+  ChevronRight,
 } from "lucide-react";
 import useSWR, { mutate as globalMutate } from "swr";
 
@@ -77,6 +83,12 @@ interface AdvisorFormState {
   periodStart: string;
   periodEnd: string;
   sortOrder: number;
+  memberId?: string | null;
+}
+
+interface AdminRoleOption {
+  id: string;
+  name: string;
 }
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -127,7 +139,110 @@ function emptyAdvisorForm(): AdvisorFormState {
     periodStart: "",
     periodEnd: "",
     sortOrder: 0,
+    memberId: null,
   };
+}
+
+// ─── MemberLinkDropdown ───────────────────────────────────────────────────────
+
+interface MemberLinkDropdownProps {
+  value: string | null;
+  onChange: (memberId: string | null, memberName: string | null) => void;
+  placeholder?: string;
+}
+
+function MemberLinkDropdown({
+  value,
+  onChange,
+  placeholder = "Search member to link...",
+}: MemberLinkDropdownProps): JSX.Element {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const { members, isLoading } = useMemberSearch(query);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const inputCls = cn(
+    "w-full pl-8 pr-3 py-2 text-sm rounded-md",
+    "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
+    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent",
+    "transition-colors"
+  );
+
+  return (
+    <div ref={wrapperRef} className="relative w-full">
+      <div className="relative">
+        <Search
+          size={14}
+          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none"
+          aria-hidden="true"
+        />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => query.length >= 2 && setOpen(true)}
+          placeholder={placeholder}
+          className={inputCls}
+        />
+        {isLoading && (
+          <Spinner
+            size="sm"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
+          />
+        )}
+      </div>
+      {open && members.length > 0 && (
+        <ul
+          role="listbox"
+          className={cn(
+            "absolute z-50 w-full mt-1 rounded-lg border border-[var(--color-border)]",
+            "bg-[var(--color-bg-elevated)] shadow-lg overflow-hidden",
+            "max-h-48 overflow-y-auto"
+          )}
+        >
+          {members.map((m) => (
+            <li key={m.id} role="option" aria-selected={value === m.id}>
+              <button
+                type="button"
+                onClick={() => { onChange(m.id, m.fullName); setQuery(""); setOpen(false); }}
+                className={cn(
+                  "w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left",
+                  "hover:bg-[var(--color-bg-overlay)] transition-colors",
+                  value === m.id ? "bg-[var(--color-primary)]/10" : "",
+                  "text-[var(--color-text-primary)]"
+                )}
+              >
+                {m.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={m.avatarUrl} alt={m.fullName} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-[var(--color-primary)]">{m.fullName.charAt(0).toUpperCase()}</span>
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{m.fullName}</div>
+                  <div className="text-xs text-[var(--color-text-secondary)] truncate">@{m.username}</div>
+                </div>
+                {value === m.id && <Check size={14} className="text-[var(--color-primary)] ml-auto flex-shrink-0" />}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 // ─── MemberSearchDropdown ─────────────────────────────────────────────────────
@@ -1140,18 +1255,327 @@ function AdvisorForm({ initial, onSave, onCancel, saving }: AdvisorFormProps): J
 
 // ─── AdvisorsTab ──────────────────────────────────────────────────────────────
 
+// ─── AdvisorAccessPanel ──────────────────────────────────────────────────────
+
+interface AdvisorAccessPanelProps {
+  advisor: AdvisorEntry;
+  adminRoles: AdminRoleOption[];
+  onUpdate: () => void;
+}
+
+function AdvisorAccessPanel({ advisor, adminRoles, onUpdate }: AdvisorAccessPanelProps): JSX.Element {
+  const [linking, setLinking] = useState(false);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const isLinked = !!advisor.memberId;
+  const hasAdminAccess = advisor.member?.isAdmin && advisor.isAdminGranted;
+
+  const handleLinkMember = async () => {
+    if (!selectedMemberId) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/advisors", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: advisor.id, action: "link_member", memberId: selectedMemberId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed" }));
+        throw new Error(err.error || err.message || "Failed to link member");
+      }
+      toast("Member linked to advisor", "success");
+      setLinking(false);
+      setSelectedMemberId(null);
+      onUpdate();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to link member", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUnlinkMember = async () => {
+    if (!window.confirm("Unlink this member from the advisor profile? Admin access (if granted) will also be revoked.")) return;
+    setSaving(true);
+    try {
+      // Revoke admin first if granted
+      if (hasAdminAccess) {
+        await fetch("/api/admin/advisors", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: advisor.id, action: "revoke_admin" }),
+        });
+      }
+      const res = await fetch("/api/admin/advisors", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: advisor.id, action: "unlink_member" }),
+      });
+      if (!res.ok) throw new Error("Failed to unlink member");
+      toast("Member unlinked from advisor", "success");
+      onUpdate();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to unlink member", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGrantAdmin = async () => {
+    if (!selectedRoleId) {
+      toast("Please select an admin role first", "error");
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/advisors", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: advisor.id, action: "grant_admin", adminRoleId: selectedRoleId }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed" }));
+        throw new Error(err.error || err.message || "Failed to grant admin access");
+      }
+      toast("Admin access granted to advisor", "success");
+      setSelectedRoleId("");
+      onUpdate();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to grant admin access", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRevokeAdmin = async () => {
+    if (!window.confirm(`Revoke admin access from ${advisor.name}? They will lose access to the admin panel.`)) return;
+    setSaving(true);
+    try {
+      const res = await fetch("/api/admin/advisors", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: advisor.id, action: "revoke_admin" }),
+      });
+      if (!res.ok) throw new Error("Failed to revoke admin access");
+      toast("Admin access revoked", "success");
+      onUpdate();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to revoke admin access", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const inputCls = cn(
+    "w-full px-3 py-2 text-sm rounded-md",
+    "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
+    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent",
+    "transition-colors"
+  );
+
+  return (
+    <div className="mt-3 p-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)] space-y-3">
+      <h4 className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">Member Profile & Admin Access</h4>
+
+      {/* Member Link Section */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium text-[var(--color-text-primary)]">Linked Member Account</span>
+          {isLinked && (
+            <a
+              href={`/members/${advisor.member?.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline"
+            >
+              View Profile <ExternalLink size={10} aria-hidden="true" />
+            </a>
+          )}
+        </div>
+
+        {isLinked ? (
+          <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-surface)] border border-[var(--color-border)]">
+            {advisor.member?.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={advisor.member.avatarUrl} alt={advisor.member.fullName} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-xs font-bold text-[var(--color-primary)]">{advisor.name.charAt(0)}</span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{advisor.member?.fullName}</div>
+              <div className="text-xs text-[var(--color-text-secondary)] truncate">@{advisor.member?.username}</div>
+            </div>
+            <button
+              type="button"
+              onClick={handleUnlinkMember}
+              disabled={saving}
+              aria-label="Unlink member"
+              className={cn(
+                "flex-shrink-0 p-1.5 rounded-md text-[var(--color-text-secondary)]",
+                "hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10",
+                "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+            >
+              {saving ? <Loader2 size={14} className="animate-spin" /> : <Link2Off size={14} aria-hidden="true" />}
+            </button>
+          </div>
+        ) : linking ? (
+          <div className="space-y-2">
+            <MemberLinkDropdown
+              value={selectedMemberId}
+              onChange={(id) => setSelectedMemberId(id)}
+              placeholder="Search member to link..."
+            />
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleLinkMember}
+                disabled={!selectedMemberId || saving}
+                className={cn(
+                  "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
+                  "bg-[var(--color-primary)] text-white",
+                  "hover:opacity-90 transition-opacity",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                )}
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <Link size={12} aria-hidden="true" />}
+                Link Member
+              </button>
+              <button
+                type="button"
+                onClick={() => { setLinking(false); setSelectedMemberId(null); }}
+                className={cn(
+                  "px-3 py-1.5 rounded-md text-xs font-medium",
+                  "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
+                  "hover:bg-[var(--color-bg-surface)] transition-colors",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                )}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setLinking(true)}
+            className={cn(
+              "w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium",
+              "border border-dashed border-[var(--color-border)] text-[var(--color-text-secondary)]",
+              "hover:border-[var(--color-primary)] hover:text-[var(--color-primary)] transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            )}
+          >
+            <Link size={12} aria-hidden="true" />
+            Link to Member Account
+          </button>
+        )}
+      </div>
+
+      {/* Admin Access Section */}
+      {isLinked && (
+        <div className="pt-2 border-t border-[var(--color-border)] space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-[var(--color-text-primary)]">Admin Panel Access</span>
+            {hasAdminAccess && (
+              <Badge variant="success" size="sm">Active</Badge>
+            )}
+          </div>
+
+          {hasAdminAccess ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-[var(--color-success)]/10 border border-[var(--color-success)]/20">
+                <ShieldCheck size={14} className="text-[var(--color-success)] flex-shrink-0" aria-hidden="true" />
+                <span className="text-xs text-[var(--color-text-primary)]">
+                  Admin role: <span className="font-semibold">{advisor.member?.adminRole?.name ?? "Unknown"}</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRevokeAdmin}
+                disabled={saving}
+                className={cn(
+                  "w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
+                  "text-[var(--color-error)] border border-[var(--color-error)]/30",
+                  "hover:bg-[var(--color-error)]/10 transition-colors",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                )}
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <ShieldOff size={12} aria-hidden="true" />}
+                Revoke Admin Access
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                Grant this advisor access to the admin panel by assigning an admin role.
+              </p>
+              <div className="relative">
+                <select
+                  value={selectedRoleId}
+                  onChange={(e) => setSelectedRoleId(e.target.value)}
+                  className={cn(inputCls, "appearance-none pr-8")}
+                  aria-label="Select admin role"
+                >
+                  <option value="">Select admin role...</option>
+                  {adminRoles.map((r) => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+                <ChevronRight size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 rotate-90 text-[var(--color-text-secondary)] pointer-events-none" aria-hidden="true" />
+              </div>
+              <button
+                type="button"
+                onClick={handleGrantAdmin}
+                disabled={saving || !selectedRoleId}
+                className={cn(
+                  "w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
+                  "bg-[var(--color-primary)] text-white",
+                  "hover:opacity-90 transition-opacity",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                )}
+              >
+                {saving ? <Loader2 size={12} className="animate-spin" /> : <ShieldCheck size={12} aria-hidden="true" />}
+                Grant Admin Access
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── AdvisorsTab ──────────────────────────────────────────────────────────────
+
 function AdvisorsTab(): JSX.Element {
   const { data, isLoading, error } = useSWR<{ data: AdvisorEntry[] }>(
     "/api/admin/advisors",
     fetcher
   );
 
+  const { data: rolesData } = useSWR<{ data: AdminRoleOption[] }>(
+    "/api/admin/admin-roles",
+    fetcher
+  );
+
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [expandedAccessId, setExpandedAccessId] = useState<string | null>(null);
   const [addingNew, setAddingNew] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const advisors = data?.data ?? [];
+  const adminRoles = rolesData?.data ?? [];
   const currentAdvisors = advisors.filter((a) => a.isCurrent);
   const exAdvisors = advisors.filter((a) => !a.isCurrent);
 
@@ -1159,20 +1583,23 @@ function AdvisorsTab(): JSX.Element {
     setSaving(true);
     try {
       const method = isNew || !form.id ? "POST" : "PUT";
+      const payload: Record<string, unknown> = {
+        ...form,
+        periodStart: form.periodStart ? Number(form.periodStart) : null,
+        periodEnd: form.periodEnd ? Number(form.periodEnd) : null,
+        id: form.id || undefined,
+      };
+      // Remove action field for standard saves
+      delete payload.action;
       const res = await fetch("/api/admin/advisors", {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...form,
-          periodStart: form.periodStart ? Number(form.periodStart) : null,
-          periodEnd: form.periodEnd ? Number(form.periodEnd) : null,
-          id: form.id || undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Failed to save" }));
-        throw new Error(err.message || "Failed to save advisor");
+        throw new Error(err.error || err.message || "Failed to save advisor");
       }
 
       await globalMutate("/api/admin/advisors");
@@ -1229,6 +1656,10 @@ function AdvisorsTab(): JSX.Element {
 
   const AdvisorRow = ({ advisor }: { advisor: AdvisorEntry }) => {
     const isEditing = editingId === advisor.id;
+    const isAccessExpanded = expandedAccessId === advisor.id;
+    const isLinked = !!advisor.memberId;
+    const hasAdminAccess = advisor.member?.isAdmin && advisor.isAdminGranted;
+
     return (
       <div
         className={cn(
@@ -1255,6 +1686,7 @@ function AdvisorsTab(): JSX.Element {
                 periodStart: advisor.periodStart ? String(advisor.periodStart) : "",
                 periodEnd: advisor.periodEnd ? String(advisor.periodEnd) : "",
                 sortOrder: 0,
+                memberId: advisor.memberId ?? null,
               }}
               onSave={(form) => handleSave(form, false)}
               onCancel={() => setEditingId(null)}
@@ -1262,84 +1694,122 @@ function AdvisorsTab(): JSX.Element {
             />
           </div>
         ) : (
-          <div className="flex items-center gap-3 px-4 py-3">
-            {advisor.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={advisor.photoUrl}
-                alt={advisor.name}
-                className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)] flex-shrink-0"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center flex-shrink-0">
-                <span className="text-lg font-bold text-[var(--color-primary)]">
-                  {advisor.name.charAt(0).toUpperCase()}
-                </span>
-              </div>
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-[var(--color-text-primary)] text-sm">
-                  {advisor.name}
-                </span>
-                <Badge variant={advisor.isCurrent ? "success" : "neutral"} size="sm">
-                  {advisor.isCurrent ? "Current" : "Ex-Advisor"}
-                </Badge>
-              </div>
-              <div className="text-xs text-[var(--color-text-secondary)] truncate">
-                {advisor.designation}
-                {advisor.institution ? ` — ${advisor.institution}` : ""}
-              </div>
-              {advisor.researchInterests && advisor.researchInterests.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1">
-                  {advisor.researchInterests.slice(0, 3).map((r, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]"
-                    >
-                      {r}
-                    </span>
-                  ))}
-                  {advisor.researchInterests.length > 3 && (
-                    <span className="text-xs text-[var(--color-text-secondary)]">
-                      +{advisor.researchInterests.length - 3} more
-                    </span>
-                  )}
+          <div>
+            <div className="flex items-center gap-3 px-4 py-3">
+              {advisor.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={advisor.photoUrl}
+                  alt={advisor.name}
+                  className="w-12 h-12 rounded-full object-cover border border-[var(--color-border)] flex-shrink-0"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg font-bold text-[var(--color-primary)]">
+                    {advisor.name.charAt(0).toUpperCase()}
+                  </span>
                 </div>
               )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-semibold text-[var(--color-text-primary)] text-sm">
+                    {advisor.name}
+                  </span>
+                  <Badge variant={advisor.isCurrent ? "success" : "neutral"} size="sm">
+                    {advisor.isCurrent ? "Current" : "Ex-Advisor"}
+                  </Badge>
+                  {isLinked && (
+                    <Badge variant="accent" size="sm">
+                      <Link size={9} className="mr-0.5" aria-hidden="true" />
+                      Linked
+                    </Badge>
+                  )}
+                  {hasAdminAccess && (
+                    <Badge variant="primary" size="sm">
+                      <ShieldCheck size={9} className="mr-0.5" aria-hidden="true" />
+                      Admin
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-xs text-[var(--color-text-secondary)] truncate">
+                  {advisor.designation}
+                  {advisor.institution ? ` — ${advisor.institution}` : ""}
+                </div>
+                {advisor.researchInterests && advisor.researchInterests.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {advisor.researchInterests.slice(0, 3).map((r, i) => (
+                      <span
+                        key={i}
+                        className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-bg-elevated)] text-[var(--color-text-secondary)]"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                    {advisor.researchInterests.length > 3 && (
+                      <span className="text-xs text-[var(--color-text-secondary)]">
+                        +{advisor.researchInterests.length - 3} more
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-1 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setExpandedAccessId(isAccessExpanded ? null : advisor.id)}
+                  aria-label={`${isAccessExpanded ? "Hide" : "Show"} access panel for ${advisor.name}`}
+                  aria-expanded={isAccessExpanded}
+                  className={cn(
+                    "p-2 rounded-lg text-[var(--color-text-secondary)] text-xs",
+                    isAccessExpanded
+                      ? "text-[var(--color-accent)] bg-[var(--color-accent)]/10"
+                      : "hover:text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10",
+                    "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  )}
+                >
+                  <ShieldCheck size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setEditingId(advisor.id); setExpandedAccessId(null); }}
+                  aria-label={`Edit ${advisor.name}`}
+                  className={cn(
+                    "p-2 rounded-lg text-[var(--color-text-secondary)]",
+                    "hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10",
+                    "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  )}
+                >
+                  <Pencil size={15} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(advisor.id, advisor.name)}
+                  disabled={deletingId === advisor.id}
+                  aria-label={`Delete ${advisor.name}`}
+                  className={cn(
+                    "p-2 rounded-lg text-[var(--color-text-secondary)]",
+                    "hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10",
+                    "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                    "disabled:opacity-50 disabled:cursor-not-allowed"
+                  )}
+                >
+                  {deletingId === advisor.id ? (
+                    <Loader2 size={15} className="animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Trash2 size={15} aria-hidden="true" />
+                  )}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => setEditingId(advisor.id)}
-                aria-label={`Edit ${advisor.name}`}
-                className={cn(
-                  "p-2 rounded-lg text-[var(--color-text-secondary)]",
-                  "hover:text-[var(--color-primary)] hover:bg-[var(--color-primary)]/10",
-                  "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                )}
-              >
-                <Pencil size={15} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDelete(advisor.id, advisor.name)}
-                disabled={deletingId === advisor.id}
-                aria-label={`Delete ${advisor.name}`}
-                className={cn(
-                  "p-2 rounded-lg text-[var(--color-text-secondary)]",
-                  "hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10",
-                  "transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-                  "disabled:opacity-50 disabled:cursor-not-allowed"
-                )}
-              >
-                {deletingId === advisor.id ? (
-                  <Loader2 size={15} className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <Trash2 size={15} aria-hidden="true" />
-                )}
-              </button>
-            </div>
+            {isAccessExpanded && (
+              <div className="px-4 pb-3">
+                <AdvisorAccessPanel
+                  advisor={advisor}
+                  adminRoles={adminRoles}
+                  onUpdate={() => globalMutate("/api/admin/advisors")}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

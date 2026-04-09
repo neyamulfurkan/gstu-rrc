@@ -335,6 +335,10 @@ export interface AdvisorEntry {
   isCurrent: boolean;
   periodStart?: number | null;
   periodEnd?: number | null;
+  memberId?: string | null;
+  member?: { id: string; username: string; fullName: string; avatarUrl: string; isAdmin: boolean; adminRole?: { id: string; name: string } | null } | null;
+  isAdminGranted?: boolean;
+  adminRoleId?: string | null;
 }
 
 // ─── Alumni Spotlight ─────────────────────────────────────────────────────────

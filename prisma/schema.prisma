@@ -173,6 +173,7 @@ model Member {
   adminActions        AuditLog[]
   passwordResetTokens PasswordResetToken[]
   adminRoleRequests   AdminRoleRequest[]
+  advisorProfile     Advisor?
   eventsAttended   Event[]        @relation("EventAttendees")
   projectsTeam     Project[]      @relation("ProjectTeam")
 
@@ -565,8 +566,13 @@ model Advisor {
   periodStart       Int?
   periodEnd         Int?
   sortOrder         Int      @default(0)
+  memberId          String?  @unique
+  member            Member?  @relation(fields: [memberId], references: [id])
+  isAdminGranted    Boolean  @default(false)
+  adminRoleId       String?
 
   @@index([isCurrent])
+  @@index([memberId])
 }
 
 model ClubMilestone {
