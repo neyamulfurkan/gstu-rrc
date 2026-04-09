@@ -320,12 +320,6 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
               <motion.article
                 key={advisor.id}
                 variants={reduced ? reducedMotionFallback : slideInLeft}
-                style={advisor.member?.username ? { cursor: "pointer" } : undefined}
-                onClick={() => {
-                  if (advisor.member?.username) {
-                    window.location.href = `/members/${advisor.member.username}`;
-                  }
-                }}
                 className={cn(
                   "flex flex-col md:flex-row gap-6 rounded-xl border border-[var(--color-border)]",
                   "bg-[var(--color-bg-elevated)] p-6 transition-all duration-300",
@@ -361,8 +355,7 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                       {advisor.member?.username ? (
                         <Link
                           href={`/members/${advisor.member.username}`}
-                          className="hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:underline inline-flex items-center gap-1.5"
-                          onClick={(e) => e.stopPropagation()}
+                          className="hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:underline inline-flex items-center gap-1.5 after:absolute after:inset-0 after:content-[''] after:z-10"
                         >
                           {advisor.name}
                           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="opacity-60">
@@ -373,6 +366,7 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                         advisor.name
                       )}
                     </h3>
+                    <div className="relative">
                     <Badge variant="accent" size="sm">
                       Current
                     </Badge>
@@ -412,9 +406,10 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                     <a
                       href={`mailto:${advisor.email}`}
                       className={cn(
-                        "text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors",
+                        "relative z-20 text-xs text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors",
                         "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                       )}
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {advisor.email}
                     </a>
