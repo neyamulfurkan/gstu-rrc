@@ -1193,6 +1193,41 @@ function AdvisorForm({ initial, onSave, onCancel, saving }: AdvisorFormProps): J
       </div>
 
       {/* isCurrent toggle */}
+      {/* Member Link */}
+      <div className="space-y-2">
+        <label className="block text-xs font-medium text-[var(--color-text-secondary)]">Link to Member Account <span className="text-xs text-[var(--color-text-secondary)] font-normal">(optional — syncs advisor with a registered member)</span></label>
+        {form.memberId ? (
+          <div className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)]">
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">Member linked (ID: {form.memberId})</div>
+              <div className="text-xs text-[var(--color-text-secondary)]">
+                This advisor will be associated with the linked member&apos;s profile.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => patch({ memberId: null })}
+              aria-label="Unlink member"
+              className="flex-shrink-0 p-1.5 rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-error)] hover:bg-[var(--color-error)]/10 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            >
+              <Link2Off size={14} aria-hidden="true" />
+            </button>
+          </div>
+        ) : (
+          <MemberLinkDropdown
+            value={form.memberId ?? null}
+            onChange={(id, name) => {
+              patch({ memberId: id });
+            }}
+            placeholder="Search member to link to this advisor..."
+          />
+        )}
+        <p className="text-xs text-[var(--color-text-secondary)]">
+          Linking allows the advisor to have a member profile page and optionally be granted admin access.
+        </p>
+      </div>
+
+      {/* isCurrent toggle */}
       <label className="flex items-center gap-2 cursor-pointer select-none w-fit">
         <button
           type="button"
