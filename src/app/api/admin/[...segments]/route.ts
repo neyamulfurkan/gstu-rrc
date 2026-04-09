@@ -1273,7 +1273,7 @@ async function handleAdvisors(
           id: true, name: true, designation: true, institution: true, photoUrl: true,
           bio: true, researchInterests: true, email: true, socialLinks: true,
           isCurrent: true, periodStart: true, periodEnd: true, memberId: true,
-          isAdminGranted: true, adminRoleId: null,
+          isAdminGranted: true, adminRoleId: true,
           member: { select: { id: true, username: true, fullName: true, avatarUrl: true, isAdmin: true, adminRole: { select: { id: true, name: true } } } },
         },
       });
