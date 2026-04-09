@@ -320,25 +320,17 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
               <motion.article
                 key={advisor.id}
                 variants={reduced ? reducedMotionFallback : slideInLeft}
-                className={cn(
-                  "flex flex-col md:flex-row gap-6 rounded-xl border border-[var(--color-border)]",
-                  "bg-[var(--color-bg-elevated)] p-6 transition-all duration-300",
-                  "hover:border-[var(--color-primary)]/40",
-                  advisor.member?.username ? "cursor-pointer" : ""
-                )}
+                style={advisor.member?.username ? { cursor: "pointer" } : undefined}
                 onClick={() => {
                   if (advisor.member?.username) {
                     window.location.href = `/members/${advisor.member.username}`;
                   }
                 }}
-                role={advisor.member?.username ? "link" : undefined}
-                tabIndex={advisor.member?.username ? 0 : undefined}
-                onKeyDown={(e) => {
-                  if (advisor.member?.username && (e.key === "Enter" || e.key === " ")) {
-                    e.preventDefault();
-                    window.location.href = `/members/${advisor.member.username}`;
-                  }
-                }}
+                className={cn(
+                  "flex flex-col md:flex-row gap-6 rounded-xl border border-[var(--color-border)]",
+                  "bg-[var(--color-bg-elevated)] p-6 transition-all duration-300",
+                  "hover:border-[var(--color-primary)]/40"
+                )}
               >
                 {/* Photo */}
                 <div className="flex-shrink-0">
