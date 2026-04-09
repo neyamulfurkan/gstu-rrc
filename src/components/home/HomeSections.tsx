@@ -369,10 +369,13 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                       {advisor.member?.username ? (
                         <Link
                           href={`/members/${advisor.member.username}`}
-                          className="hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:underline"
+                          className="hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:underline inline-flex items-center gap-1.5"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {advisor.name}
+                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="opacity-60">
+                            <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
                         </Link>
                       ) : (
                         advisor.name
