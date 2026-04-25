@@ -317,11 +317,6 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
             variants={reduced ? reducedMotionFallback : staggerContainer}
           >
             {currentAdvisors.map((advisor) => {
-              const CardWrapper = advisor.member?.username
-                ? ({ children }: { children: React.ReactNode }) => (
-                    <Link href={`/members/${advisor.member!.username}`} className="block">{children}</Link>
-                  )
-                : ({ children }: { children: React.ReactNode }) => <>{children}</>;
               return (
               <motion.article
                 key={advisor.id}
@@ -332,9 +327,8 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                   "hover:border-[var(--color-primary)]/40"
                 )}
               >
-                <CardWrapper>
                 {/* Photo */}
-                <div className="flex-shrink-0 pointer-events-none">
+                <div className="flex-shrink-0">
                   <div className="relative w-24 h-24 md:w-32 md:h-32 rounded-xl overflow-hidden border border-[var(--color-border)]">
                     {advisor.photoUrl ? (
                       <Image
@@ -421,14 +415,13 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                     </a>
                   )}
                 </div>
-                </CardWrapper>
               </motion.article>
               );
             })}
           </motion.div>
         )}
 
-        {/* Ex-advisors */
+        {/* Ex-advisors */}
         {exAdvisors.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] font-[var(--font-mono)] mb-6">
