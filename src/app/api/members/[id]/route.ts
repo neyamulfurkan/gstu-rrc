@@ -234,7 +234,7 @@ const adminEditSchema = selfEditSchema.extend({
   adminNotes: z.string().optional(),
   studentId: z.string().min(5).optional(),
   session: z.string().min(4).optional(),
-  departmentId: z.string().cuid().optional(),
+  departmentId: z.string().min(1).optional(),
   memberType: z.enum(["member", "alumni"]).optional(),
 });
 

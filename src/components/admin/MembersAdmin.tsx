@@ -2072,6 +2072,7 @@ export function MembersAdmin(): JSX.Element {
       >
         {editMember && (
           <MemberForm
+            key={`edit-member-${editMember.id}-roles-${rolesData?.data?.length ?? 0}`}
             initialData={editMember}
             roles={rolesData?.data ?? []}
             departments={deptsData?.data ?? []}

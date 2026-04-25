@@ -156,7 +156,7 @@ export function MemberForm({
       address: initialData?.address ?? "",
       bio: initialData?.bio ?? "",
       memberType: (initialData?.memberType as "member" | "alumni") ?? "member",
-      roleId: (initialData as any)?.roleId ?? roles.find((r) => r.name === initialData?.role?.name)?.id ?? "",
+      roleId: (initialData as any)?.roleId ?? (initialData?.role?.name ? roles.find((r) => r.name === initialData.role!.name)?.id : undefined) ?? "",
       status: (initialData?.status as "active" | "inactive" | "suspended") ?? "active",
       username: "",
       avatarUrl: initialData?.avatarUrl ?? "",
@@ -168,6 +168,19 @@ export function MemberForm({
   });
 
   const memberType = watch("memberType");
+
+  // Re-sync roleId once roles finish loading (SWR may deliver roles after form mounts)
+  useEffect(() => {
+    if (roles.length === 0) return;
+    const resolvedRoleId = isEditing
+      ? (initialData as any)?.roleId ??
+        roles.find((r) => r.name === (initialData as any)?.role?.name)?.id ??
+        ""
+      : "";
+    if (resolvedRoleId) {
+      setValue("roleId", resolvedRoleId, { shouldValidate: false, shouldDirty: false });
+    }
+  }, [roles.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Sync avatarUrl state into form
   useEffect(() => {
@@ -201,6 +214,10 @@ export function MemberForm({
         if (data.memberType) payload.memberType = data.memberType;
         if (data.status) payload.status = data.status;
         payload.roleId = data.roleId && data.roleId !== "" ? data.roleId : undefined;
+        // Ensure roleId is always sent for admin edits even if it equals the original
+        if (isEditing && data.roleId && data.roleId !== "") {
+          payload.roleId = data.roleId;
+        }
         if (data.departmentId && data.departmentId !== "") payload.departmentId = data.departmentId;
         if (data.gender !== undefined) payload.gender = data.gender || null;
         if (data.dob !== undefined) payload.dob = data.dob || null;
