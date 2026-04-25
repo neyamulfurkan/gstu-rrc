@@ -167,6 +167,7 @@ export function MemberForm({
     },
   });
 
+  console.log("FORM ERRORS", errors);
   const memberType = watch("memberType");
 
   // Re-sync roleId once roles finish loading (SWR may deliver roles after form mounts)
@@ -199,6 +200,7 @@ export function MemberForm({
 
   const handleFormSubmit = useCallback(
     async (data: MemberFormValues) => {
+      console.log("FORM SUBMITTED", data);
       setServerError(null);
       setIsSubmitting(true);
       try {
@@ -269,12 +271,11 @@ export function MemberForm({
 
       {/* Scrollable body */}
       <form
-        id="member-form"
         onSubmit={handleSubmit(handleFormSubmit)}
-        className="flex-1 overflow-y-auto min-h-0"
+        className="flex-1 overflow-y-auto min-h-0 flex flex-col"
         noValidate
       >
-        <div className="px-6 py-5 space-y-6">
+        <div className="px-6 py-5 space-y-6 flex-1">
           {/* Server error */}
           {serverError && (
             <Alert
@@ -580,42 +581,44 @@ export function MemberForm({
             </p>
           </section>
         </div>
+      {/* Footer — inside the form so type="submit" works without form= attribute */}
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border)] flex-shrink-0 bg-[var(--color-bg-surface)] sticky bottom-0 z-10">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className={cn(
+              "rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm",
+              "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
+              "hover:bg-[var(--color-bg-elevated)] transition-colors",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+              "disabled:opacity-50 disabled:cursor-not-allowed"
+            )}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              console.log("BUTTON CLICKED");
+              handleSubmit(handleFormSubmit)();
+            }}
+            disabled={isSubmitting}
+            className={cn(
+              "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium",
+              "bg-[var(--color-accent)] text-[var(--color-bg-base)]",
+              "hover:opacity-90 transition-opacity",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-base)]",
+              "disabled:opacity-50 disabled:cursor-not-allowed"
+            )}
+          >
+            {isSubmitting && (
+              <Spinner size="sm" label="Saving member…" />
+            )}
+            {isEditing ? "Save Changes" : "Create Member"}
+          </button>
+        </div>
       </form>
-
-      {/* Footer */}
-      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border)] flex-shrink-0 bg-[var(--color-bg-surface)] sticky bottom-0 z-10">
-        <button
-          type="button"
-          onClick={onClose}
-          disabled={isSubmitting}
-          className={cn(
-            "rounded-lg border border-[var(--color-border)] px-4 py-2 text-sm",
-            "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]",
-            "hover:bg-[var(--color-bg-elevated)] transition-colors",
-            "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
-          )}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          form="member-form"
-          disabled={isSubmitting}
-          className={cn(
-            "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium",
-            "bg-[var(--color-accent)] text-[var(--color-bg-base)]",
-            "hover:opacity-90 transition-opacity",
-            "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-base)]",
-            "disabled:opacity-50 disabled:cursor-not-allowed"
-          )}
-        >
-          {isSubmitting && (
-            <Spinner size="sm" label="Saving member…" />
-          )}
-          {isEditing ? "Save Changes" : "Create Member"}
-        </button>
-      </div>
     </div>
   );
 }
