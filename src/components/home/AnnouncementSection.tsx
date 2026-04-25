@@ -494,7 +494,8 @@ export function AnnouncementSection({
       <TickerBar announcements={announcements} tickerSpeed={tickerSpeed} />
 
       {/* Cards grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-[var(--color-bg-base)] border-b border-[var(--color-border)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Section heading */}
         <motion.div
           variants={sectionHeaderVariants}
@@ -562,6 +563,7 @@ export function AnnouncementSection({
             <ChevronRight className="w-4 h-4" aria-hidden="true" />
           </a>
         </div>
+      </div>
       </div>
     </section>
   );
