@@ -60,7 +60,7 @@ const baseMemberFormSchema = z.object({
   address: z.string().optional(),
   bio: z.string().optional(),
   memberType: z.enum(["member", "alumni"]),
-  roleId: z.string().min(1, "Please select a role"),
+  roleId: z.string().min(1, "Please select a role").or(z.literal("")).refine(val => val !== "", { message: "Please select a role" }),
   status: z.enum(["active", "inactive", "suspended"]),
   avatarUrl: z.string().optional(),
   password: z.string().optional(),
@@ -184,7 +184,7 @@ export function MemberForm({
 
   // Sync avatarUrl state into form
   useEffect(() => {
-    setValue("avatarUrl", avatarUrl);
+    setValue("avatarUrl", avatarUrl, { shouldValidate: false });
   }, [avatarUrl, setValue]);
 
   // Group roles by category
@@ -298,6 +298,7 @@ export function MemberForm({
               label="Avatar Image"
               accept="image/*"
             />
+            <input type="hidden" {...register("avatarUrl")} />
             {errors.avatarUrl && (
               <FormError>{errors.avatarUrl.message}</FormError>
             )}
@@ -492,6 +493,7 @@ export function MemberForm({
                               : ""
                           )}
                           {...field}
+                          name="roleId"
                         >
                           <option value="">Select a role</option>
                           {ROLE_CATEGORY_ORDER.filter(
