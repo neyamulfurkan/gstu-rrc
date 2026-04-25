@@ -601,7 +601,7 @@ function CurrentCommitteeTab({ committeeType }: CurrentCommitteeTabProps): JSX.E
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Failed to save" }));
-        throw new Error(err.message || "Failed to save");
+        throw new Error(err.error || err.message || "Failed to save");
       }
 
       await globalMutate("/api/admin/committee");
@@ -751,7 +751,7 @@ function ExCommitteeTab(): JSX.Element {
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Failed to save" }));
-        throw new Error(err.message || "Failed to save");
+        throw new Error(err.error || err.message || "Failed to save");
       }
 
       await globalMutate("/api/admin/committee");

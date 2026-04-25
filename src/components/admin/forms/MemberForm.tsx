@@ -156,7 +156,7 @@ export function MemberForm({
       address: initialData?.address ?? "",
       bio: initialData?.bio ?? "",
       memberType: (initialData?.memberType as "member" | "alumni") ?? "member",
-      roleId: (initialData as any)?.roleId ?? "",
+      roleId: (initialData as any)?.roleId ?? roles.find((r) => r.name === initialData?.role?.name)?.id ?? "",
       status: (initialData?.status as "active" | "inactive" | "suspended") ?? "active",
       username: "",
       avatarUrl: initialData?.avatarUrl ?? "",
