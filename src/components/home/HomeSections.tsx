@@ -425,11 +425,10 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
               </motion.article>
               );
             })}
-            ))}
           </motion.div>
         )}
 
-        {/* Ex-advisors */}
+        {/* Ex-advisors */
         {exAdvisors.length > 0 && (
           <div>
             <h3 className="text-sm font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] font-[var(--font-mono)] mb-6">
