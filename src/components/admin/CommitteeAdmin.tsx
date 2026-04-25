@@ -374,6 +374,11 @@ interface DraggableListProps {
 }
 
 function DraggableList({ rows, onChange, committeeType }: DraggableListProps): JSX.Element {
+  const { data: rolesData } = useSWR<{ data: Array<{ id: string; name: string }> }>(
+    "/api/admin/roles",
+    fetcher
+  );
+  const roleNames = rolesData?.data?.map((r) => r.name) ?? [];
   const listRef = useRef<HTMLDivElement>(null);
   const draggingIdx = useRef<number | null>(null);
   const dragOverIdx = useRef<number | null>(null);
@@ -483,34 +488,9 @@ function DraggableList({ rows, onChange, committeeType }: DraggableListProps): J
                 )}
               />
               <datalist id={`designations-${committeeType}`}>
-                {committeeType === "executive" || committeeType === "sub_executive" ? (
-                  <>
-                    <option value="President" />
-                    <option value="Vice President" />
-                    <option value="General Secretary" />
-                    <option value="Joint Secretary" />
-                    <option value="Treasurer" />
-                    <option value="Assistant Treasurer" />
-                    <option value="Organizing Secretary" />
-                    <option value="Research Secretary" />
-                    <option value="Publication Secretary" />
-                    <option value="Cultural Secretary" />
-                    <option value="Sports Secretary" />
-                    <option value="IT Secretary" />
-                    <option value="Public Relations Officer" />
-                    <option value="Executive Member" />
-                    <option value="Sub-Executive Member" />
-                  </>
-                ) : (
-                  <>
-                    <option value="President" />
-                    <option value="Vice President" />
-                    <option value="General Secretary" />
-                    <option value="Treasurer" />
-                    <option value="Executive Member" />
-                    <option value="General Member" />
-                  </>
-                )}
+                {roleNames.map((name) => (
+                  <option key={name} value={name} />
+                ))}
               </datalist>
             </div>
 
