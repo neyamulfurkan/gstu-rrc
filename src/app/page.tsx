@@ -605,14 +605,14 @@ export default async function HomePage(): Promise<JSX.Element> {
       },
     }),
 
-    // Current executive committee spotlights (top 3)
+    // Current executive committee spotlights
     prisma.committeeMember.findMany({
       where: {
         session: null,
         committeeType: "executive",
       },
       orderBy: { sortOrder: "asc" },
-      take: 3,
+      take: 20,
       select: {
         id: true,
         memberId: true,
