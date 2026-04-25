@@ -2031,8 +2031,8 @@ export function MembersAdmin(): JSX.Element {
       <Modal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}
-        title="Add New Member"
         size="xl"
+        showCloseButton={false}
       >
         <MemberForm
           roles={rolesData?.data ?? []}
@@ -2067,8 +2067,8 @@ export function MembersAdmin(): JSX.Element {
       <Modal
         isOpen={!!editMember}
         onClose={() => setEditMember(null)}
-        title="Edit Member"
         size="xl"
+        showCloseButton={false}
       >
         {editMember && (
           <MemberForm
