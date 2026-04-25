@@ -46,7 +46,7 @@ interface MemberFormProps {
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
 const baseMemberFormSchema = z.object({
-  username: z.string().min(3, "Username must be at least 3 characters").max(30).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional(),
+  username: z.string().min(3, "Username must be at least 3 characters").max(30).regex(/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers, and underscores").optional().or(z.literal("")),
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
   phone: z
@@ -158,7 +158,7 @@ export function MemberForm({
       memberType: (initialData?.memberType as "member" | "alumni") ?? "member",
       roleId: (initialData as any)?.roleId ?? (initialData?.role?.name ? roles.find((r) => r.name === initialData.role!.name)?.id : undefined) ?? "",
       status: (initialData?.status as "active" | "inactive" | "suspended") ?? "active",
-      username: "",
+      username: isEditing ? undefined : "",
       avatarUrl: initialData?.avatarUrl ?? "",
       password: "",
       adminNotes: initialData?.adminNotes ?? "",
@@ -167,7 +167,6 @@ export function MemberForm({
     },
   });
 
-  console.log("FORM ERRORS", errors);
   const memberType = watch("memberType");
 
   // Re-sync roleId once roles finish loading (SWR may deliver roles after form mounts)
@@ -200,7 +199,6 @@ export function MemberForm({
 
   const handleFormSubmit = useCallback(
     async (data: MemberFormValues) => {
-      console.log("FORM SUBMITTED", data);
       setServerError(null);
       setIsSubmitting(true);
       try {
@@ -598,11 +596,7 @@ export function MemberForm({
             Cancel
           </button>
           <button
-            type="button"
-            onClick={() => {
-              console.log("BUTTON CLICKED");
-              handleSubmit(handleFormSubmit)();
-            }}
+            type="submit"
             disabled={isSubmitting}
             className={cn(
               "flex items-center gap-2 rounded-lg px-5 py-2 text-sm font-medium",
