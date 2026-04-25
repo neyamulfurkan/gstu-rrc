@@ -477,14 +477,20 @@ function EditGalleryModal({
 
 interface BulkUploadSectionProps {
   categories: CategoryItem[];
+  events: EventOption[];
+  projects: ProjectOption[];
   onComplete: () => void;
+  defaultEventId?: string;
+  defaultProjectId?: string;
 }
 
-function BulkUploadSection({ categories, onComplete }: BulkUploadSectionProps) {
+function BulkUploadSection({ categories, events, projects, onComplete, defaultEventId = "", defaultProjectId = "" }: BulkUploadSectionProps) {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState<Record<string, "pending" | "uploading" | "done" | "error">>({});
   const [bulkCategoryId, setBulkCategoryId] = useState("");
+  const [bulkEventId, setBulkEventId] = useState(defaultEventId);
+  const [bulkProjectId, setBulkProjectId] = useState(defaultProjectId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropRef = useRef<HTMLDivElement>(null);
 
@@ -568,14 +574,16 @@ function BulkUploadSection({ categories, onComplete }: BulkUploadSectionProps) {
           continue;
         }
         const body: Record<string, unknown> = {
-          url,
-          type: "image",
-          altText: file.name.replace(/\.[^/.]+$/, ""),
-          categoryId: bulkCategoryId,
-          year: new Date().getFullYear(),
-          tags: [],
-          downloadEnabled: false,
-        };
+url,
+type: "image",
+altText: file.name.replace(/.[^/.]+$/, ""),
+categoryId: bulkCategoryId,
+year: new Date().getFullYear(),
+tags: [],
+downloadEnabled: false,
+eventId: bulkEventId || null,
+projectId: bulkProjectId || null,
+};
 
         const apiRes = await fetch("/api/gallery", {
           method: "POST",
@@ -615,22 +623,52 @@ function BulkUploadSection({ categories, onComplete }: BulkUploadSectionProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3">
         <h3 className="text-base font-semibold text-[var(--color-text-primary)] font-[var(--font-heading)]">
           Bulk Upload
         </h3>
-        <select
-          value={bulkCategoryId}
-          onChange={(e) => setBulkCategoryId(e.target.value)}
-          className={cn(inputClass, "w-48")}
-        >
-          <option value="" disabled>Select a category (required)</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
+        <div className="flex flex-wrap gap-3">
+          <select
+            value={bulkCategoryId}
+            onChange={(e) => setBulkCategoryId(e.target.value)}
+            className={cn(inputClass, "flex-1 min-w-[180px]")}
+          >
+            <option value="" disabled>Select a category (required)</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+          {events.length > 0 && (
+            <select
+              value={bulkEventId}
+              onChange={(e) => { setBulkEventId(e.target.value); if (e.target.value) setBulkProjectId(""); }}
+              className={cn(inputClass, "flex-1 min-w-[180px]")}
+            >
+              <option value="">Link to event (optional)</option>
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {truncateText(ev.title, 35)}
+                </option>
+              ))}
+            </select>
+          )}
+          {projects.length > 0 && (
+            <select
+              value={bulkProjectId}
+              onChange={(e) => { setBulkProjectId(e.target.value); if (e.target.value) setBulkEventId(""); }}
+              className={cn(inputClass, "flex-1 min-w-[180px]")}
+            >
+              <option value="">Link to project (optional)</option>
+              {projects.map((proj) => (
+                <option key={proj.id} value={proj.id}>
+                  {truncateText(proj.title, 35)}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
       </div>
 
       <div
@@ -810,18 +848,12 @@ function GalleryItemTile({
     }
   }
 
-  const statusVariant =
-    item.type === "image"
-      ? ({ success: "success", approved: "success", pending: "warning", rejected: "error" } as Record<string, "success" | "warning" | "error" | "neutral">)[
-          "approved"
-        ]
-      : "neutral";
-
   const statusMap: Record<string, "success" | "warning" | "error" | "neutral"> = {
     approved: "success",
     pending: "warning",
     rejected: "error",
   };
+  const itemStatus = (item as GalleryItemCard & { status?: string }).status ?? "pending";
 
   return (
     <div
@@ -851,8 +883,8 @@ function GalleryItemTile({
 
       {/* Status Badge */}
       <div className="absolute top-2 left-2">
-        <Badge variant={statusMap["pending"] ?? "neutral"} size="sm">
-          pending
+        <Badge variant={statusMap[itemStatus] ?? "neutral"} size="sm">
+          {itemStatus}
         </Badge>
       </div>
 
@@ -1103,6 +1135,8 @@ export function GalleryAdmin(): JSX.Element {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedType, setSelectedType] = useState<MediaType>("all");
   const [uploaderSearch, setUploaderSearch] = useState("");
+  const [selectedEventId, setSelectedEventId] = useState("");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [editingItem, setEditingItem] = useState<GalleryItemCard | null>(null);
   const [deletingItem, setDeletingItem] = useState<GalleryItemCard | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -1116,6 +1150,8 @@ export function GalleryAdmin(): JSX.Element {
   if (selectedCategoryId) galleryQueryParams.set("categoryId", selectedCategoryId);
   if (selectedType !== "all") galleryQueryParams.set("type", selectedType);
   if (debouncedUploaderSearch) galleryQueryParams.set("uploaderSearch", debouncedUploaderSearch);
+  if (selectedEventId) galleryQueryParams.set("eventId", selectedEventId);
+  if (selectedProjectId) galleryQueryParams.set("projectId", selectedProjectId);
   galleryQueryParams.set("take", "40");
 
   const galleryUrl = `/api/gallery?${galleryQueryParams.toString()}`;
@@ -1376,14 +1412,47 @@ export function GalleryAdmin(): JSX.Element {
               ))}
             </div>
 
-            {(selectedCategoryId || selectedType !== "all" || uploaderSearch) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedCategoryId("");
-                  setSelectedType("all");
-                  setUploaderSearch("");
-                }}
+{events.length > 0 && (
+<select
+value={selectedEventId}
+onChange={(e) => { setSelectedEventId(e.target.value); if (e.target.value) setSelectedProjectId(""); }}
+className={cn(inputClass, "w-44")}
+aria-label="Filter by event"
+>
+<option value="">All Events</option>
+{events.map((ev) => (
+<option key={ev.id} value={ev.id}>
+{truncateText(ev.title, 30)}
+</option>
+))}
+</select>
+)}
+        {projects.length > 0 && (
+          <select
+            value={selectedProjectId}
+            onChange={(e) => { setSelectedProjectId(e.target.value); if (e.target.value) setSelectedEventId(""); }}
+            className={cn(inputClass, "w-44")}
+            aria-label="Filter by project"
+          >
+            <option value="">All Projects</option>
+            {projects.map((proj) => (
+              <option key={proj.id} value={proj.id}>
+                {truncateText(proj.title, 30)}
+              </option>
+            ))}
+          </select>
+        )}
+
+        {(selectedCategoryId || selectedType !== "all" || uploaderSearch || selectedEventId || selectedProjectId) && (
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedCategoryId("");
+              setSelectedType("all");
+              setUploaderSearch("");
+              setSelectedEventId("");
+              setSelectedProjectId("");
+            }}
                 className={cn(
                   "flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium",
                   "text-[var(--color-text-secondary)] hover:text-[var(--color-error)]",
@@ -1493,6 +1562,8 @@ export function GalleryAdmin(): JSX.Element {
           >
             <BulkUploadSection
               categories={categories}
+              events={events}
+              projects={projects}
               onComplete={() => {
                 mutateGallery();
                 setActiveSubTab("gallery");

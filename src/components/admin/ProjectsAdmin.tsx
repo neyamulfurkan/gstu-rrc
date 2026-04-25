@@ -22,11 +22,14 @@ import {
   Search,
   X,
   Users,
+  Images,
+  Check,
+  ImageIcon,
 } from "lucide-react";
 import useSWR, { mutate as globalMutate } from "swr";
 
 import { cn, formatDate, cloudinaryUrl } from "@/lib/utils";
-import type { ProjectCard } from "@/types/index";
+import type { ProjectCard, GalleryItemCard } from "@/types/index";
 import { Table, Pagination, EmptyState } from "@/components/ui/DataDisplay";
 import {
   Badge,
@@ -452,6 +455,202 @@ function CategoryManager({
   );
 }
 
+// ─── Project Gallery Drawer ───────────────────────────────────────────────────
+
+interface ProjectGalleryDrawerProps {
+  projectId: string | null;
+  projectTitle: string;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+function ProjectGalleryDrawer({
+  projectId,
+  projectTitle,
+  isOpen,
+  onClose,
+}: ProjectGalleryDrawerProps): JSX.Element {
+  const { data, error, mutate } = useSWR<{ data: GalleryItemCard[] }>(
+    projectId && isOpen ? `/api/gallery?projectId=${projectId}&status=all&take=50` : null,
+    fetcher
+  );
+
+  const items = data?.data ?? [];
+  const loading = !data && !error && isOpen && !!projectId;
+
+  async function handleApprove(itemId: string) {
+    try {
+      const res = await fetch(`/api/gallery/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "approved" }),
+      });
+      if (!res.ok) throw new Error("Failed to approve");
+      toast("Gallery item approved", "success");
+      mutate();
+    } catch {
+      toast("Failed to approve gallery item", "error");
+    }
+  }
+
+  async function handleReject(itemId: string) {
+    try {
+      const res = await fetch(`/api/gallery/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "rejected" }),
+      });
+      if (!res.ok) throw new Error("Failed to reject");
+      toast("Gallery item rejected", "info");
+      mutate();
+    } catch {
+      toast("Failed to reject gallery item", "error");
+    }
+  }
+
+  async function handleDelete(itemId: string) {
+    try {
+      const res = await fetch(`/api/gallery/${itemId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
+      toast("Gallery item deleted", "success");
+      mutate();
+    } catch {
+      toast("Failed to delete gallery item", "error");
+    }
+  }
+
+  const statusVariant = (status: string): "success" | "warning" | "error" | "neutral" => {
+    if (status === "approved") return "success";
+    if (status === "pending") return "warning";
+    if (status === "rejected") return "error";
+    return "neutral";
+  };
+
+  return (
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Gallery — ${projectTitle}`}
+      side="right"
+      width="560px"
+    >
+      <div className="p-4 h-full overflow-y-auto">
+        {loading && (
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} height={160} className="w-full rounded-lg" />
+            ))}
+          </div>
+        )}
+
+        {error && (
+          <Alert
+            variant="error"
+            message="Failed to load gallery items. Please try again."
+            className="mb-4"
+          />
+        )}
+
+        {!loading && !error && items.length === 0 && (
+          <EmptyState
+            icon="Images"
+            heading="No Gallery Items"
+            description="No images or videos have been tagged to this project yet."
+          />
+        )}
+
+        {!loading && items.length > 0 && (
+          <div className="grid grid-cols-2 gap-3">
+            {items.map((item) => {
+              const status = (item as GalleryItemCard & { status?: string }).status ?? "approved";
+              return (
+                <div
+                  key={item.id}
+                  className={cn(
+                    "relative rounded-xl overflow-hidden border",
+                    "bg-[var(--color-bg-surface)] border-[var(--color-border)]",
+                    "group"
+                  )}
+                >
+                  <div className="relative h-32 bg-[var(--color-bg-elevated)]">
+                    {item.type === "image" ? (
+                      <Image
+                        src={item.url}
+                        alt={item.altText || item.title || "Gallery item"}
+                        fill
+                        className="object-cover"
+                        sizes="240px"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-8 h-8 text-[var(--color-text-secondary)]" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-2">
+                    {item.title && (
+                      <p className="text-xs font-medium text-[var(--color-text-primary)] truncate mb-1">
+                        {item.title}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between gap-1">
+                      <Badge variant={statusVariant(status)} size="sm">
+                        {status}
+                      </Badge>
+                      <div className="flex items-center gap-1">
+                        {status !== "approved" && (
+                          <button
+                            type="button"
+                            onClick={() => handleApprove(item.id)}
+                            aria-label="Approve item"
+                            className={cn(
+                              "p-1 rounded text-[var(--color-success)]",
+                              "hover:bg-[var(--color-success)]/10 transition-colors",
+                              "focus:outline-none focus:ring-2 focus:ring-[var(--color-success)]"
+                            )}
+                          >
+                            <Check size={12} />
+                          </button>
+                        )}
+                        {status !== "rejected" && (
+                          <button
+                            type="button"
+                            onClick={() => handleReject(item.id)}
+                            aria-label="Reject item"
+                            className={cn(
+                              "p-1 rounded text-[var(--color-warning)]",
+                              "hover:bg-[var(--color-warning)]/10 transition-colors",
+                              "focus:outline-none focus:ring-2 focus:ring-[var(--color-warning)]"
+                            )}
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(item.id)}
+                          aria-label="Delete item"
+                          className={cn(
+                            "p-1 rounded text-[var(--color-error)]",
+                            "hover:bg-[var(--color-error)]/10 transition-colors",
+                            "focus:outline-none focus:ring-2 focus:ring-[var(--color-error)]"
+                          )}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </Drawer>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 type ActiveTab = "projects" | "categories";
@@ -469,6 +668,11 @@ export function ProjectsAdmin(): JSX.Element {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<ProjectRow | null>(null);
+
+  // Gallery drawer state
+  const [galleryProjectId, setGalleryProjectId] = useState<string | null>(null);
+  const [galleryProjectTitle, setGalleryProjectTitle] = useState("");
+  const [galleryDrawerOpen, setGalleryDrawerOpen] = useState(false);
 
   // Local optimistic published state
   const [publishedOverrides, setPublishedOverrides] = useState<
@@ -723,20 +927,30 @@ export function ProjectsAdmin(): JSX.Element {
             }
             align="right"
           >
-            <DropdownMenuItem
-              icon={<Pencil size={14} aria-hidden="true" />}
-              onClick={() => openEdit(row)}
-            >
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuDivider />
-            <DropdownMenuItem
-              icon={<Trash2 size={14} aria-hidden="true" />}
-              variant="danger"
-              onClick={() => openDelete(row)}
-            >
-              Delete
-            </DropdownMenuItem>
+           <DropdownMenuItem
+icon={<Pencil size={14} aria-hidden="true" />}
+onClick={() => openEdit(row)}
+>
+Edit
+</DropdownMenuItem>
+<DropdownMenuItem
+icon={<Images size={14} aria-hidden="true" />}
+onClick={() => {
+setGalleryProjectId(row.id);
+setGalleryProjectTitle(row.title);
+setGalleryDrawerOpen(true);
+}}
+>
+View Gallery
+</DropdownMenuItem>
+<DropdownMenuDivider />
+<DropdownMenuItem
+icon={<Trash2 size={14} aria-hidden="true" />}
+variant="danger"
+onClick={() => openDelete(row)}
+>
+Delete
+</DropdownMenuItem>
           </DropdownMenu>
         ),
       },
@@ -1102,6 +1316,18 @@ export function ProjectsAdmin(): JSX.Element {
           }}
         />
       )}
+
+      {/* Project Gallery Drawer */}
+      <ProjectGalleryDrawer
+        projectId={galleryProjectId}
+        projectTitle={galleryProjectTitle}
+        isOpen={galleryDrawerOpen}
+        onClose={() => {
+          setGalleryDrawerOpen(false);
+          setGalleryProjectId(null);
+          setGalleryProjectTitle("");
+        }}
+      />
     </div>
   );
 }
