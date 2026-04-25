@@ -524,11 +524,11 @@ export function EditProfileForm({
               errorData.message ?? "A conflict occurred. The email or username may already be in use."
             );
           } else if (response.status === 400) {
-            setSubmitError(errorData.message ?? "Invalid data. Please check your inputs.");
+            setSubmitError(errorData.error ?? errorData.message ?? "Invalid data. Please check your inputs.");
           } else if (response.status === 401 && passwordExpanded && passwordState.currentPassword) {
             setFieldErrors({ currentPassword: "Current password is incorrect" });
           } else {
-            setSubmitError(errorData.message ?? "Failed to update profile. Please try again.");
+            setSubmitError(errorData.error ?? errorData.message ?? "Failed to update profile. Please try again.");
           }
           return;
         }
