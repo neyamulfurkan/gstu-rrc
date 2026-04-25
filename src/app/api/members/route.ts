@@ -134,6 +134,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         coverUrl: true,
         department: { select: { name: true } },
         role: { select: { name: true, color: true, category: true } },
+        roleId: true,
         session: true,
         memberType: true,
         skills: true,
@@ -184,6 +185,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         avatarUrl: m.avatarUrl ?? "",
         coverUrl: m.coverUrl ?? "",
         department: { name: m.department?.name ?? "" },
+        roleId: (m as any).roleId ?? null,
         role: {
           name: m.role?.name ?? "Member",
           color: m.role?.color ?? "#7B8DB0",
