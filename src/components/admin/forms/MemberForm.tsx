@@ -247,7 +247,7 @@ export function MemberForm({
   );
 
   return (
-    <div className="flex flex-col h-full bg-[var(--color-bg-surface)] rounded-xl overflow-hidden">
+    <div className="flex flex-col bg-[var(--color-bg-surface)] rounded-xl overflow-hidden" style={{ maxHeight: "85vh" }}>
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--color-border)] flex-shrink-0">
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">
@@ -271,7 +271,7 @@ export function MemberForm({
       <form
         id="member-form"
         onSubmit={handleSubmit(handleFormSubmit)}
-        className="flex-1 min-h-0 overflow-y-auto"
+        className="flex-1 overflow-y-auto min-h-0"
         noValidate
       >
         <div className="px-6 py-5 space-y-6">
@@ -581,7 +581,7 @@ export function MemberForm({
       </form>
 
       {/* Footer */}
-      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border)] flex-shrink-0 bg-[var(--color-bg-surface)]">
+      <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[var(--color-border)] flex-shrink-0 bg-[var(--color-bg-surface)] sticky bottom-0 z-10">
         <button
           type="button"
           onClick={onClose}

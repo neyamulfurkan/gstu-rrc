@@ -243,7 +243,7 @@ export function Modal({
                   )}
                 </div>
               )}
-              <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">{children}</div>
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">{children}</div>
             </motion.div>
           </motion.div>
         )}
@@ -460,7 +460,7 @@ export function Drawer({
                 </div>
               )}
 
-              <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">{children}</div>
+              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">{children}</div>
             </motion.div>
           </>
         )}
