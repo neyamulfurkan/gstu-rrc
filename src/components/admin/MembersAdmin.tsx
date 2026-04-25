@@ -2079,7 +2079,7 @@ export function MembersAdmin(): JSX.Element {
               const res = await fetch(`/api/members/${editMember.id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
+                body: JSON.stringify({ ...data, roleId: (data as any).roleId }),
               });
               if (!res.ok) {
                 const body = await res.json().catch(() => ({}));

@@ -229,7 +229,7 @@ const selfEditSchema = z.object({
 });
 
 const adminEditSchema = selfEditSchema.extend({
-  roleId: z.string().cuid().optional(),
+  roleId: z.string().min(1).optional(),
   status: z.enum(["active", "inactive", "suspended"]).optional(),
   adminNotes: z.string().optional(),
   studentId: z.string().min(5).optional(),
@@ -389,7 +389,7 @@ export async function PUT(
 
     // Admin-only fields
     if (isAdminWithPermission) {
-      if (validated.roleId !== undefined) {
+      if (validated.roleId !== undefined && validated.roleId !== null && validated.roleId !== "") {
         updateData.roleId = validated.roleId;
       }
       if (validated.status !== undefined) {

@@ -558,7 +558,7 @@ interface CurrentCommitteeTabProps {
 function CurrentCommitteeTab({ committeeType }: CurrentCommitteeTabProps): JSX.Element {
   const apiType = committeeType === "executive" ? "executive" : "sub_executive";
   const { data, isLoading, error } = useSWR<{ data: { executive: CommitteeMemberEntry[]; subExecutive: CommitteeMemberEntry[]; exCommittee: CommitteeMemberEntry[] } }>(
-    `/api/admin/committee?type=${apiType}`,
+    "/api/admin/committee",
     fetcher
   );
 
@@ -604,7 +604,7 @@ function CurrentCommitteeTab({ committeeType }: CurrentCommitteeTabProps): JSX.E
         throw new Error(err.message || "Failed to save");
       }
 
-      await globalMutate(`/api/admin/committee?type=${apiType}`);
+      await globalMutate("/api/admin/committee");
       toast("Committee saved successfully", "success");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "An error occurred";
@@ -676,7 +676,7 @@ function CurrentCommitteeTab({ committeeType }: CurrentCommitteeTabProps): JSX.E
 
 function ExCommitteeTab(): JSX.Element {
   const { data, isLoading, error } = useSWR<{ data: { executive: CommitteeMemberEntry[]; subExecutive: CommitteeMemberEntry[]; exCommittee: CommitteeMemberEntry[] } }>(
-    "/api/admin/committee?type=ex",
+    "/api/admin/committee",
     fetcher
   );
 
@@ -754,7 +754,7 @@ function ExCommitteeTab(): JSX.Element {
         throw new Error(err.message || "Failed to save");
       }
 
-      await globalMutate("/api/admin/committee?type=ex");
+      await globalMutate("/api/admin/committee");
       toast(`Session "${session.sessionLabel}" saved`, "success");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "An error occurred";

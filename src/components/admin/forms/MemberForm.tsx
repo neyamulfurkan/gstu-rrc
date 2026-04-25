@@ -200,7 +200,7 @@ export function MemberForm({
         if (data.session) payload.session = data.session;
         if (data.memberType) payload.memberType = data.memberType;
         if (data.status) payload.status = data.status;
-        if (data.roleId && data.roleId !== "") payload.roleId = data.roleId;
+        payload.roleId = data.roleId && data.roleId !== "" ? data.roleId : undefined;
         if (data.departmentId && data.departmentId !== "") payload.departmentId = data.departmentId;
         if (data.gender !== undefined) payload.gender = data.gender || null;
         if (data.dob !== undefined) payload.dob = data.dob || null;
