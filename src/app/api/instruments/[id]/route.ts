@@ -178,7 +178,7 @@ export async function PUT(
       updateData.imageUrl = body.imageUrl;
     }
     if (typeof body.status === "string") {
-      const validStatuses = ["available", "on_loan", "under_maintenance", "unavailable"];
+      const validStatuses = ["available", "on_loan", "maintenance", "unavailable"];
       if (!validStatuses.includes(body.status)) {
         return NextResponse.json(
           { error: "Invalid status value" },
@@ -189,6 +189,9 @@ export async function PUT(
     }
     if (typeof body.categoryId === "string") {
       updateData.categoryId = body.categoryId;
+    }
+    if (typeof body.quantity === "number" && Number.isInteger(body.quantity) && body.quantity >= 1) {
+      updateData.quantity = body.quantity;
     }
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
@@ -205,6 +208,7 @@ export async function PUT(
         name: true,
         description: true,
         imageUrl: true,
+        quantity: true,
         status: true,
         category: { select: { name: true } },
       },
