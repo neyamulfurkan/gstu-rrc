@@ -124,7 +124,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         name: true,
         description: true,
         imageUrl: true,
-        quantity: true,
         status: true,
         returnDate: true,
         category: {
@@ -161,7 +160,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       category: (instrument as typeof instrument & { category: { name: string } }).category,
       description: instrument.description,
       imageUrl: instrument.imageUrl,
-      quantity: (instrument as typeof instrument & { quantity?: number }).quantity,
       status: instrument.status,
       borrower:
         instrument.status === "on_loan" && (instrument as typeof instrument & { borrower?: { username: string; fullName: string; avatarUrl: string } | null }).borrower
@@ -261,7 +259,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         categoryId,
         description,
         imageUrl: safeImageUrl,
-        quantity: quantity ?? 1,
         status: status ?? "available",
       },
       select: {
@@ -269,7 +266,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         name: true,
         description: true,
         imageUrl: true,
-        quantity: true,
         status: true,
         category: {
           select: { name: true },
