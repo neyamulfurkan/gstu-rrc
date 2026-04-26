@@ -170,8 +170,8 @@ function GalleryTeaser({ items }: GalleryTeaserProps): JSX.Element {
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {items.map((item, idx) => (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {items.slice(0, 4).map((item, idx) => (
             <Link
               key={item.id}
               href="/gallery"
@@ -612,7 +612,7 @@ export default async function HomePage(): Promise<JSX.Element> {
         committeeType: "executive",
       },
       orderBy: { sortOrder: "asc" },
-      take: 20,
+      take: 3,
       select: {
         id: true,
         memberId: true,
@@ -643,11 +643,11 @@ export default async function HomePage(): Promise<JSX.Element> {
       },
     }),
 
-    // 8 latest approved gallery images
+    // 4 latest approved gallery images
     prisma.galleryItem.findMany({
       where: { status: "approved" },
       orderBy: { createdAt: "desc" },
-      take: 8,
+      take: 4,
       select: {
         id: true,
         url: true,
@@ -1010,9 +1010,6 @@ export default async function HomePage(): Promise<JSX.Element> {
 
       {/* Why Join */}
       <WhyJoinSection cards={whyJoin} />
-
-      {/* Committee Spotlight */}
-      <CommitteeSpotlight members={committeeEntries} />
 
       {/* Advisors */}
       {advisorEntries.length > 0 && (

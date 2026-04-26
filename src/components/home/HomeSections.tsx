@@ -353,20 +353,8 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-start gap-2 mb-1">
                     <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
-                      {advisor.member?.username ? (
-                        <Link
-                          href={`/members/${advisor.member.username}`}
-                          className="hover:text-[var(--color-accent)] transition-colors focus:outline-none focus:underline inline-flex items-center gap-1.5"
-                        >
-                          {advisor.name}
-                          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true" className="opacity-60">
-                            <path d="M2 10L10 2M10 2H5M10 2v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        </Link>
-                      ) : (
-                        advisor.name
-                      )}
-                    </h3>
+                    {advisor.name}
+                  </h3>
                     <Badge variant="accent" size="sm">
                       Current
                     </Badge>
