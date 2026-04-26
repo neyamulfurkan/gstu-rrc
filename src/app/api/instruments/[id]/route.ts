@@ -74,7 +74,6 @@ export async function GET(
         name: true,
         description: true,
         imageUrl: true,
-        quantity: true,
         status: true,
         borrowDate: true,
         returnDate: true,
@@ -191,10 +190,6 @@ export async function PUT(
     if (typeof body.categoryId === "string") {
       updateData.categoryId = body.categoryId;
     }
-    if (typeof body.quantity === "number" && Number.isInteger(body.quantity) && body.quantity >= 1) {
-      updateData.quantity = body.quantity;
-    }
-
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
         { error: "No valid fields to update" },
@@ -210,7 +205,6 @@ export async function PUT(
         name: true,
         description: true,
         imageUrl: true,
-        quantity: true,
         status: true,
         category: { select: { name: true } },
       },

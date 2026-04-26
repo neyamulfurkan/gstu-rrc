@@ -124,7 +124,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         name: true,
         description: true,
         imageUrl: true,
-        quantity: true,
         status: true,
         returnDate: true,
         category: {
@@ -158,17 +157,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const data = instruments.slice(0, take).map((instrument) => ({
       id: instrument.id,
       name: instrument.name,
-      category: instrument.category,
+      category: (instrument as typeof instrument & { category: { name: string } }).category,
       description: instrument.description,
       imageUrl: instrument.imageUrl,
-      quantity: instrument.quantity,
       status: instrument.status,
       borrower:
-        instrument.status === "on_loan" && instrument.borrower
+        instrument.status === "on_loan" && (instrument as typeof instrument & { borrower?: { username: string; fullName: string; avatarUrl: string } | null }).borrower
           ? {
-              username: instrument.borrower.username ?? "",
-              fullName: instrument.borrower.fullName ?? "Unknown",
-              avatarUrl: instrument.borrower.avatarUrl ?? "",
+              username: (instrument as typeof instrument & { borrower: { username: string; fullName: string; avatarUrl: string } }).borrower.username ?? "",
+              fullName: (instrument as typeof instrument & { borrower: { username: string; fullName: string; avatarUrl: string } }).borrower.fullName ?? "Unknown",
+              avatarUrl: (instrument as typeof instrument & { borrower: { username: string; fullName: string; avatarUrl: string } }).borrower.avatarUrl ?? "",
             }
           : undefined,
       returnDate:
@@ -261,7 +259,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         categoryId,
         description,
         imageUrl: safeImageUrl,
-        quantity: quantity ?? 1,
         status: status ?? "available",
       },
       select: {
@@ -269,7 +266,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         name: true,
         description: true,
         imageUrl: true,
-        quantity: true,
         status: true,
         category: {
           select: { name: true },
