@@ -320,6 +320,14 @@ export type AnnouncementSchemaInput = z.infer<typeof announcementSchema>;
 export type InstrumentSchemaInput = z.infer<typeof instrumentSchema>;
 export type PasswordResetSchemaInput = z.infer<typeof passwordResetSchema>;
 
+export const committeeApplicationSchema = z.object({
+  position: z.string().min(2, "Position must be at least 2 characters"),
+  statement: z.string().min(30, "Statement must be at least 30 characters").max(1000, "Statement cannot exceed 1000 characters"),
+  experience: z.string().min(10, "Experience must be at least 10 characters").max(500, "Experience cannot exceed 500 characters"),
+});
+
+export type CommitteeApplicationSchemaInput = z.infer<typeof committeeApplicationSchema>;
+
 export const profileEditSchema = z.object({
   fullName: z.string().min(2).optional(),
   phone: z.string().regex(/^01[3-9]\d{8}$/).optional(),

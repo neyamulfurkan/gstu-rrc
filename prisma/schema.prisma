@@ -99,6 +99,10 @@ model ClubConfig {
   resendFromName           String   @default("")
   emailTemplates           Json     @default("{}")
   defaultMemberRoleId      String   @default("")
+  committeeAppOpen         Boolean  @default(false)
+  committeeAppSession      String   @default("")
+  committeeAppDeadline     DateTime?
+  committeeAppPositions    Json     @default("[]")
   updatedAt                DateTime @updatedAt
 }
 
@@ -172,8 +176,9 @@ model Member {
   notifications    Notification[]
   adminActions        AuditLog[]
   passwordResetTokens PasswordResetToken[]
-  adminRoleRequests   AdminRoleRequest[]
-  advisorProfile     Advisor?
+  adminRoleRequests        AdminRoleRequest[]
+  advisorProfile           Advisor?
+  committeeApplications    CommitteeApplication[]
   eventsAttended   Event[]        @relation("EventAttendees")
   projectsTeam     Project[]      @relation("ProjectTeam")
 
@@ -648,6 +653,24 @@ model EmailLog {
   sentAt       DateTime @default(now())
 
   @@index([sentAt])
+}
+
+model CommitteeApplication {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation(fields: [memberId], references: [id])
+  position    String
+  statement   String   @db.Text
+  experience  String   @db.Text
+  targetSession String
+  status      String   @default("pending")
+  adminNote   String?
+  createdAt   DateTime @default(now())
+  reviewedAt  DateTime?
+
+  @@index([memberId])
+  @@index([status])
+  @@index([targetSession])
 }
 
 model FacebookPendingPost {

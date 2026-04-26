@@ -29,6 +29,11 @@ import {
   ShieldOff,
   ExternalLink,
   ChevronRight,
+  ClipboardList,
+  ToggleLeft,
+  ToggleRight,
+  Calendar,
+  Tag,
 } from "lucide-react";
 import useSWR, { mutate as globalMutate } from "swr";
 
@@ -52,7 +57,7 @@ const fetcher = async (url: string) => {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabId = "executive" | "sub-executive" | "ex-committee" | "advisors";
+type TabId = "executive" | "sub-executive" | "ex-committee" | "advisors" | "applications";
 
 interface DraggableRow {
   localId: string;
@@ -1925,6 +1930,498 @@ function AdvisorsTab(): JSX.Element {
   );
 }
 
+// ─── CommitteeApplicationsTab ─────────────────────────────────────────────────
+
+function CommitteeApplicationsTab(): JSX.Element {
+  const { data: configData, isLoading: configLoading } = useSWR<{ data: Record<string, unknown> }>(
+    "/api/admin/committee-applications",
+    async (url: string) => {
+      // Fetch config settings separately
+      const res = await fetch("/api/config");
+      if (!res.ok) throw new Error("Failed to fetch config");
+      const json = await res.json();
+      return {
+        data: {
+          committeeAppOpen: json.committeeAppOpen ?? false,
+          committeeAppSession: json.committeeAppSession ?? "",
+          committeeAppDeadline: json.committeeAppDeadline ?? null,
+          committeeAppPositions: json.committeeAppPositions ?? [],
+        },
+      };
+    }
+  );
+
+  const { data: appsData, isLoading: appsLoading, mutate: mutateApps } = useSWR<{
+    data: Array<{
+      id: string;
+      memberId: string;
+      position: string;
+      statement: string;
+      experience: string;
+      targetSession: string;
+      status: string;
+      adminNote: string | null;
+      createdAt: string;
+      reviewedAt: string | null;
+      member: {
+        username: string;
+        fullName: string;
+        avatarUrl: string;
+        session: string;
+        department: { name: string };
+      };
+    }>;
+    total: number;
+  }>("/api/admin/committee-applications?take=50", fetcher);
+
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [saving, setSaving] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [actioningId, setActioningId] = useState<string | null>(null);
+  const [selectedApp, setSelectedApp] = useState<string | null>(null);
+  const [adminNote, setAdminNote] = useState("");
+
+  // Settings state
+  const [appOpen, setAppOpen] = useState(false);
+  const [appSession, setAppSession] = useState("");
+  const [appDeadline, setAppDeadline] = useState("");
+  const [appPositions, setAppPositions] = useState<string[]>([]);
+  const [positionInput, setPositionInput] = useState("");
+  const [settingsInitialized, setSettingsInitialized] = useState(false);
+
+  useEffect(() => {
+    if (configData?.data && !settingsInitialized) {
+      const d = configData.data;
+      setAppOpen(Boolean(d.committeeAppOpen));
+      setAppSession(String(d.committeeAppSession ?? ""));
+      setAppDeadline(
+        d.committeeAppDeadline
+          ? new Date(d.committeeAppDeadline as string).toISOString().slice(0, 16)
+          : ""
+      );
+      setAppPositions(Array.isArray(d.committeeAppPositions) ? (d.committeeAppPositions as string[]) : []);
+      setSettingsInitialized(true);
+    }
+  }, [configData, settingsInitialized]);
+
+  const handleSaveSettings = async () => {
+    setSettingsSaving(true);
+    try {
+      const res = await fetch("/api/admin/committee-applications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          committeeAppOpen: appOpen,
+          committeeAppSession: appSession,
+          committeeAppDeadline: appDeadline || null,
+          committeeAppPositions: appPositions,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed" }));
+        throw new Error(err.error || "Failed to save settings");
+      }
+      await globalMutate("/api/admin/committee-applications");
+      setSettingsInitialized(false);
+      toast("Settings saved successfully", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to save settings", "error");
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const handleAction = async (id: string, action: "approve" | "reject") => {
+    setActioningId(id);
+    try {
+      const res = await fetch("/api/admin/committee-applications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action, adminNote: adminNote.trim() || undefined }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: "Failed" }));
+        throw new Error(err.error || "Failed to process application");
+      }
+      await mutateApps();
+      setSelectedApp(null);
+      setAdminNote("");
+      toast(`Application ${action === "approve" ? "approved" : "rejected"}`, action === "approve" ? "success" : "error");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed", "error");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const addPosition = () => {
+    const v = positionInput.trim();
+    if (!v || appPositions.includes(v)) return;
+    setAppPositions((prev) => [...prev, v]);
+    setPositionInput("");
+  };
+
+  const removePosition = (pos: string) => {
+    setAppPositions((prev) => prev.filter((p) => p !== pos));
+  };
+
+  const filteredApps = (appsData?.data ?? []).filter((a) =>
+    statusFilter === "all" ? true : a.status === statusFilter
+  );
+
+  const selectedAppData = appsData?.data.find((a) => a.id === selectedApp) ?? null;
+
+  const inputCls = cn(
+    "w-full px-3 py-2 text-sm rounded-md",
+    "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
+    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent",
+    "transition-colors"
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* ── Settings Panel ── */}
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 bg-[var(--color-bg-elevated)] border-b border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <ClipboardList size={16} className="text-[var(--color-accent)]" aria-hidden="true" />
+            <h3 className="font-semibold text-sm text-[var(--color-text-primary)]">Application Settings</h3>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveSettings}
+            disabled={settingsSaving}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium",
+              "bg-[var(--color-primary)] text-white",
+              "hover:opacity-90 transition-opacity",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            )}
+          >
+            {settingsSaving ? (
+              <Loader2 size={12} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Save size={12} aria-hidden="true" />
+            )}
+            {settingsSaving ? "Saving…" : "Save Settings"}
+          </button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          {/* Open/Close toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">Accept Applications</p>
+              <p className="text-xs text-[var(--color-text-secondary)] mt-0.5">
+                When enabled, active members can submit committee applications.
+                All members will be notified when you turn this on.
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={appOpen}
+              onClick={() => setAppOpen((v) => !v)}
+              className="flex-shrink-0 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded-full"
+            >
+              {appOpen ? (
+                <ToggleRight size={36} className="text-[var(--color-success)]" aria-hidden="true" />
+              ) : (
+                <ToggleLeft size={36} className="text-[var(--color-text-secondary)]" aria-hidden="true" />
+              )}
+            </button>
+          </div>
+
+          {/* Session label */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              Target Session <span className="text-[var(--color-error)]">*</span>
+            </label>
+            <div className="relative">
+              <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)] pointer-events-none" aria-hidden="true" />
+              <input
+                type="text"
+                value={appSession}
+                onChange={(e) => setAppSession(e.target.value)}
+                placeholder="e.g. 2025-26"
+                className={cn(inputCls, "pl-8")}
+              />
+            </div>
+          </div>
+
+          {/* Deadline */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              Application Deadline <span className="text-xs font-normal">(optional)</span>
+            </label>
+            <input
+              type="datetime-local"
+              value={appDeadline}
+              onChange={(e) => setAppDeadline(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+
+          {/* Available positions */}
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              <Tag size={11} className="inline mr-1" aria-hidden="true" />
+              Available Positions
+            </label>
+            <div className="flex gap-2 mb-2">
+              <input
+                type="text"
+                value={positionInput}
+                onChange={(e) => setPositionInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addPosition(); } }}
+                placeholder="e.g. President, Secretary..."
+                className={cn(inputCls, "flex-1")}
+              />
+              <button
+                type="button"
+                onClick={addPosition}
+                disabled={!positionInput.trim()}
+                aria-label="Add position"
+                className={cn(
+                  "px-3 py-2 rounded-md bg-[var(--color-primary)] text-white text-sm",
+                  "hover:opacity-90 transition-opacity",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                )}
+              >
+                <Plus size={15} aria-hidden="true" />
+              </button>
+            </div>
+            {appPositions.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {appPositions.map((pos) => (
+                  <span
+                    key={pos}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[var(--color-primary)]/10 text-[var(--color-primary)] border border-[var(--color-primary)]/20"
+                  >
+                    {pos}
+                    <button
+                      type="button"
+                      onClick={() => removePosition(pos)}
+                      aria-label={`Remove ${pos}`}
+                      className="hover:text-[var(--color-error)] transition-colors ml-0.5"
+                    >
+                      <X size={11} aria-hidden="true" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {appPositions.length === 0 && (
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                No positions defined. Members can type any position when applying.
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Applications List ── */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-semibold text-sm text-[var(--color-text-primary)]">
+            Received Applications
+            {appsData?.total !== undefined && (
+              <span className="ml-2 text-xs font-normal text-[var(--color-text-secondary)]">
+                ({appsData.total} total)
+              </span>
+            )}
+          </h3>
+          {/* Status filter */}
+          <div className="flex gap-1 p-0.5 rounded-lg bg-[var(--color-bg-elevated)] border border-[var(--color-border)]">
+            {(["pending", "approved", "rejected", "all"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setStatusFilter(s)}
+                className={cn(
+                  "px-2.5 py-1 rounded-md text-xs font-medium capitalize transition-all",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]",
+                  statusFilter === s
+                    ? "bg-[var(--color-bg-surface)] text-[var(--color-text-primary)] shadow-sm"
+                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {appsLoading ? (
+          <div className="space-y-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} height={72} className="w-full rounded-xl" />
+            ))}
+          </div>
+        ) : filteredApps.length === 0 ? (
+          <EmptyState
+            icon="ClipboardList"
+            heading="No applications"
+            description={
+              statusFilter === "pending"
+                ? "No pending applications at the moment."
+                : `No ${statusFilter} applications found.`
+            }
+          />
+        ) : (
+          <div className="space-y-2">
+            {filteredApps.map((app) => (
+              <div
+                key={app.id}
+                className={cn(
+                  "rounded-xl border transition-colors",
+                  selectedApp === app.id
+                    ? "border-[var(--color-primary)]/40"
+                    : "border-[var(--color-border)]",
+                  "bg-[var(--color-bg-surface)]"
+                )}
+              >
+                {/* Row */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedApp(selectedApp === app.id ? null : app.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-inset rounded-xl"
+                  aria-expanded={selectedApp === app.id}
+                >
+                  {app.member.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={app.member.avatarUrl}
+                      alt={app.member.fullName}
+                      className="w-10 h-10 rounded-full object-cover border border-[var(--color-border)] flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-[var(--color-primary)]">
+                        {app.member.fullName.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-sm text-[var(--color-text-primary)]">
+                        {app.member.fullName}
+                      </span>
+                      <Badge
+                        variant={
+                          app.status === "approved"
+                            ? "success"
+                            : app.status === "rejected"
+                            ? "error"
+                            : "warning"
+                        }
+                        size="sm"
+                      >
+                        {app.status}
+                      </Badge>
+                    </div>
+                    <div className="text-xs text-[var(--color-text-secondary)] truncate">
+                      Applied for: <span className="font-medium text-[var(--color-accent)]">{app.position}</span>
+                      {" · "}{app.member.department.name}{" · "}Session {app.member.session}
+                    </div>
+                  </div>
+                  <div className="text-xs text-[var(--color-text-secondary)] flex-shrink-0">
+                    {new Date(app.createdAt).toLocaleDateString()}
+                  </div>
+                  {selectedApp === app.id ? (
+                    <ChevronUp size={15} className="text-[var(--color-text-secondary)] flex-shrink-0" aria-hidden="true" />
+                  ) : (
+                    <ChevronDown size={15} className="text-[var(--color-text-secondary)] flex-shrink-0" aria-hidden="true" />
+                  )}
+                </button>
+
+                {/* Expanded detail */}
+                {selectedApp === app.id && (
+                  <div className="px-4 pb-4 border-t border-[var(--color-border)] space-y-3 pt-3">
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Statement</p>
+                      <p className="text-sm text-[var(--color-text-primary)] leading-relaxed whitespace-pre-wrap">{app.statement}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Experience</p>
+                      <p className="text-sm text-[var(--color-text-primary)] leading-relaxed whitespace-pre-wrap">{app.experience}</p>
+                    </div>
+
+                    {app.status === "pending" && (
+                      <div className="space-y-2 pt-2 border-t border-[var(--color-border)]">
+                        <label className="block text-xs font-medium text-[var(--color-text-secondary)]">
+                          Admin Note <span className="font-normal">(optional, sent to applicant)</span>
+                        </label>
+                        <textarea
+                          value={adminNote}
+                          onChange={(e) => setAdminNote(e.target.value)}
+                          placeholder="Optional note for the applicant..."
+                          rows={2}
+                          className={cn(inputCls, "resize-none")}
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleAction(app.id, "approve")}
+                            disabled={actioningId === app.id}
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
+                              "bg-[var(--color-success)] text-white",
+                              "hover:opacity-90 transition-opacity",
+                              "disabled:opacity-50 disabled:cursor-not-allowed",
+                              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                            )}
+                          >
+                            {actioningId === app.id ? (
+                              <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                            ) : (
+                              <Check size={14} aria-hidden="true" />
+                            )}
+                            Approve
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleAction(app.id, "reject")}
+                            disabled={actioningId === app.id}
+                            className={cn(
+                              "flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium",
+                              "text-[var(--color-error)] border border-[var(--color-error)]/30",
+                              "hover:bg-[var(--color-error)]/10 transition-colors",
+                              "disabled:opacity-50 disabled:cursor-not-allowed",
+                              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                            )}
+                          >
+                            {actioningId === app.id ? (
+                              <Loader2 size={14} className="animate-spin" aria-hidden="true" />
+                            ) : (
+                              <X size={14} aria-hidden="true" />
+                            )}
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {app.status !== "pending" && app.adminNote && (
+                      <div className="pt-2 border-t border-[var(--color-border)]">
+                        <p className="text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1">Admin Note</p>
+                        <p className="text-sm text-[var(--color-text-secondary)] italic">{app.adminNote}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── CommitteeAdmin (main) ────────────────────────────────────────────────────
 
 export function CommitteeAdmin(): JSX.Element {
@@ -1950,6 +2447,11 @@ export function CommitteeAdmin(): JSX.Element {
       id: "advisors",
       label: "Advisors",
       icon: <BookOpen size={15} aria-hidden="true" />,
+    },
+    {
+      id: "applications",
+      label: "Applications",
+      icon: <ClipboardList size={15} aria-hidden="true" />,
     },
   ];
 
@@ -2005,6 +2507,7 @@ export function CommitteeAdmin(): JSX.Element {
         {activeTab === "sub-executive" && <CurrentCommitteeTab committeeType="sub-executive" />}
         {activeTab === "ex-committee" && <ExCommitteeTab />}
         {activeTab === "advisors" && <AdvisorsTab />}
+        {activeTab === "applications" && <CommitteeApplicationsTab />}
       </div>
     </div>
   );

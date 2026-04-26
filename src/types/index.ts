@@ -343,6 +343,26 @@ export interface AdvisorEntry {
 
 // ─── Alumni Spotlight ─────────────────────────────────────────────────────────
 
+export interface CommitteeApplicationItem {
+  id: string;
+  memberId: string;
+  member: {
+    username: string;
+    fullName: string;
+    avatarUrl: string;
+    department: { name: string };
+    session: string;
+  };
+  position: string;
+  statement: string;
+  experience: string;
+  targetSession: string;
+  status: string;
+  adminNote?: string | null;
+  createdAt: Date | string;
+  reviewedAt?: Date | string | null;
+}
+
 export interface AlumniSpotlightEntry {
   id: string;
   name: string;

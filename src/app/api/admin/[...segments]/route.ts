@@ -199,6 +199,8 @@ async function handleRequest(
         return await handleEmailLogs(req, session, method);
       case "export":
         return await handleExport(req, session);
+      case "committee-applications":
+        return await handleCommitteeApplications(req, session, method, ip);
       case "facebook-pending":
         return await handleFacebookPending(req, session, method);
       case "facebook-oauth":
@@ -2653,6 +2655,304 @@ async function handleExport(
       "Content-Disposition": `attachment; filename="audit-log-${Date.now()}.csv"`,
     },
   });
+}
+
+// ─── committee-applications ───────────────────────────────────────────────────
+
+async function handleCommitteeApplications(
+  req: NextRequest,
+  session: Session,
+  method: string,
+  ip: string
+): Promise<NextResponse> {
+  if (method === "GET") {
+    if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+    const sp = req.nextUrl.searchParams;
+    const status = sp.get("status") ?? undefined;
+    const targetSession = sp.get("targetSession") ?? undefined;
+    const cursor = sp.get("cursor") ?? undefined;
+    const take = Math.min(parseInt(sp.get("take") ?? "25", 10), 100);
+
+    const where: Record<string, unknown> = {};
+    if (status) where.status = status;
+    if (targetSession) where.targetSession = targetSession;
+
+    const [applications, total] = await Promise.all([
+      (prisma as any).committeeApplication.findMany({
+        where,
+        take: take + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          position: true,
+          statement: true,
+          experience: true,
+          targetSession: true,
+          status: true,
+          adminNote: true,
+          createdAt: true,
+          reviewedAt: true,
+          member: {
+            select: {
+              username: true,
+              fullName: true,
+              avatarUrl: true,
+              session: true,
+              department: { select: { name: true } },
+            },
+          },
+          memberId: true,
+        },
+      }),
+      (prisma as any).committeeApplication.count({ where }),
+    ]);
+
+    const hasMore = applications.length > take;
+    const data = hasMore ? applications.slice(0, take) : applications;
+    const nextCursor = hasMore ? data[data.length - 1]?.id : undefined;
+
+    return NextResponse.json({ data, nextCursor, total });
+  }
+
+  if (method === "POST") {
+    // Member submitting a committee application (no admin required)
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const { position, statement, experience } = body as {
+      position?: string;
+      statement?: string;
+      experience?: string;
+    };
+
+    if (!position || !statement || !experience) {
+      return NextResponse.json(
+        { error: "position, statement, and experience are required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if applications are open
+    const config = await prisma.clubConfig.findUnique({
+      where: { id: "main" },
+      select: {
+        committeeAppOpen: true,
+        committeeAppSession: true,
+        committeeAppDeadline: true,
+      } as any,
+    });
+
+    const cfg = config as any;
+    if (!cfg?.committeeAppOpen) {
+      return NextResponse.json(
+        { error: "Committee applications are currently closed" },
+        { status: 403 }
+      );
+    }
+
+    if (cfg.committeeAppDeadline && new Date(cfg.committeeAppDeadline) < new Date()) {
+      return NextResponse.json(
+        { error: "The application deadline has passed" },
+        { status: 403 }
+      );
+    }
+
+    // Check for existing pending application from this member for this session
+    const existing = await (prisma as any).committeeApplication.findFirst({
+      where: {
+        memberId: session.user.userId,
+        targetSession: cfg.committeeAppSession,
+        status: "pending",
+      },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "You already have a pending application for this session" },
+        { status: 409 }
+      );
+    }
+
+    const application = await (prisma as any).committeeApplication.create({
+      data: {
+        memberId: session.user.userId,
+        position: position.trim(),
+        statement: statement.trim(),
+        experience: experience.trim(),
+        targetSession: cfg.committeeAppSession,
+        status: "pending",
+      },
+      select: { id: true, position: true, status: true, createdAt: true },
+    });
+
+    // Notify admins with manage_members permission
+    await createNotificationForAdmins({
+      type: "committee_application",
+      title: "New Committee Application",
+      body: `${session.user.name ?? "A member"} applied for ${position} in session ${cfg.committeeAppSession}.`,
+      link: "/admin/committee",
+      permission: "manage_members",
+    });
+
+    return NextResponse.json({ data: application }, { status: 201 });
+  }
+
+  if (method === "PATCH") {
+    if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const { id, action, adminNote } = body as {
+      id?: string;
+      action?: "approve" | "reject";
+      adminNote?: string;
+    };
+
+    if (!id || !action) {
+      return NextResponse.json({ error: "id and action are required" }, { status: 400 });
+    }
+
+    const existing = await (prisma as any).committeeApplication.findUnique({
+      where: { id },
+      select: { id: true, status: true, memberId: true, position: true, targetSession: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: "Application not found" }, { status: 404 });
+    }
+
+    if (existing.status !== "pending") {
+      return NextResponse.json({ error: "Application already processed" }, { status: 409 });
+    }
+
+    const updated = await (prisma as any).committeeApplication.update({
+      where: { id },
+      data: {
+        status: action === "approve" ? "approved" : "rejected",
+        adminNote: adminNote ?? null,
+        reviewedAt: new Date(),
+      },
+      select: { id: true, status: true },
+    });
+
+    // Notify the applicant
+    try {
+      await prisma.notification.create({
+        data: {
+          memberId: existing.memberId,
+          type: "committee_application_result",
+          title: action === "approve"
+            ? "Committee Application Approved!"
+            : "Committee Application Update",
+          body: action === "approve"
+            ? `Congratulations! Your application for ${existing.position} has been approved.`
+            : `Your application for ${existing.position} was not selected this time.${adminNote ? ` Note: ${adminNote}` : ""}`,
+          link: "/profile",
+          isRead: false,
+        },
+      });
+    } catch (err) {
+      console.error("[committee-applications] Failed to notify applicant:", err);
+    }
+
+    await logAction({
+      adminId: session.user.userId,
+      actionType: `${action}_committee_application`,
+      description: `${action === "approve" ? "Approved" : "Rejected"} committee application for position: ${existing.position}`,
+      entityType: "committee_application",
+      entityId: id,
+      ipAddress: ip,
+    });
+
+    return NextResponse.json({ data: updated });
+  }
+
+  // Toggle open/close from admin (PUT)
+  if (method === "PUT") {
+    if (!isSuperAdmin(session) && !hasPermission(session.user.permissions, "manage_members")) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    let body: Record<string, unknown>;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    const { committeeAppOpen, committeeAppSession, committeeAppDeadline, committeeAppPositions } =
+      body as {
+        committeeAppOpen?: boolean;
+        committeeAppSession?: string;
+        committeeAppDeadline?: string | null;
+        committeeAppPositions?: string[];
+      };
+
+    const updateData: Record<string, unknown> = {};
+    if (committeeAppOpen !== undefined) updateData.committeeAppOpen = committeeAppOpen;
+    if (committeeAppSession !== undefined) updateData.committeeAppSession = committeeAppSession;
+    if (committeeAppDeadline !== undefined)
+      updateData.committeeAppDeadline = committeeAppDeadline ? new Date(committeeAppDeadline) : null;
+    if (committeeAppPositions !== undefined) updateData.committeeAppPositions = committeeAppPositions;
+
+    await (prisma as any).clubConfig.update({
+      where: { id: "main" },
+      data: updateData,
+    });
+
+    // If opening applications, notify all active members
+    if (committeeAppOpen === true) {
+      try {
+        const activeMembers = await prisma.member.findMany({
+          where: { status: "active" },
+          select: { id: true },
+        });
+        if (activeMembers.length > 0) {
+          await prisma.notification.createMany({
+            data: activeMembers.map((m) => ({
+              memberId: m.id,
+              type: "committee_applications_open",
+              title: "Committee Applications Now Open!",
+              body: `Applications for the ${committeeAppSession ?? "new"} committee are now open. Apply from your profile!`,
+              link: "/profile",
+              isRead: false,
+            })),
+            skipDuplicates: true,
+          });
+        }
+      } catch (err) {
+        console.error("[committee-applications] Failed to notify members:", err);
+      }
+    }
+
+    await logAction({
+      adminId: session.user.userId,
+      actionType: "update_committee_applications",
+      description: `${committeeAppOpen === true ? "Opened" : committeeAppOpen === false ? "Closed" : "Updated"} committee applications`,
+      entityType: "club_config",
+      entityId: "main",
+      ipAddress: ip,
+    });
+
+    return NextResponse.json({ data: { ok: true } });
+  }
+
+  return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
 
 // ─── facebook-pending ─────────────────────────────────────────────────────────
