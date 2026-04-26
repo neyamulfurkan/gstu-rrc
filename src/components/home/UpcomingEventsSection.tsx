@@ -138,7 +138,7 @@ export function UpcomingEventsSection({ events }: UpcomingEventsSectionProps): J
               )}
               style={{ fontFamily: "var(--font-mono)" }}
             >
-              What's Coming
+              Events
             </span>
             <div className="relative">
               <h2
@@ -150,7 +150,7 @@ export function UpcomingEventsSection({ events }: UpcomingEventsSectionProps): J
                 )}
                 style={{ fontFamily: "var(--font-heading)" }}
               >
-                Upcoming Events
+                Events
               </h2>
               <motion.div
                 className="absolute -bottom-2 left-0 h-[3px] w-full rounded-full bg-gradient-to-r from-[var(--color-accent)] to-transparent"

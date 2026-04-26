@@ -531,7 +531,7 @@ export default async function HomePage(): Promise<JSX.Element> {
       },
     }),
 
-    // Next 5 upcoming events
+    // Next 5 upcoming events, fallback to 5 most recent past events
     prisma.event.findMany({
       where: {
         isPublished: true,
@@ -724,7 +724,42 @@ export default async function HomePage(): Promise<JSX.Element> {
   eventCount = results[2] as number;
   projectCount = results[3] as number;
   announcements = results[4] as AnnouncementRow[];
-  upcomingEvents = results[5] as EventRow[];
+  const rawUpcomingEvents = results[5] as EventRow[];
+  // If no upcoming events, fetch past events as fallback
+  if (rawUpcomingEvents.length === 0) {
+    try {
+      const pastEvents = await prisma.event.findMany({
+        where: {
+          isPublished: true,
+          OR: [
+            { endDate: { lt: now } },
+            { endDate: null, startDate: { lt: now } },
+          ],
+        },
+        orderBy: { startDate: "desc" },
+        take: 5,
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          coverUrl: true,
+          startDate: true,
+          endDate: true,
+          allDay: true,
+          venue: true,
+          description: true,
+          isPublished: true,
+          registrationEnabled: true,
+          category: { select: { name: true, color: true } },
+        },
+      });
+      upcomingEvents = pastEvents as EventRow[];
+    } catch (err) {
+      console.error("[HomePage] Failed to fetch past events fallback:", err);
+    }
+  } else {
+    upcomingEvents = rawUpcomingEvents;
+  }
   recentProjects = results[6] as ProjectRow[];
   whyJoinCards = results[7] as WhyJoinRow[];
   committeeSpotlight = results[8] as CommitteeRow[];
