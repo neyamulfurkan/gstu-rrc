@@ -19,6 +19,38 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
     }
   }
 
+  // Handle fields=committeeApp for member-facing application config
+  const isCommitteeAppRequest = url.searchParams.get("fields") === "committeeApp";
+  if (isCommitteeAppRequest) {
+    try {
+      const committeeAppConfig = await prisma.clubConfig.findUnique({
+        where: { id: "main" },
+        select: {
+          committeeAppOpen: true,
+          committeeAppSession: true,
+          committeeAppDeadline: true,
+          committeeAppPositions: true,
+        } as Record<string, boolean>,
+      });
+      if (!committeeAppConfig) {
+        return NextResponse.json(
+          { data: { committeeAppOpen: false, committeeAppSession: "", committeeAppDeadline: null, committeeAppPositions: [] } },
+          { headers: { "Cache-Control": "no-store" } }
+        );
+      }
+      return NextResponse.json(
+        { data: committeeAppConfig },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    } catch (error) {
+      console.error("[GET /api/config?fields=committeeApp] Error:", error);
+      return NextResponse.json(
+        { data: { committeeAppOpen: false, committeeAppSession: "", committeeAppDeadline: null, committeeAppPositions: [] } },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+  }
+
   // Handle admin=true for masked secrets (email tab)
   const isAdminRequest = url.searchParams.get("admin") === "true";
   if (isAdminRequest) {
@@ -137,6 +169,10 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
         fbGreetingMessage: true,
         fbFallbackMessage: true,
         fbRequireApproval: true,
+        committeeAppOpen: true,
+        committeeAppSession: true,
+        committeeAppDeadline: true,
+        committeeAppPositions: true,
       },
     });
 

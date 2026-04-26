@@ -22,6 +22,11 @@ import {
   User,
   MapPin,
   Tag,
+  ClipboardList,
+  Loader2,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from "lucide-react";
 
 import { Badge, Skeleton, Spinner } from "@/components/ui/Feedback";
@@ -93,7 +98,7 @@ const TipTapReadOnly = dynamic(
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type TabKey = "about" | "posts" | "projects" | "gallery" | "certificates";
+type TabKey = "about" | "posts" | "projects" | "gallery" | "certificates" | "apply";
 
 interface TabDefinition {
   key: TabKey;
@@ -816,6 +821,326 @@ function CertificatesTab({ memberId }: CertificatesTabProps): JSX.Element {
   );
 }
 
+// ─── Committee Application Tab ───────────────────────────────────────────────
+
+interface CommitteeAppConfig {
+  committeeAppOpen: boolean;
+  committeeAppSession: string;
+  committeeAppDeadline: string | null;
+  committeeAppPositions: string[];
+}
+
+interface ExistingApplication {
+  id: string;
+  position: string;
+  status: string;
+  targetSession: string;
+  createdAt: string;
+  adminNote?: string | null;
+}
+
+function CommitteeApplicationTab({ memberId }: { memberId: string }): JSX.Element {
+  const [position, setPosition] = useState("");
+  const [statement, setStatement] = useState("");
+  const [experience, setExperience] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+
+  const { data: configData, isLoading: configLoading } = useSWR<{ data: CommitteeAppConfig }>(
+    "/api/config?fields=committeeApp",
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const cfg = configData?.data;
+
+  const { data: existingData, isLoading: existingLoading, mutate: mutateExisting } = useSWR<{
+    data: ExistingApplication[];
+    total: number;
+  }>(
+    `/api/admin/committee-applications?take=5`,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+
+  const myApplications = (existingData?.data ?? []).filter(
+    (a) => a.status === "pending" || a.status === "approved" || a.status === "rejected"
+  );
+
+  const hasPendingApplication = myApplications.some(
+    (a) => a.status === "pending" && a.targetSession === cfg?.committeeAppSession
+  );
+
+  const inputCls = cn(
+    "w-full px-3 py-2 text-sm rounded-md",
+    "bg-[var(--color-bg-elevated)] border border-[var(--color-border)]",
+    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+    "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-transparent",
+    "transition-colors"
+  );
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!position.trim() || !statement.trim() || !experience.trim()) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const res = await fetch("/api/admin/committee-applications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          position: position.trim(),
+          statement: statement.trim(),
+          experience: experience.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setSubmitError(json.error ?? "Failed to submit application");
+        return;
+      }
+      setSubmitSuccess(true);
+      setPosition("");
+      setStatement("");
+      setExperience("");
+      mutateExisting();
+    } catch {
+      setSubmitError("Network error. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (configLoading || existingLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton height={24} width="40%" rounded="md" />
+        <Skeleton height={16} width="70%" rounded="md" />
+        <Skeleton height={80} rounded="md" />
+      </div>
+    );
+  }
+
+  if (!cfg?.committeeAppOpen) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center px-4">
+        <ClipboardList size={36} className="text-[var(--color-text-secondary)] mb-3 opacity-60" />
+        <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
+          Applications Closed
+        </h3>
+        <p className="text-sm text-[var(--color-text-secondary)]">
+          Committee applications are not open at this time. Check back later.
+        </p>
+      </div>
+    );
+  }
+
+  const deadline = cfg.committeeAppDeadline ? new Date(cfg.committeeAppDeadline) : null;
+  const isDeadlinePassed = deadline ? deadline < new Date() : false;
+
+  return (
+    <div className="space-y-6">
+      {/* Session info banner */}
+      <div className={cn(
+        "rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent)]/5 px-4 py-3"
+      )}>
+        <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+          Applications open for session:{" "}
+          <span className="text-[var(--color-accent)]">{cfg.committeeAppSession}</span>
+        </p>
+        {deadline && (
+          <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+            Deadline:{" "}
+            <span className={isDeadlinePassed ? "text-[var(--color-error)]" : "text-[var(--color-warning)]"}>
+              {formatDate(deadline.toISOString(), "full")}
+            </span>
+          </p>
+        )}
+      </div>
+
+      {/* Past applications */}
+      {myApplications.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+            My Applications
+          </h3>
+          {myApplications.map((app) => (
+            <div
+              key={app.id}
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-surface)] px-4 py-3 flex items-center gap-3"
+            >
+              {app.status === "approved" && (
+                <CheckCircle size={18} className="text-[var(--color-success)] flex-shrink-0" aria-hidden="true" />
+              )}
+              {app.status === "rejected" && (
+                <XCircle size={18} className="text-[var(--color-error)] flex-shrink-0" aria-hidden="true" />
+              )}
+              {app.status === "pending" && (
+                <Clock size={18} className="text-[var(--color-warning)] flex-shrink-0" aria-hidden="true" />
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">
+                  {app.position}
+                  <span className="ml-2 text-xs text-[var(--color-text-secondary)]">
+                    · Session {app.targetSession}
+                  </span>
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)] capitalize mt-0.5">
+                  Status: <span className={cn(
+                    app.status === "approved" && "text-[var(--color-success)]",
+                    app.status === "rejected" && "text-[var(--color-error)]",
+                    app.status === "pending" && "text-[var(--color-warning)]",
+                  )}>{app.status}</span>
+                </p>
+                {app.adminNote && (
+                  <p className="text-xs text-[var(--color-text-secondary)] mt-1 italic">
+                    Note: {app.adminNote}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Application form */}
+      {hasPendingApplication ? (
+        <div className="rounded-xl border border-[var(--color-warning)]/30 bg-[var(--color-warning)]/5 px-4 py-3">
+          <p className="text-sm text-[var(--color-warning)]">
+            You already have a pending application for session {cfg.committeeAppSession}.
+            You will be notified once it is reviewed.
+          </p>
+        </div>
+      ) : isDeadlinePassed ? (
+        <div className="rounded-xl border border-[var(--color-error)]/30 bg-[var(--color-error)]/5 px-4 py-3">
+          <p className="text-sm text-[var(--color-error)]">
+            The application deadline has passed.
+          </p>
+        </div>
+      ) : submitSuccess ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center px-4">
+          <CheckCircle size={40} className="text-[var(--color-success)] mb-3" aria-hidden="true" />
+          <h3 className="text-base font-semibold text-[var(--color-text-primary)] mb-1">
+            Application Submitted!
+          </h3>
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            Your application has been received. You will be notified of the result.
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              Position Applying For <span className="text-[var(--color-error)]">*</span>
+            </label>
+            {cfg.committeeAppPositions && cfg.committeeAppPositions.length > 0 ? (
+              <select
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                required
+                className={inputCls}
+              >
+                <option value="">Select a position...</option>
+                {cfg.committeeAppPositions.map((pos) => (
+                  <option key={pos} value={pos}>
+                    {pos}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
+                placeholder="e.g. President, Secretary..."
+                required
+                minLength={2}
+                className={inputCls}
+              />
+            )}
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              Statement / Why you want this role{" "}
+              <span className="text-[var(--color-error)]">*</span>
+              <span className="ml-1 text-[var(--color-text-secondary)] font-normal">
+                ({statement.length}/1000)
+              </span>
+            </label>
+            <textarea
+              value={statement}
+              onChange={(e) => setStatement(e.target.value)}
+              placeholder="Explain why you are applying and what you hope to contribute..."
+              required
+              minLength={30}
+              maxLength={1000}
+              rows={4}
+              className={cn(inputCls, "resize-none")}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1">
+              Relevant Experience{" "}
+              <span className="text-[var(--color-error)]">*</span>
+              <span className="ml-1 text-[var(--color-text-secondary)] font-normal">
+                ({experience.length}/500)
+              </span>
+            </label>
+            <textarea
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+              placeholder="Describe any relevant experience, skills, or achievements..."
+              required
+              minLength={10}
+              maxLength={500}
+              rows={3}
+              className={cn(inputCls, "resize-none")}
+            />
+          </div>
+
+          {submitError && (
+            <p className="text-sm text-[var(--color-error)] bg-[var(--color-error)]/10 border border-[var(--color-error)]/30 rounded-md px-3 py-2">
+              {submitError}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={
+              submitting ||
+              !position.trim() ||
+              statement.trim().length < 30 ||
+              experience.trim().length < 10
+            }
+            className={cn(
+              "w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium",
+              "bg-[var(--color-primary)] text-white",
+              "hover:opacity-90 transition-opacity",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            )}
+          >
+            {submitting ? (
+              <>
+                <Loader2 size={15} className="animate-spin" aria-hidden="true" />
+                Submitting...
+              </>
+            ) : (
+              <>
+                <ClipboardList size={15} aria-hidden="true" />
+                Submit Application
+              </>
+            )}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+}
+
 // ─── ProfileTabs ─────────────────────────────────────────────────────────────
 
 export function ProfileTabs({ member, isOwner }: ProfileTabsProps): JSX.Element {
@@ -831,6 +1156,14 @@ export function ProfileTabs({ member, isOwner }: ProfileTabsProps): JSX.Element 
   const isAdminViewer =
     session?.user?.isAdmin === true;
 
+  // Fetch config to check if committee applications are open (only for owner)
+  const { data: appConfigData } = useSWR<{ data: { committeeAppOpen?: boolean } }>(
+    isOwner ? "/api/config?fields=committeeApp" : null,
+    fetcher,
+    { revalidateOnFocus: false }
+  );
+  const committeeAppOpen = appConfigData?.data?.committeeAppOpen === true;
+
   // Reduced motion detection
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -845,6 +1178,7 @@ export function ProfileTabs({ member, isOwner }: ProfileTabsProps): JSX.Element 
     : tabContentVariants;
 
   // Define tabs — hide Certificates from non-owners and non-admins
+  // Show Apply tab only to owner when applications are open
   const tabs: TabDefinition[] = useMemo(() => {
     const allTabs: TabDefinition[] = [
       {
@@ -872,6 +1206,15 @@ export function ProfileTabs({ member, isOwner }: ProfileTabsProps): JSX.Element 
         label: "Certificates",
         icon: <Award size={15} aria-hidden="true" />,
       },
+      ...(isOwner && committeeAppOpen
+        ? [
+            {
+              key: "apply" as TabKey,
+              label: "Apply",
+              icon: <ClipboardList size={15} aria-hidden="true" />,
+            },
+          ]
+        : []),
     ];
 
     if (!isOwner && !isAdminViewer) {
@@ -879,7 +1222,7 @@ export function ProfileTabs({ member, isOwner }: ProfileTabsProps): JSX.Element 
     }
 
     return allTabs;
-  }, [isOwner, isAdminViewer]);
+  }, [isOwner, isAdminViewer, committeeAppOpen]);
 
   const handleTabChange = useCallback(
     (key: TabKey) => {
@@ -944,6 +1287,10 @@ export function ProfileTabs({ member, isOwner }: ProfileTabsProps): JSX.Element 
         case "certificates":
           if (!isOwner && !isAdminViewer) return null;
           return <CertificatesTab memberId={member.id} />;
+
+        case "apply":
+          if (!isOwner) return null;
+          return <CommitteeApplicationTab memberId={member.id} />;
 
         default:
           return null;
