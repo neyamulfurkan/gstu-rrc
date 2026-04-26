@@ -538,7 +538,7 @@ export default async function HomePage(): Promise<JSX.Element> {
         startDate: { gte: now },
       },
       orderBy: { startDate: "asc" },
-      take: 5,
+      take: 3,
       select: {
         id: true,
         slug: true,
@@ -737,7 +737,7 @@ export default async function HomePage(): Promise<JSX.Element> {
           ],
         },
         orderBy: { startDate: "desc" },
-        take: 5,
+        take: 3,
         select: {
           id: true,
           slug: true,

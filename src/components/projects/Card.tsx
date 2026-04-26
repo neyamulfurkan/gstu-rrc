@@ -152,7 +152,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element
       )}
     >
       {/* ── Cover Image ── */}
-      <div className="relative aspect-[4/3] w-full bg-[var(--color-bg-elevated)]">
+      <div className="relative aspect-[16/9] w-full bg-[var(--color-bg-elevated)]">
         {coverSrc ? (
           <Image
             src={coverSrc}
@@ -211,7 +211,7 @@ export function ProjectCard({ project, onClick }: ProjectCardProps): JSX.Element
               key="overlay"
               className={cn(
                 "absolute inset-0 z-20 flex flex-col justify-end p-4",
-                "bg-[var(--color-bg-overlay)]"
+                "bg-gradient-to-t from-black/90 via-black/60 to-black/20"
               )}
               variants={overlayVariants}
               initial="hidden"
