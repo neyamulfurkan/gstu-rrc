@@ -53,6 +53,7 @@ interface InstrumentFormData {
   categoryId: string;
   description: string;
   imageUrl: string;
+  quantity: number;
   status: string;
 }
 
@@ -161,6 +162,7 @@ function InstrumentForm({
     categoryId: (initialData as { categoryId?: string } | undefined)?.categoryId ?? "",
     description: initialData?.description ?? "",
     imageUrl: initialData?.imageUrl ?? "",
+    quantity: (initialData as { quantity?: number } | undefined)?.quantity ?? 1,
     status: initialData?.status ?? "available",
   });
   const [submitting, setSubmitting] = useState(false);
@@ -188,6 +190,10 @@ function InstrumentForm({
       }
       if (!form.description.trim()) {
         setError("Description is required.");
+        return;
+      }
+      if (!form.quantity || form.quantity < 1) {
+        setError("Quantity must be at least 1.");
         return;
       }
 
@@ -314,6 +320,29 @@ function InstrumentForm({
             aria-hidden="true"
           />
         </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="inst-quantity"
+          className="text-sm font-medium text-[var(--color-text-primary)]"
+        >
+          Quantity <span className="text-[var(--color-error)]">*</span>
+        </label>
+        <input
+          id="inst-quantity"
+          type="number"
+          min={1}
+          max={999}
+          value={form.quantity}
+          onChange={(e) => {
+            const val = parseInt(e.target.value, 10);
+            setForm((prev) => ({ ...prev, quantity: isNaN(val) ? 1 : Math.max(1, val) }));
+          }}
+          className={inputBase}
+          required
+        />
+        <p className="text-xs text-[var(--color-text-secondary)]">Number of units available</p>
       </div>
 
       <CloudinaryWidget
@@ -655,6 +684,15 @@ function InstrumentsTab({ categories }: InstrumentsTabProps): JSX.Element {
         render: (row) => (
           <span className="text-sm text-[var(--color-text-secondary)]">
             {row.category.name}
+          </span>
+        ),
+      },
+      {
+        key: "quantity",
+        header: "Qty",
+        render: (row) => (
+          <span className="text-sm font-medium text-[var(--color-text-primary)] font-[var(--font-mono)]">
+            {(row as InstrumentCard & { quantity?: number }).quantity ?? 1}
           </span>
         ),
       },

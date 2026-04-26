@@ -205,6 +205,14 @@ export function InstrumentCard({
             {instrument.category.name}
           </Badge>
         </span>
+        {/* Quantity badge */}
+        {(instrument as InstrumentCardType & { quantity?: number }).quantity !== undefined && (
+          <span className="absolute top-2 right-2">
+            <Badge variant="neutral" size="sm">
+              Qty: {(instrument as InstrumentCardType & { quantity?: number }).quantity}
+            </Badge>
+          </span>
+        )}
       </div>
 
       {/* ── Info ── */}

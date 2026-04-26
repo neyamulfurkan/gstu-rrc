@@ -138,6 +138,7 @@ export interface InstrumentCard {
   category: { name: string };
   description: string;
   imageUrl: string;
+  quantity: number;
   status: string;
   borrower?: { username: string; fullName: string; avatarUrl: string } | null;
   borrowDate?: Date | string | null;

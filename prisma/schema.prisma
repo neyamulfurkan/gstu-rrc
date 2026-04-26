@@ -446,6 +446,7 @@ model Instrument {
   category    InstrumentCategory @relation(fields: [categoryId], references: [id])
   description String             @default("") @db.Text
   imageUrl    String
+  quantity    Int                @default(1)
   status      String             @default("available")
   borrowerId  String?
   borrower    Member?            @relation(fields: [borrowerId], references: [id])

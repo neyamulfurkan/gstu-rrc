@@ -219,6 +219,12 @@ export const instrumentSchema = z.object({
   categoryId: z.string().min(1, "Please select a valid category"),
   description: z.string().min(10, "Description must be at least 10 characters"),
   imageUrl: z.string().url("Please upload a valid image").optional().or(z.literal("")),
+  quantity: z
+    .number()
+    .int("Quantity must be a whole number")
+    .min(1, "Quantity must be at least 1")
+    .max(999, "Quantity cannot exceed 999")
+    .default(1),
   status: z
     .enum(["available", "on_loan", "maintenance", "unavailable"])
     .default("available"),
