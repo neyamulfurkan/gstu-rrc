@@ -384,7 +384,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         workplace: memberData.workplace ?? null,
         status,
         adminNotes,
-          roleId: resolvedRoleId ?? "",
+          roleId: resolvedRoleId ?? (memberData as any).memberType === "faculty" ? (resolvedRoleId ?? "") : (resolvedRoleId ?? ""),
         skills: [],
         socialLinks: {},
         avatarUrl: "",

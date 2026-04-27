@@ -389,8 +389,11 @@ export async function PUT(
 
     // Admin-only fields
     if (isAdminWithPermission) {
-      if (validated.roleId !== undefined && validated.roleId !== null && validated.roleId !== "") {
-        updateData.roleId = validated.roleId;
+      if (validated.roleId !== undefined && validated.roleId !== null) {
+        if (validated.roleId !== "") {
+          updateData.roleId = validated.roleId;
+        }
+        // Allow empty roleId for faculty — skip update, keep existing role
       }
       if (validated.status !== undefined) {
         updateData.status = validated.status;

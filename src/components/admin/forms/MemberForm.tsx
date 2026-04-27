@@ -62,7 +62,7 @@ const baseMemberFormSchema = z.object({
   address: z.string().optional(),
   bio: z.string().optional(),
   memberType: z.enum(["member", "alumni", "faculty"]),
-  roleId: z.string().min(1, "Please select a role").or(z.literal("")).refine(val => val !== "", { message: "Please select a role" }),
+  roleId: z.string().optional().or(z.literal("")),
   status: z.enum(["active", "inactive", "suspended"]),
   avatarUrl: z.string().optional(),
   password: z.string().optional(),
@@ -98,6 +98,13 @@ const memberFormSchema = baseMemberFormSchema.superRefine((data, ctx) => {
         path: ["session"],
       });
     }
+    if (!data.roleId || data.roleId.trim() === "") {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Please select a role",
+        path: ["roleId"],
+      });
+    }
   }
 });
 
@@ -130,6 +137,13 @@ const createMemberFormSchema = baseMemberFormSchema
           code: z.ZodIssueCode.custom,
           message: "Session must be at least 4 characters",
           path: ["session"],
+        });
+      }
+      if (!data.roleId || data.roleId.trim() === "") {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Please select a role",
+          path: ["roleId"],
         });
       }
     }
@@ -532,7 +546,7 @@ export function MemberForm({
                   control={control}
                   render={({ field }) => (
                     <div className="w-full">
-                      <FormLabel htmlFor="roleId" required>
+                      <FormLabel htmlFor="roleId" required={memberType !== "faculty"}>
                         Role
                       </FormLabel>
                       <div className="relative">
