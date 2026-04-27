@@ -70,6 +70,12 @@ async function main(): Promise<void> {
     update: {},
   });
 
+  await prisma.role.upsert({
+    where: { name: "Faculty Advisor" },
+    create: { name: "Faculty Advisor", color: "#00C896", category: "faculty", sortOrder: 25 },
+    update: {},
+  });
+
   console.log("✅ Roles seeded");
 
   // ─── 3. Default AdminRole ─────────────────────────────────────────────────
@@ -504,7 +510,7 @@ async function main(): Promise<void> {
   console.log("\n🎉 Database seed completed successfully!");
   console.log("\n📋 Summary:");
   console.log("  • 1 Department");
-  console.log("  • 5 Member Roles (President, Vice President, General Secretary, General Member, Alumni)");
+  console.log("  • 6 Member Roles (President, Vice President, General Secretary, General Member, Alumni, Faculty Advisor)");
   console.log("  • 1 Admin Role (Super Admin with all permissions)");
   console.log("  • 5 Event Categories");
   console.log("  • 5 Project Categories");

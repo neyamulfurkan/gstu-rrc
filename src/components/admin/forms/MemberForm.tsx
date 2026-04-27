@@ -144,10 +144,11 @@ const ROLE_CATEGORY_LABELS: Record<string, string> = {
   sub_executive: "Sub-Executive",
   general: "General",
   alumni: "Alumni",
+  faculty: "Faculty / Advisor",
   admin: "Admin",
 };
 
-const ROLE_CATEGORY_ORDER = ["executive", "sub_executive", "general", "alumni", "admin"];
+const ROLE_CATEGORY_ORDER = ["executive", "sub_executive", "general", "alumni", "faculty", "admin"];
 
 // ─── MemberForm ───────────────────────────────────────────────────────────────
 
