@@ -116,7 +116,7 @@ export default async function MembersPage(): Promise<JSX.Element> {
   const [membersRaw, totalCount, roles, departments, sessionRows] =
     await Promise.all([
       prisma.member.findMany({
-        where: { status: "active", role: { category: { not: "faculty" } } },
+        where: { status: "active", memberType: { not: "faculty" } },
         orderBy: { role: { sortOrder: "asc" } },
         take: PAGE_SIZE,
         select: {
@@ -138,7 +138,7 @@ export default async function MembersPage(): Promise<JSX.Element> {
         },
       }),
 
-      prisma.member.count({ where: { status: "active", role: { category: { not: "faculty" } } } }),
+      prisma.member.count({ where: { status: "active", memberType: { not: "faculty" } } }),
 
       prisma.role.findMany({
         orderBy: { sortOrder: "asc" },
@@ -152,7 +152,7 @@ export default async function MembersPage(): Promise<JSX.Element> {
 
       prisma.member
         .findMany({
-          where: { status: "active", role: { category: { not: "faculty" } } },
+          where: { status: "active", memberType: { not: "faculty" } },
           select: { session: true },
           distinct: ["session"],
           orderBy: { session: "desc" },
