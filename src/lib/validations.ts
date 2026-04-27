@@ -374,7 +374,7 @@ export const adminMemberSchema = z.object({
   studentId: z.string().min(5).optional(),
   session: z.string().min(4).optional(),
   departmentId: z.string().cuid().optional(),
-  memberType: z.enum(["member", "alumni"]).optional(),
+  memberType: z.enum(["member", "alumni", "faculty"]).optional(),
   password: z.string().min(8).optional(),
 });
 

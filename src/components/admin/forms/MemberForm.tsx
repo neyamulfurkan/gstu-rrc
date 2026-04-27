@@ -52,14 +52,16 @@ const baseMemberFormSchema = z.object({
   phone: z
     .string()
     .regex(/^01[3-9]\d{8}$/, "Please enter a valid Bangladesh mobile number"),
-  studentId: z.string().min(5, "Student ID must be at least 5 characters"),
+  studentId: z.string().optional().or(z.literal("")),
+  facultyId: z.string().optional().or(z.literal("")),
+  _studentIdRequired: z.string().optional(),
   departmentId: z.string().min(1, "Please select a department"),
-  session: z.string().min(4, "Session must be at least 4 characters"),
+  session: z.string().optional().or(z.literal("")),
   gender: z.string().optional(),
   dob: z.string().optional(),
   address: z.string().optional(),
   bio: z.string().optional(),
-  memberType: z.enum(["member", "alumni"]),
+  memberType: z.enum(["member", "alumni", "faculty"]),
   roleId: z.string().min(1, "Please select a role").or(z.literal("")).refine(val => val !== "", { message: "Please select a role" }),
   status: z.enum(["active", "inactive", "suspended"]),
   avatarUrl: z.string().optional(),
@@ -81,6 +83,22 @@ const memberFormSchema = baseMemberFormSchema.superRefine((data, ctx) => {
       path: ["password"],
     });
   }
+  if (data.memberType !== "faculty") {
+    if (!data.studentId || data.studentId.trim().length < 5) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Student ID must be at least 5 characters",
+        path: ["studentId"],
+      });
+    }
+    if (!data.session || data.session.trim().length < 4) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Session must be at least 4 characters",
+        path: ["session"],
+      });
+    }
+  }
 });
 
 const createMemberFormSchema = baseMemberFormSchema
@@ -97,6 +115,24 @@ const createMemberFormSchema = baseMemberFormSchema
       .refine((val) => /[^a-zA-Z0-9]/.test(val), {
         message: "Password must contain at least one special character",
       }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.memberType !== "faculty") {
+      if (!data.studentId || data.studentId.trim().length < 5) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Student ID must be at least 5 characters",
+          path: ["studentId"],
+        });
+      }
+      if (!data.session || data.session.trim().length < 4) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Session must be at least 4 characters",
+          path: ["session"],
+        });
+      }
+    }
   });
 
 type MemberFormValues = z.infer<typeof memberFormSchema>;
@@ -155,7 +191,7 @@ export function MemberForm({
         : "",
       address: initialData?.address ?? "",
       bio: initialData?.bio ?? "",
-      memberType: (initialData?.memberType as "member" | "alumni") ?? "member",
+      memberType: (initialData?.memberType as "member" | "alumni" | "faculty") ?? "member",
       roleId: (initialData as any)?.roleId ?? (initialData?.role?.name ? roles.find((r) => r.name === initialData.role!.name)?.id : undefined) ?? "",
       status: (initialData?.status as "active" | "inactive" | "suspended") ?? "active",
       username: isEditing ? undefined : "",
@@ -332,13 +368,23 @@ export function MemberForm({
                 error={errors.phone?.message}
                 {...register("phone")}
               />
-              <Input
-                label="Student ID"
-                required
-                placeholder="e.g. 2021331001"
-                error={errors.studentId?.message}
-                {...register("studentId")}
-              />
+              {memberType !== "faculty" && (
+                <Input
+                  label="Student ID"
+                  required
+                  placeholder="e.g. 2021331001"
+                  error={errors.studentId?.message}
+                  {...register("studentId")}
+                />
+              )}
+              {memberType === "faculty" && (
+                <Input
+                  label="Faculty / Employee ID"
+                  placeholder="e.g. GSTU-FAC-001 (optional)"
+                  error={errors.studentId?.message}
+                  {...register("studentId")}
+                />
+              )}
               <div>
                 <Controller
                   name="departmentId"
@@ -360,13 +406,23 @@ export function MemberForm({
                   )}
                 />
               </div>
-              <Input
-                label="Session"
-                required
-                placeholder="e.g. 2021-22"
-                error={errors.session?.message}
-                {...register("session")}
-              />
+              {memberType !== "faculty" && (
+                <Input
+                  label="Session"
+                  required
+                  placeholder="e.g. 2021-22"
+                  error={errors.session?.message}
+                  {...register("session")}
+                />
+              )}
+              {memberType === "faculty" && (
+                <Input
+                  label="Joining Year"
+                  placeholder="e.g. 2019 (optional)"
+                  error={errors.session?.message}
+                  {...register("session")}
+                />
+              )}
               {!isEditing && (
                 <Input
                   label="Username"
@@ -446,6 +502,7 @@ export function MemberForm({
                     >
                       <option value="member">Member</option>
                       <option value="alumni">Alumni</option>
+                      <option value="faculty">Faculty / Advisor</option>
                     </Select>
                   )}
                 />
@@ -522,11 +579,11 @@ export function MemberForm({
               </div>
             </div>
 
-            {memberType === "alumni" && (
+            {(memberType === "alumni" || memberType === "faculty") && (
               <div className="mt-4">
                 <Input
-                  label="Workplace"
-                  placeholder="e.g. Google, BUET Faculty (optional)"
+                  label={memberType === "faculty" ? "Institution / Department" : "Workplace"}
+                  placeholder={memberType === "faculty" ? "e.g. Dept. of EEE, GSTU (optional)" : "e.g. Google, BUET Faculty (optional)"}
                   error={errors.workplace?.message}
                   {...register("workplace")}
                 />

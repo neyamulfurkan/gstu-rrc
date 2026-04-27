@@ -235,7 +235,7 @@ const adminEditSchema = selfEditSchema.extend({
   studentId: z.string().min(5).optional(),
   session: z.string().min(4).optional(),
   departmentId: z.string().min(1).optional(),
-  memberType: z.enum(["member", "alumni"]).optional(),
+  memberType: z.enum(["member", "alumni", "faculty"]).optional(),
 });
 
 export async function PUT(
