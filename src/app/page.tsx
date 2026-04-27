@@ -684,6 +684,15 @@ export default async function HomePage(): Promise<JSX.Element> {
         isCurrent: true,
         periodStart: true,
         periodEnd: true,
+        memberId: true,
+        member: {
+          select: {
+            id: true,
+            username: true,
+            fullName: true,
+            avatarUrl: true,
+          },
+        },
       },
     }),
 
@@ -958,6 +967,8 @@ export default async function HomePage(): Promise<JSX.Element> {
     isCurrent: a.isCurrent,
     periodStart: a.periodStart,
     periodEnd: a.periodEnd,
+    memberId: (a as typeof a & { memberId?: string | null }).memberId ?? null,
+    member: (a as typeof a & { member?: { id: string; username: string; fullName: string; avatarUrl: string } | null }).member ?? null,
   }));
 
   const instrumentCards: InstrumentCard[] = (availableInstruments as typeof availableInstruments).map(

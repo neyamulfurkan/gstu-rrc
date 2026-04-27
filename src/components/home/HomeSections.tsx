@@ -411,6 +411,24 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                       {advisor.email}
                     </a>
                   )}
+                  {advisor.member?.username && (
+                    <Link
+                      href={`/members/${advisor.member.username}`}
+                      className={cn(
+                        "relative z-20 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold",
+                        "border border-[var(--color-primary)]/30 text-[var(--color-primary)]",
+                        "hover:bg-[var(--color-primary)]/10 transition-colors duration-150",
+                        "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.2" />
+                        <path d="M1.5 10.5c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                      </svg>
+                      View Profile
+                    </Link>
+                  )}
                 </div>
               </motion.article>
               );
