@@ -113,6 +113,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       (where as Record<string, unknown>).memberType = memberType;
     }
 
+    // ── Hide faculty from public member listings ──────────────────────────
+    if (!isAdminUser) {
+      (where as Record<string, unknown>).role = { category: { not: "faculty" } };
+    }
+
     // ── isAdmin filter (for admin panel use) ──────────────────────────────
     const isAdminFilter = searchParams.get("isAdmin");
     if (isAdminFilter === "true") {

@@ -126,7 +126,7 @@ async function getAlumniPageData(): Promise<{
     await Promise.all([
       // First 20 active alumni members
       prisma.member.findMany({
-        where: { memberType: "alumni", status: "active" },
+        where: { memberType: "alumni", status: "active", role: { category: { not: "faculty" } } },
         orderBy: { session: "desc" },
         take: 20,
         select: {
@@ -166,7 +166,7 @@ async function getAlumniPageData(): Promise<{
 
       // Distinct sessions of active alumni
       prisma.member.findMany({
-        where: { memberType: "alumni", status: "active" },
+        where: { memberType: "alumni", status: "active", role: { category: { not: "faculty" } } },
         select: { session: true },
         distinct: ["session"],
         orderBy: { session: "desc" },
