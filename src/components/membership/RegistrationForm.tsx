@@ -850,7 +850,7 @@ function Step5Review({
     departments.find((d) => d.id === state.personalInfo.departmentId)?.name ??
     state.personalInfo.departmentId;
 
-  const rows: Array<{ label: string; value: string; step: 1 | 2 | 3 | 4 }> = [
+  const rows: Array<{ label: string; value: string | undefined; step: 1 | 2 | 3 | 4 }> = [
     { label: "Member Type", value: state.memberType === "alumni" ? "Alumni" : "Current Student", step: 1 },
     { label: "Full Name", value: state.personalInfo.fullName, step: 2 },
     { label: "Student ID", value: state.personalInfo.studentId, step: 2 },
