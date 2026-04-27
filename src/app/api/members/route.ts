@@ -269,27 +269,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const bodyRecord2 = body as Record<string, unknown>;
     const isFaculty = bodyRecord2.memberType === "faculty";
 
-    // Validate personal info fields
-    const memberResult = memberSchema.safeParse(body);
-    const memberData = memberResult.success ? memberResult.data : undefined;
-    if (!memberResult.success) {
-      const fieldErrors = memberResult.error.flatten().fieldErrors;
-      if (isFaculty) {
-        delete fieldErrors.studentId;
-        delete fieldErrors.session;
-        delete fieldErrors.departmentId;
-      }
-      if (Object.keys(fieldErrors).length > 0) {
-        return NextResponse.json(
-          { error: "Validation failed", details: fieldErrors },
-          { status: 400 }
-        );
-      }
-    }
+    // Build a flexible schema that makes studentId/session optional for faculty
+    const flexMemberSchema = memberSchema.extend({
+      studentId: isFaculty
+        ? memberSchema.shape.studentId.optional().or(z.literal(""))
+        : memberSchema.shape.studentId,
+      session: isFaculty
+        ? memberSchema.shape.session.optional().or(z.literal(""))
+        : memberSchema.shape.session,
+      departmentId: memberSchema.shape.departmentId.optional().or(z.literal("")),
+    });
 
-    if (!memberData) {
-      return NextResponse.json({ error: "Invalid member data" }, { status: 400 });
+    const memberResult = flexMemberSchema.safeParse(body);
+    if (!memberResult.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: memberResult.error.flatten().fieldErrors },
+        { status: 400 }
+      );
     }
+    const memberData = memberResult.data;
 
     // Validate account fields (username + password) without requiring confirmPassword
     const simpleAccountSchema = z.object({
@@ -363,24 +361,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       resolvedRoleId = defaultRole?.id ?? null;
     }
 
-    // ── Fetch department to validate (skip for faculty) ─────────────────────
-    if (!isFaculty) {
-      if (!memberData.departmentId) {
-        return NextResponse.json(
-          { error: "Please select a valid department" },
-          { status: 400 }
-        );
-      }
-      const department = await prisma.department.findUnique({
-        where: { id: memberData.departmentId },
-        select: { id: true },
-      });
-      if (!department) {
-        return NextResponse.json(
-          { error: "Selected department does not exist" },
-          { status: 400 }
-        );
-      }
+    // ── Fetch department to validate ──────────────────────────────────────
+    if (!memberData.departmentId) {
+      return NextResponse.json(
+        { error: "Please select a valid department" },
+        { status: 400 }
+      );
+    }
+    const department = await prisma.department.findUnique({
+      where: { id: memberData.departmentId },
+      select: { id: true },
+    });
+    if (!department) {
+      return NextResponse.json(
+        { error: "Selected department does not exist" },
+        { status: 400 }
+      );
     }
 
     // ── Hash password ─────────────────────────────────────────────────────
@@ -395,7 +391,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         fullName: memberData.fullName.trim(),
         studentId: isFaculty ? (memberData.studentId?.trim() ?? "") : (memberData.studentId ?? "").trim(),
         phone: memberData.phone.trim(),
-        departmentId: isFaculty ? "" : (memberData.departmentId ?? ""),
+        departmentId: memberData.departmentId ?? "",
         session: isFaculty ? (memberData.session?.trim() ?? "") : (memberData.session ?? "").trim(),
         memberType: typeof bodyRecord.memberType === "string" ? bodyRecord.memberType : "member",
         gender: memberData.gender ?? null,
@@ -404,7 +400,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         workplace: memberData.workplace ?? null,
         status,
         adminNotes,
-          roleId: resolvedRoleId ?? (memberData as any).memberType === "faculty" ? (resolvedRoleId ?? "") : (resolvedRoleId ?? ""),
+        roleId: resolvedRoleId ?? "",
         skills: [],
         socialLinks: {},
         avatarUrl: "",
