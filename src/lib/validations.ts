@@ -2,13 +2,13 @@ import { z } from "zod";
 
 export const memberSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  studentId: z.string().min(5, "Student ID must be at least 5 characters"),
+  studentId: z.string().min(5, "Student ID must be at least 5 characters").optional().or(z.literal("")),
   email: z.string().email("Please enter a valid email address"),
   phone: z
     .string()
     .regex(/^01[3-9]\d{8}$/, "Please enter a valid Bangladesh mobile number"),
-  departmentId: z.string().cuid("Please select a valid department"),
-  session: z.string().min(4, "Session must be at least 4 characters"),
+  departmentId: z.string().optional().or(z.literal("")),
+  session: z.string().min(4, "Session must be at least 4 characters").optional().or(z.literal("")),
   gender: z.string().optional(),
   dob: z.coerce.date().optional(),
   address: z.string().optional(),

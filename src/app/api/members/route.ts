@@ -265,16 +265,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    // For faculty members, skip student-specific field validation
+    const bodyRecord2 = body as Record<string, unknown>;
+    const isFaculty = bodyRecord2.memberType === "faculty";
+
     // Validate personal info fields
     const memberResult = memberSchema.safeParse(body);
     if (!memberResult.success) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: memberResult.error.flatten().fieldErrors,
-        },
-        { status: 400 }
-      );
+      const fieldErrors = memberResult.error.flatten().fieldErrors;
+      // For faculty, ignore studentId, session, departmentId errors
+      if (isFaculty) {
+        delete fieldErrors.studentId;
+        delete fieldErrors.session;
+        delete fieldErrors.departmentId;
+      }
+      if (Object.keys(fieldErrors).length > 0) {
+        return NextResponse.json(
+          { error: "Validation failed", details: fieldErrors },
+          { status: 400 }
+        );
+      }
     }
 
     // Validate account fields (username + password) without requiring confirmPassword
@@ -350,15 +360,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       resolvedRoleId = defaultRole?.id ?? null;
     }
 
-    // ── Fetch department to validate ──────────────────────────────────────
-    const department = await prisma.department.findUnique({
-      where: { id: memberData.departmentId },
-      select: { id: true },
-    });
-
-    if (!department) {
+    // ── Fetch department to validate (skip for faculty) ─────────────────────
+    let department: { id: string } | null = null;
+    if (!isFaculty && memberData.departmentId) {
+      department = await prisma.department.findUnique({
+        where: { id: memberData.departmentId },
+        select: { id: true },
+      });
+      if (!department) {
+        return NextResponse.json(
+          { error: "Selected department does not exist" },
+          { status: 400 }
+        );
+      }
+    } else if (!isFaculty) {
       return NextResponse.json(
-        { error: "Selected department does not exist" },
+        { error: "Please select a valid department" },
         { status: 400 }
       );
     }
@@ -373,10 +390,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         email: memberData.email.toLowerCase().trim(),
         passwordHash,
         fullName: memberData.fullName.trim(),
-        studentId: memberData.studentId.trim(),
+        studentId: isFaculty ? (memberData.studentId?.trim() ?? "") : memberData.studentId.trim(),
         phone: memberData.phone.trim(),
-        departmentId: memberData.departmentId,
-        session: memberData.session.trim(),
+        departmentId: isFaculty ? (memberData.departmentId ?? "") : memberData.departmentId,
+        session: isFaculty ? (memberData.session?.trim() ?? "") : memberData.session.trim(),
         memberType: typeof bodyRecord.memberType === "string" ? bodyRecord.memberType : "member",
         gender: memberData.gender ?? null,
         dob: memberData.dob ?? null,
