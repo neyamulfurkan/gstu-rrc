@@ -620,7 +620,7 @@ function formatStatus(status: string): string {
 export function InstrumentTeaser({ instruments }: InstrumentTeaserProps): JSX.Element {
   const reduced = useReducedMotion();
 
-  const displayed = instruments.slice(0, 6);
+  const displayed = instruments.slice(0, 3);
 
   if (displayed.length === 0) return <></>;
 
@@ -673,7 +673,7 @@ export function InstrumentTeaser({ instruments }: InstrumentTeaserProps): JSX.El
 
         {/* Cards */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 sm:grid-cols-3 gap-6"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-60px" }}
