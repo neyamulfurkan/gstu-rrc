@@ -245,11 +245,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const application = await prisma.application.create({
       data: {
         fullName: data.fullName,
-        studentId: data.studentId,
+        studentId: data.studentId ?? "",
         email: data.email,
         phone: data.phone,
-        departmentId: data.departmentId,
-        session: data.session,
+        departmentId: data.departmentId ?? "",
+        session: data.session ?? "",
         gender: data.gender ?? null,
         dob: data.dob ?? null,
         address: data.address ?? null,

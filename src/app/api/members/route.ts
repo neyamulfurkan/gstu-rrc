@@ -271,9 +271,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Validate personal info fields
     const memberResult = memberSchema.safeParse(body);
+    const memberData = memberResult.success ? memberResult.data : undefined;
     if (!memberResult.success) {
       const fieldErrors = memberResult.error.flatten().fieldErrors;
-      // For faculty, ignore studentId, session, departmentId errors
       if (isFaculty) {
         delete fieldErrors.studentId;
         delete fieldErrors.session;
@@ -285,6 +285,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 400 }
         );
       }
+    }
+
+    if (!memberData) {
+      return NextResponse.json({ error: "Invalid member data" }, { status: 400 });
     }
 
     // Validate account fields (username + password) without requiring confirmPassword
@@ -314,7 +318,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const memberData = memberResult.data;
     const accountData = accountResult.data;
     const bodyRecord = body as Record<string, unknown>;
 
@@ -361,9 +364,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // ── Fetch department to validate (skip for faculty) ─────────────────────
-    let department: { id: string } | null = null;
-    if (!isFaculty && memberData.departmentId) {
-      department = await prisma.department.findUnique({
+    if (!isFaculty) {
+      if (!memberData.departmentId) {
+        return NextResponse.json(
+          { error: "Please select a valid department" },
+          { status: 400 }
+        );
+      }
+      const department = await prisma.department.findUnique({
         where: { id: memberData.departmentId },
         select: { id: true },
       });
@@ -373,11 +381,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           { status: 400 }
         );
       }
-    } else if (!isFaculty) {
-      return NextResponse.json(
-        { error: "Please select a valid department" },
-        { status: 400 }
-      );
     }
 
     // ── Hash password ─────────────────────────────────────────────────────
@@ -390,10 +393,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         email: memberData.email.toLowerCase().trim(),
         passwordHash,
         fullName: memberData.fullName.trim(),
-        studentId: isFaculty ? (memberData.studentId?.trim() ?? "") : memberData.studentId.trim(),
+        studentId: isFaculty ? (memberData.studentId?.trim() ?? "") : (memberData.studentId ?? "").trim(),
         phone: memberData.phone.trim(),
-        departmentId: isFaculty ? (memberData.departmentId ?? "") : memberData.departmentId,
-        session: isFaculty ? (memberData.session?.trim() ?? "") : memberData.session.trim(),
+        departmentId: isFaculty ? "" : (memberData.departmentId ?? ""),
+        session: isFaculty ? (memberData.session?.trim() ?? "") : (memberData.session ?? "").trim(),
         memberType: typeof bodyRecord.memberType === "string" ? bodyRecord.memberType : "member",
         gender: memberData.gender ?? null,
         dob: memberData.dob ?? null,

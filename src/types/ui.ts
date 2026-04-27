@@ -66,14 +66,14 @@ export interface SidebarNavItem {
 
 export interface RegistrationPersonalInfo {
   fullName: string;
-  studentId: string;
+  studentId: string | undefined;
   email: string;
   phone: string;
   gender: string;
   dob: string;
   address: string;
-  departmentId: string;
-  session: string;
+  departmentId: string | undefined;
+  session: string | undefined;
   avatarUrl: string;
   workplace?: string;
 }
