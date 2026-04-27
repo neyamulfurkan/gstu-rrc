@@ -153,35 +153,35 @@ function SearchOverlay({ onClose }: SearchOverlayProps): JSX.Element {
   const results: SearchResult[] = [];
 
   if (data) {
-    data.members.forEach((m) =>
+    (data.members as Array<{ id: string; fullName?: string; name?: string; username?: string; identifier?: string }>).forEach((m) =>
       results.push({
         id: m.id,
-        name: m.fullName,
-        href: `/members/${m.username}`,
+        name: m.fullName || m.name || "",
+        href: `/members/${m.username || m.identifier}`,
         type: "member",
-        subtitle: "@" + m.username,
+        subtitle: "@" + (m.username || m.identifier),
       })
     );
-    data.events.forEach((e) =>
+    (data.events as Array<{ id: string; title?: string; name?: string; slug?: string; identifier?: string }>).forEach((e) =>
       results.push({
         id: e.id,
-        name: e.title,
-        href: `/events/${e.slug}`,
+        name: e.title || e.name || "",
+        href: `/events/${e.slug || e.identifier}`,
         type: "event",
       })
     );
-    data.projects.forEach((p) =>
+    (data.projects as Array<{ id: string; title?: string; name?: string; slug?: string; identifier?: string }>).forEach((p) =>
       results.push({
         id: p.id,
-        name: p.title,
-        href: `/projects/${p.slug}`,
+        name: p.title || p.name || "",
+        href: `/projects/${p.slug || p.identifier}`,
         type: "project",
       })
     );
-    data.announcements.forEach((a) =>
+    (data.announcements as Array<{ id: string; title?: string; name?: string; excerpt?: string }>).forEach((a) =>
       results.push({
         id: a.id,
-        name: a.title,
+        name: a.title || a.name || "",
         href: "#",
         type: "announcement",
         subtitle: a.excerpt,
@@ -334,17 +334,17 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
 
   const inlineResults: SearchResult[] = [];
   if (inlineSearchData) {
-    inlineSearchData.members.forEach((m) =>
-      inlineResults.push({ id: m.id, name: m.fullName, href: `/members/${m.username}`, type: "member", subtitle: "@" + m.username })
+    (inlineSearchData.members as Array<{ id: string; fullName?: string; name?: string; username?: string; identifier?: string; avatarUrl?: string }>).forEach((m) =>
+      inlineResults.push({ id: m.id, name: m.fullName || m.name || "", href: `/members/${m.username || m.identifier}`, type: "member", subtitle: "@" + (m.username || m.identifier) })
     );
-    inlineSearchData.events.forEach((e) =>
-      inlineResults.push({ id: e.id, name: e.title, href: `/events/${e.slug}`, type: "event" })
+    (inlineSearchData.events as Array<{ id: string; title?: string; name?: string; slug?: string; identifier?: string }>).forEach((e) =>
+      inlineResults.push({ id: e.id, name: e.title || e.name || "", href: `/events/${e.slug || e.identifier}`, type: "event" })
     );
-    inlineSearchData.projects.forEach((p) =>
-      inlineResults.push({ id: p.id, name: p.title, href: `/projects/${p.slug}`, type: "project" })
+    (inlineSearchData.projects as Array<{ id: string; title?: string; name?: string; slug?: string; identifier?: string }>).forEach((p) =>
+      inlineResults.push({ id: p.id, name: p.title || p.name || "", href: `/projects/${p.slug || p.identifier}`, type: "project" })
     );
-    inlineSearchData.announcements.forEach((a) =>
-      inlineResults.push({ id: a.id, name: a.title, href: "/feed", type: "announcement", subtitle: a.excerpt })
+    (inlineSearchData.announcements as Array<{ id: string; title?: string; name?: string; excerpt?: string }>).forEach((a) =>
+      inlineResults.push({ id: a.id, name: a.title || a.name || "", href: "/feed", type: "announcement", subtitle: a.excerpt })
     );
   }
 
