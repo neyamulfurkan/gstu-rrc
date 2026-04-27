@@ -351,23 +351,32 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-start gap-2 mb-1">
-                    {advisor.memberId ? (
-                      <Link
-                        href={`/members/${advisor.member?.username ?? advisor.memberId}`}
-                        className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-heading)] hover:text-[var(--color-accent)] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
-                      >
-                        {advisor.name}
-                      </Link>
-                    ) : (
-                      <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
-                        {advisor.name}
-                      </h3>
-                    )}
+                  <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
+                    <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-heading)]">
+                      {advisor.name}
+                    </h3>
                     <Badge variant="accent" size="sm">
                       Current
                     </Badge>
                   </div>
+                  {advisor.member?.username && (
+                    <Link
+                      href={`/members/${advisor.member.username}`}
+                      className={cn(
+                        "relative z-20 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold flex-shrink-0",
+                        "border border-[var(--color-primary)]/30 text-[var(--color-primary)]",
+                        "hover:bg-[var(--color-primary)]/10 transition-colors duration-150",
+                        "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                      )}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+                        <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.2" />
+                        <path d="M1.5 10.5c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+                      </svg>
+                      View Profile
+                    </Link>
+                  )}
                   <p className="text-sm font-medium text-[var(--color-primary)] mb-0.5">
                     {advisor.designation}
                   </p>
@@ -411,24 +420,7 @@ export function AdvisorsSection({ advisors }: AdvisorsSectionProps): JSX.Element
                       {advisor.email}
                     </a>
                   )}
-                  {advisor.member?.username && (
-                    <Link
-                      href={`/members/${advisor.member.username}`}
-                      className={cn(
-                        "relative z-20 mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold",
-                        "border border-[var(--color-primary)]/30 text-[var(--color-primary)]",
-                        "hover:bg-[var(--color-primary)]/10 transition-colors duration-150",
-                        "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
-                      )}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-                        <circle cx="6" cy="4" r="2.5" stroke="currentColor" strokeWidth="1.2" />
-                        <path d="M1.5 10.5c0-2.485 2.015-4.5 4.5-4.5s4.5 2.015 4.5 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-                      </svg>
-                      View Profile
-                    </Link>
-                  )}
+
                 </div>
               </motion.article>
               );
