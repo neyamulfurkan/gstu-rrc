@@ -413,53 +413,61 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   // Build system prompt
   const basePrompt =
-    config?.aiSystemPrompt ??
-    `You are the official AI assistant for the {{clubName}} at {{universityName}}. You have comprehensive knowledge about every aspect of the club. Always answer confidently and accurately using the context provided below. Never say you do not have information if it is present here.
+    (config?.aiSystemPrompt && config.aiSystemPrompt.trim() !== "")
+      ? config.aiSystemPrompt
+      : `You are the official AI assistant for ${clubName} at ${universityName}. You have comprehensive knowledge about every aspect of the club. Always answer confidently and accurately using the context provided below. Never say you do not have information if it is present here.
 
 === CLUB INFORMATION ===
-{{CLUB_INFO}}
+${context.clubInfo}
 
 === MEMBERSHIP STATISTICS ===
-{{MEMBERS}}
+${context.members}
 
 === MEMBERSHIP & REGISTRATION ===
-{{MEMBERSHIP}}
+${context.membership}
 
 === UPCOMING EVENTS ===
-{{EVENTS}}
+${context.events}
 
 === PAST EVENTS ===
-{{PAST_EVENTS}}
+${context.pastEvents}
 
 === ACTIVE ANNOUNCEMENTS ===
-{{ANNOUNCEMENTS}}
+${context.announcements}
 
 === RECENT PROJECTS ===
-{{PROJECTS}}
+${context.projects}
 
 === ALL PROJECTS ===
-{{ALL_PROJECTS}}
+${context.allProjects}
 
 === CURRENT EXECUTIVE COMMITTEE ===
-{{COMMITTEE}}
+${context.committee}
+
+=== EX-COMMITTEE MEMBERS ===
+${context.exCommittee}
 
 === CURRENT ADVISORS ===
-{{ADVISORS}}
+${context.advisors}
+
+=== EX-ADVISORS ===
+${context.exAdvisors}
 
 === INSTRUMENTS & EQUIPMENT ===
-{{INSTRUMENTS}}
+${context.instruments}
 
 === ACHIEVEMENTS ===
-{{ACHIEVEMENTS}}
+${context.achievements}
 
 === CLUB MILESTONES ===
-{{MILESTONES}}
+${context.milestones}
 
 Instructions:
 - Answer all questions about the club using the context above
 - Be friendly, concise, and accurate
 - If asked about member count, events, projects, fees, committee, advisors, instruments, or any club detail, use the data above
 - When listing events or projects, format them clearly
+- For membership fee questions: the fee and payment details are in the MEMBERSHIP & REGISTRATION section above
 - If you have structured data for events or projects queries, you may respond with a JSON object starting with "{"
 - Otherwise respond with plain helpful text`;
 
@@ -479,22 +487,29 @@ Instructions:
     // use defaults
   }
 
-  const systemPrompt = basePrompt
-    .replace(/\{\{clubName\}\}/g, clubName)
-    .replace(/\{\{universityName\}\}/g, universityName)
-    .replace("{{CLUB_INFO}}", context.clubInfo)
-    .replace("{{MEMBERS}}", context.members)
-    .replace("{{EVENTS}}", context.events)
-    .replace("{{PAST_EVENTS}}", context.pastEvents)
-    .replace("{{PROJECTS}}", context.projects)
-    .replace("{{ALL_PROJECTS}}", context.allProjects)
-    .replace("{{COMMITTEE}}", context.committee)
-    .replace("{{ADVISORS}}", context.advisors)
-    .replace("{{ANNOUNCEMENTS}}", context.announcements)
-    .replace("{{INSTRUMENTS}}", context.instruments)
-    .replace("{{MEMBERSHIP}}", context.membership)
-    .replace("{{ACHIEVEMENTS}}", context.achievements)
-    .replace("{{MILESTONES}}", context.milestones);
+  let systemPrompt: string;
+  if (config?.aiSystemPrompt && config.aiSystemPrompt.trim() !== "") {
+    systemPrompt = config.aiSystemPrompt
+      .replace(/\{\{clubName\}\}/g, clubName)
+      .replace(/\{\{universityName\}\}/g, universityName)
+      .replace(/\{\{CLUB_INFO\}\}/g, context.clubInfo)
+      .replace(/\{\{MEMBERS\}\}/g, context.members)
+      .replace(/\{\{EVENTS\}\}/g, context.events)
+      .replace(/\{\{PAST_EVENTS\}\}/g, context.pastEvents)
+      .replace(/\{\{PROJECTS\}\}/g, context.projects)
+      .replace(/\{\{ALL_PROJECTS\}\}/g, context.allProjects)
+      .replace(/\{\{COMMITTEE\}\}/g, context.committee)
+      .replace(/\{\{EX_COMMITTEE\}\}/g, context.exCommittee)
+      .replace(/\{\{ADVISORS\}\}/g, context.advisors)
+      .replace(/\{\{EX_ADVISORS\}\}/g, context.exAdvisors)
+      .replace(/\{\{ANNOUNCEMENTS\}\}/g, context.announcements)
+      .replace(/\{\{INSTRUMENTS\}\}/g, context.instruments)
+      .replace(/\{\{MEMBERSHIP\}\}/g, context.membership)
+      .replace(/\{\{ACHIEVEMENTS\}\}/g, context.achievements)
+      .replace(/\{\{MILESTONES\}\}/g, context.milestones);
+  } else {
+    systemPrompt = basePrompt;
+  }
 
   // Call Groq
   let aiResponse: string;
