@@ -411,6 +411,22 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
   }
 
+  // Fetch club name and university name for placeholder replacement
+  let clubName = "GSTU Robotics & Research Club";
+  let universityName = "Gopalganj Science and Technology University";
+  try {
+    const clubInfo = await prisma.clubConfig.findUnique({
+      where: { id: "main" },
+      select: { clubName: true, universityName: true },
+    });
+    if (clubInfo) {
+      clubName = clubInfo.clubName || clubName;
+      universityName = clubInfo.universityName || universityName;
+    }
+  } catch {
+    // use defaults
+  }
+
   // Build system prompt
   const basePrompt =
     (config?.aiSystemPrompt && config.aiSystemPrompt.trim() !== "")
@@ -470,22 +486,6 @@ Instructions:
 - For membership fee questions: the fee and payment details are in the MEMBERSHIP & REGISTRATION section above
 - If you have structured data for events or projects queries, you may respond with a JSON object starting with "{"
 - Otherwise respond with plain helpful text`;
-
-  // Fetch club name and university name for placeholder replacement
-  let clubName = "GSTU Robotics & Research Club";
-  let universityName = "Gopalganj Science and Technology University";
-  try {
-    const clubInfo = await prisma.clubConfig.findUnique({
-      where: { id: "main" },
-      select: { clubName: true, universityName: true },
-    });
-    if (clubInfo) {
-      clubName = clubInfo.clubName || clubName;
-      universityName = clubInfo.universityName || universityName;
-    }
-  } catch {
-    // use defaults
-  }
 
   let systemPrompt: string;
   if (config?.aiSystemPrompt && config.aiSystemPrompt.trim() !== "") {
