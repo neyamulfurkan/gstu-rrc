@@ -492,19 +492,22 @@ model CertificateTemplate {
 }
 
 model Certificate {
-  id                  String              @id @default(cuid())
-  serial              String              @unique
-  recipientId         String
-  recipient           Member              @relation(fields: [recipientId], references: [id])
-  templateId          String
-  template            CertificateTemplate @relation(fields: [templateId], references: [id])
-  achievement         String
-  issuedAt            DateTime            @default(now())
-  signedByName        String
-  signedByDesignation String
-  signatureUrl        String
-  pdfUrl              String
-  isRevoked           Boolean             @default(false)
+  id                   String              @id @default(cuid())
+  serial               String              @unique
+  recipientId          String
+  recipient            Member              @relation(fields: [recipientId], references: [id])
+  templateId           String
+  template             CertificateTemplate @relation(fields: [templateId], references: [id])
+  achievement          String
+  issuedAt             DateTime            @default(now())
+  signedByName         String
+  signedByDesignation  String
+  signatureUrl         String
+  signedByName2        String              @default("")
+  signedByDesignation2 String              @default("")
+  signatureUrl2        String              @default("")
+  pdfUrl               String
+  isRevoked            Boolean             @default(false)
 
   @@index([serial])
   @@index([recipientId])

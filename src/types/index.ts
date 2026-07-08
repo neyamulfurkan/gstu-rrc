@@ -161,6 +161,8 @@ export interface CertificateCardWithRecipient extends CertificateCard {
   recipient: { fullName: string; username: string; avatarUrl: string };
   signedByName: string;
   signedByDesignation: string;
+  signedByName2?: string;
+  signedByDesignation2?: string;
 }
 
 // ─── Notification ─────────────────────────────────────────────────────────────

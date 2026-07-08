@@ -116,9 +116,12 @@ const issueSchema = z.object({
   templateId: z.string().min(1, "Please select a template"),
   achievement: z.string().min(2, "Achievement must be at least 2 characters"),
   issuedAt: z.string().min(1, "Please select a date"),
-  signedByName: z.string().min(2, "Signatory name is required"),
-  signedByDesignation: z.string().min(2, "Signatory designation is required"),
+  signedByName: z.string().min(2, "Advisor name is required"),
+  signedByDesignation: z.string().min(2, "Advisor designation is required"),
   signatureUrl: z.string().optional(),
+  signedByName2: z.string().min(2, "President name is required"),
+  signedByDesignation2: z.string().min(2, "President designation is required"),
+  signatureUrl2: z.string().optional(),
 });
 
 type IssueFormValues = z.infer<typeof issueSchema>;
@@ -616,6 +619,8 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [signatureUrl, setSignatureUrl] = useState<string>("");
   const [signatureUploading, setSignatureUploading] = useState(false);
+  const [signatureUrl2, setSignatureUrl2] = useState<string>("");
+  const [signatureUploading2, setSignatureUploading2] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -663,6 +668,9 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
       .replace(/\{\{signed_by_name\}\}/g, formValues.signedByName ?? "")
       .replace(/\{\{signed_by_designation\}\}/g, formValues.signedByDesignation ?? "")
       .replace(/\{\{signature_image\}\}/g, signatureUrl ? `<img src="${signatureUrl}" style="max-height:60px;" />` : "")
+      .replace(/\{\{signed_by_name_2\}\}/g, formValues.signedByName2 ?? "")
+      .replace(/\{\{signed_by_designation_2\}\}/g, formValues.signedByDesignation2 ?? "")
+      .replace(/\{\{signature_image_2\}\}/g, signatureUrl2 ? `<img src="${signatureUrl2}" style="max-height:60px;" />` : "")
       .replace(/\{\{serial\}\}/g, "GSTU-2026-PREVIEW")
       .replace(/\{\{qr_code\}\}/g, "")
       .replace(/\{\{club_name\}\}/g, "GSTU Robotics & Research Club")
@@ -694,6 +702,9 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
           signedByName: data.signedByName,
           signedByDesignation: data.signedByDesignation,
           signatureUrl: signatureUrl || undefined,
+          signedByName2: data.signedByName2,
+          signedByDesignation2: data.signedByDesignation2,
+          signatureUrl2: signatureUrl2 || undefined,
         }),
       });
 
@@ -728,38 +739,57 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
     }
   }
 
-  // Cloudinary signature upload
+  // Cloudinary signature upload (shared for both signers)
+  async function uploadSignatureFile(file: File): Promise<string> {
+    const paramsRes = await fetch("/api/upload", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder: "admin/certificates" }),
+    });
+    if (!paramsRes.ok) throw new Error("Failed to get upload params");
+    const { signature, timestamp, cloudName, apiKey } = await paramsRes.json();
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("folder", "admin/certificates");
+    formData.append("signature", signature);
+    formData.append("timestamp", String(timestamp));
+    formData.append("api_key", apiKey);
+
+    const uploadRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+      { method: "POST", body: formData }
+    );
+    if (!uploadRes.ok) throw new Error("Upload failed");
+    const uploadData = await uploadRes.json();
+    return uploadData.secure_url ?? "";
+  }
+
   async function handleSignatureUpload(file: File): Promise<void> {
     if (!file) return;
     setSignatureUploading(true);
     try {
-      const paramsRes = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ folder: "admin/certificates" }),
-      });
-      if (!paramsRes.ok) throw new Error("Failed to get upload params");
-      const { signature, timestamp, cloudName, apiKey } = await paramsRes.json();
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("folder", "admin/certificates");
-      formData.append("signature", signature);
-      formData.append("timestamp", String(timestamp));
-      formData.append("api_key", apiKey);
-
-      const uploadRes = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        { method: "POST", body: formData }
-      );
-      if (!uploadRes.ok) throw new Error("Upload failed");
-      const uploadData = await uploadRes.json();
-      setSignatureUrl(uploadData.secure_url ?? "");
-      toast("Signature uploaded", "success");
+      const url = await uploadSignatureFile(file);
+      setSignatureUrl(url);
+      toast("Advisor signature uploaded", "success");
     } catch {
       toast("Failed to upload signature", "error");
     } finally {
       setSignatureUploading(false);
+    }
+  }
+
+  async function handleSignatureUpload2(file: File): Promise<void> {
+    if (!file) return;
+    setSignatureUploading2(true);
+    try {
+      const url = await uploadSignatureFile(file);
+      setSignatureUrl2(url);
+      toast("President signature uploaded", "success");
+    } catch {
+      toast("Failed to upload signature", "error");
+    } finally {
+      setSignatureUploading2(false);
     }
   }
 
@@ -870,65 +900,59 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
           )}
         </div>
 
-        {/* Signatory */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className={labelClass} htmlFor="signedByName">
-              Signed By (Name) <span className="text-[var(--color-error)]">*</span>
-            </label>
-            <input
-              id="signedByName"
-              type="text"
-              placeholder="e.g., Dr. Rahim Uddin"
-              {...register("signedByName")}
-              className={cn(
-                inputClass,
-                errors.signedByName && "border-[var(--color-error)] focus:ring-[var(--color-error)]"
+        {/* Signatory 1 — Advisor */}
+        <div className="rounded-xl border border-[var(--color-border)] p-4 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
+            Signature 1 — Advisor
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass} htmlFor="signedByName">
+                Advisor Name <span className="text-[var(--color-error)]">*</span>
+              </label>
+              <input
+                id="signedByName"
+                type="text"
+                placeholder="e.g., Dr. Rahim Uddin"
+                {...register("signedByName")}
+                className={cn(
+                  inputClass,
+                  errors.signedByName && "border-[var(--color-error)] focus:ring-[var(--color-error)]"
+                )}
+                aria-describedby={errors.signedByName ? "signedByName-error" : undefined}
+              />
+              {errors.signedByName && (
+                <p id="signedByName-error" className={errorClass} role="alert">
+                  {errors.signedByName.message}
+                </p>
               )}
-              aria-describedby={errors.signedByName ? "signedByName-error" : undefined}
-            />
-            {errors.signedByName && (
-              <p id="signedByName-error" className={errorClass} role="alert">
-                {errors.signedByName.message}
-              </p>
-            )}
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="signedByDesignation">
-              Designation <span className="text-[var(--color-error)]">*</span>
-            </label>
-            <input
-              id="signedByDesignation"
-              type="text"
-              placeholder="e.g., Faculty Advisor"
-              {...register("signedByDesignation")}
-              className={cn(
-                inputClass,
-                errors.signedByDesignation && "border-[var(--color-error)] focus:ring-[var(--color-error)]"
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="signedByDesignation">
+                Designation <span className="text-[var(--color-error)]">*</span>
+              </label>
+              <input
+                id="signedByDesignation"
+                type="text"
+                placeholder="e.g., Faculty Advisor"
+                {...register("signedByDesignation")}
+                className={cn(
+                  inputClass,
+                  errors.signedByDesignation && "border-[var(--color-error)] focus:ring-[var(--color-error)]"
+                )}
+                aria-describedby={errors.signedByDesignation ? "signedByDesignation-error" : undefined}
+              />
+              {errors.signedByDesignation && (
+                <p id="signedByDesignation-error" className={errorClass} role="alert">
+                  {errors.signedByDesignation.message}
+                </p>
               )}
-              aria-describedby={errors.signedByDesignation ? "signedByDesignation-error" : undefined}
-            />
-            {errors.signedByDesignation && (
-              <p id="signedByDesignation-error" className={errorClass} role="alert">
-                {errors.signedByDesignation.message}
-              </p>
-            )}
+            </div>
           </div>
-        </div>
-
-        {/* Signature Upload */}
-        <div>
-          <label className={labelClass}>Signature Image (optional)</label>
           <div className="flex items-center gap-4">
             {signatureUrl ? (
               <div className="relative h-14 w-32 border border-[var(--color-border)] rounded-lg overflow-hidden bg-white">
-                <Image
-                  src={signatureUrl}
-                  alt="Signature"
-                  fill
-                  className="object-contain"
-                  sizes="128px"
-                />
+                <Image src={signatureUrl} alt="Advisor signature" fill className="object-contain" sizes="128px" />
               </div>
             ) : null}
             <label
@@ -953,11 +977,91 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
               />
             </label>
             {signatureUrl && (
-              <button
-                type="button"
-                onClick={() => setSignatureUrl("")}
-                className="text-xs text-[var(--color-error)] hover:underline focus:outline-none"
-              >
+              <button type="button" onClick={() => setSignatureUrl("")} className="text-xs text-[var(--color-error)] hover:underline focus:outline-none">
+                Remove
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Signatory 2 — President */}
+        <div className="rounded-xl border border-[var(--color-border)] p-4 space-y-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
+            Signature 2 — President
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass} htmlFor="signedByName2">
+                President Name <span className="text-[var(--color-error)]">*</span>
+              </label>
+              <input
+                id="signedByName2"
+                type="text"
+                placeholder="e.g., Mehedi Hasan"
+                {...register("signedByName2")}
+                className={cn(
+                  inputClass,
+                  errors.signedByName2 && "border-[var(--color-error)] focus:ring-[var(--color-error)]"
+                )}
+                aria-describedby={errors.signedByName2 ? "signedByName2-error" : undefined}
+              />
+              {errors.signedByName2 && (
+                <p id="signedByName2-error" className={errorClass} role="alert">
+                  {errors.signedByName2.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="signedByDesignation2">
+                Designation <span className="text-[var(--color-error)]">*</span>
+              </label>
+              <input
+                id="signedByDesignation2"
+                type="text"
+                placeholder="e.g., Club President"
+                {...register("signedByDesignation2")}
+                className={cn(
+                  inputClass,
+                  errors.signedByDesignation2 && "border-[var(--color-error)] focus:ring-[var(--color-error)]"
+                )}
+                aria-describedby={errors.signedByDesignation2 ? "signedByDesignation2-error" : undefined}
+              />
+              {errors.signedByDesignation2 && (
+                <p id="signedByDesignation2-error" className={errorClass} role="alert">
+                  {errors.signedByDesignation2.message}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            {signatureUrl2 ? (
+              <div className="relative h-14 w-32 border border-[var(--color-border)] rounded-lg overflow-hidden bg-white">
+                <Image src={signatureUrl2} alt="President signature" fill className="object-contain" sizes="128px" />
+              </div>
+            ) : null}
+            <label
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer",
+                "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
+                "hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]",
+                "transition-colors duration-150",
+                signatureUploading2 && "opacity-60 pointer-events-none"
+              )}
+            >
+              {signatureUploading2 ? <Spinner size="sm" /> : <Plus size={14} />}
+              {signatureUrl2 ? "Change" : "Upload Signature"}
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleSignatureUpload2(file);
+                }}
+              />
+            </label>
+            {signatureUrl2 && (
+              <button type="button" onClick={() => setSignatureUrl2("")} className="text-xs text-[var(--color-error)] hover:underline focus:outline-none">
                 Remove
               </button>
             )}

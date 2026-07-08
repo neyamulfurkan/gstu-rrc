@@ -46,9 +46,12 @@ const PLACEHOLDERS = [
   { key: "{{member_name}}", label: "Member Name", sample: "John Doe" },
   { key: "{{achievement}}", label: "Achievement", sample: "Excellence in Robotics" },
   { key: "{{date}}", label: "Issue Date", sample: "March 18, 2026" },
-  { key: "{{signed_by_name}}", label: "Signed By Name", sample: "Dr. Jane Smith" },
-  { key: "{{signed_by_designation}}", label: "Signed By Designation", sample: "Club President" },
-  { key: "{{signature_image}}", label: "Signature Image URL", sample: "https://example.com/sig.png" },
+  { key: "{{signed_by_name}}", label: "Advisor Name", sample: "Dr. Jane Smith" },
+  { key: "{{signed_by_designation}}", label: "Advisor Designation", sample: "Faculty Advisor" },
+  { key: "{{signature_image}}", label: "Advisor Signature URL", sample: "https://example.com/sig1.png" },
+  { key: "{{signed_by_name_2}}", label: "President Name", sample: "Mehedi Hasan" },
+  { key: "{{signed_by_designation_2}}", label: "President Designation", sample: "Club President" },
+  { key: "{{signature_image_2}}", label: "President Signature URL", sample: "https://example.com/sig2.png" },
   { key: "{{serial}}", label: "Serial Number", sample: "GSTU-2026-A3F8E1C2" },
   { key: "{{qr_code}}", label: "QR Code (Data URL)", sample: "" },
   { key: "{{club_name}}", label: "Club Name", sample: "GSTU Robotics & Research Club" },
@@ -60,8 +63,11 @@ const SAMPLE_DATA: Record<string, string> = {
   "{{achievement}}": "Excellence in Robotics",
   "{{date}}": "March 18, 2026",
   "{{signed_by_name}}": "Dr. Jane Smith",
-  "{{signed_by_designation}}": "Club President",
+  "{{signed_by_designation}}": "Faculty Advisor",
   "{{signature_image}}": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iNjAiPjxwYXRoIGQ9Ik0xMCA0MCBRNDAgMTAgODAgMzAgUTEyMCA1MCAxNTAgMjAiIHN0cm9rZT0iIzMzMyIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+",
+  "{{signed_by_name_2}}": "Mehedi Hasan",
+  "{{signed_by_designation_2}}": "Club President",
+  "{{signature_image_2}}": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAiIGhlaWdodD0iNjAiPjxwYXRoIGQ9Ik0xNSA0NSBRNTAgMTUgOTAgMzUgUTEzMCA1NSAxNDUgMjUiIHN0cm9rZT0iIzIyMiIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIyIi8+PC9zdmc+",
   "{{serial}}": "GSTU-2026-A3F8E1C2",
   "{{qr_code}}": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
   "{{club_name}}": "GSTU Robotics & Research Club",
@@ -76,52 +82,69 @@ const DEFAULT_HTML = `<!DOCTYPE html>
 </head>
 <body>
   <div class="certificate">
+    <div class="border-frame"></div>
     <div class="header">
       <img src="{{logo_url}}" alt="Club Logo" class="logo" />
-      <h1 class="club-name">{{club_name}}</h1>
+      <p class="club-name">{{club_name}}</p>
+      <h1 class="cert-title">Certificate of Achievement</h1>
+      <div class="title-rule"></div>
     </div>
     <div class="body">
-      <p class="certifies">This is to certify that</p>
+      <p class="certifies">This certificate is proudly presented to</p>
       <h2 class="member-name">{{member_name}}</h2>
-      <p class="achievement-label">has successfully achieved</p>
+      <p class="achievement-label">in recognition of</p>
       <p class="achievement">{{achievement}}</p>
     </div>
     <div class="footer">
       <div class="signature-block">
-        <img src="{{signature_image}}" alt="Signature" class="signature" />
+        <img src="{{signature_image}}" alt="Advisor Signature" class="signature" />
+        <div class="sig-line"></div>
         <p class="signed-by">{{signed_by_name}}</p>
         <p class="designation">{{signed_by_designation}}</p>
       </div>
-      <div class="meta">
-        <p class="date">{{date}}</p>
-        <p class="serial">{{serial}}</p>
+      <div class="seal-block">
         <img src="{{qr_code}}" alt="QR Code" class="qr-code" />
+        <p class="serial">{{serial}}</p>
+        <p class="date">Issued {{date}}</p>
+      </div>
+      <div class="signature-block">
+        <img src="{{signature_image_2}}" alt="President Signature" class="signature" />
+        <div class="sig-line"></div>
+        <p class="signed-by">{{signed_by_name_2}}</p>
+        <p class="designation">{{signed_by_designation_2}}</p>
       </div>
     </div>
   </div>
 </body>
 </html>`;
 
-const DEFAULT_CSS = `* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: Georgia, serif; background: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-.certificate { width: 800px; min-height: 560px; border: 8px double #b8860b; padding: 48px; background: linear-gradient(135deg, #fffdf0 0%, #fff8dc 100%); position: relative; }
-.header { text-align: center; margin-bottom: 32px; }
-.logo { width: 64px; height: 64px; margin-bottom: 12px; }
-.club-name { font-size: 14px; letter-spacing: 4px; text-transform: uppercase; color: #555; font-family: Arial, sans-serif; }
-.body { text-align: center; margin-bottom: 40px; }
-.certifies { font-size: 14px; color: #777; margin-bottom: 12px; }
-.member-name { font-size: 36px; color: #1a1a1a; font-style: italic; margin-bottom: 16px; }
-.achievement-label { font-size: 14px; color: #777; margin-bottom: 8px; }
-.achievement { font-size: 18px; color: #b8860b; font-weight: bold; }
-.footer { display: flex; justify-content: space-between; align-items: flex-end; }
-.signature-block { text-align: center; }
-.signature { height: 48px; margin-bottom: 4px; }
-.signed-by { font-size: 14px; font-weight: bold; color: #333; border-top: 1px solid #333; padding-top: 4px; }
-.designation { font-size: 12px; color: #777; }
-.meta { text-align: right; }
-.date { font-size: 13px; color: #555; margin-bottom: 4px; }
-.serial { font-size: 11px; color: #999; font-family: monospace; margin-bottom: 8px; }
-.qr-code { width: 60px; height: 60px; }`;
+const DEFAULT_CSS = `@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Lato', Arial, sans-serif; background: #eee; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+.certificate { width: 297mm; max-width: 900px; aspect-ratio: 297/210; padding: 44px 56px; background: #fffdf7; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,0.15); }
+.border-frame { position: absolute; inset: 14px; border: 2px solid #b8860b; pointer-events: none; }
+.border-frame::before { content: ""; position: absolute; inset: 6px; border: 1px solid rgba(184,134,11,0.4); }
+.header { text-align: center; margin-bottom: 22px; }
+.logo { width: 56px; height: 56px; margin-bottom: 8px; object-fit: contain; }
+.club-name { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: #777; margin-bottom: 10px; }
+.cert-title { font-family: 'Playfair Display', serif; font-size: 32px; color: #1a1a1a; font-weight: 700; }
+.title-rule { width: 90px; height: 2px; background: #b8860b; margin: 12px auto 0; }
+.body { text-align: center; margin-bottom: 34px; }
+.certifies { font-size: 13px; color: #777; margin-bottom: 14px; letter-spacing: 0.5px; }
+.member-name { font-family: 'Playfair Display', serif; font-size: 38px; color: #1a1a1a; font-style: italic; margin-bottom: 14px; }
+.achievement-label { font-size: 12px; color: #999; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 8px; }
+.achievement { font-size: 16px; color: #333; font-weight: 400; max-width: 560px; margin: 0 auto; line-height: 1.6; }
+.footer { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; }
+.signature-block { text-align: center; flex: 1; }
+.signature { height: 42px; margin-bottom: 4px; object-fit: contain; }
+.sig-line { width: 150px; height: 1px; background: #333; margin: 0 auto 6px; }
+.signed-by { font-size: 13px; font-weight: 700; color: #222; }
+.designation { font-size: 11px; color: #777; margin-top: 2px; }
+.seal-block { text-align: center; flex-shrink: 0; }
+.qr-code { width: 52px; height: 52px; margin-bottom: 4px; }
+.serial { font-size: 9px; color: #999; font-family: 'Courier New', monospace; letter-spacing: 0.5px; }
+.date { font-size: 10px; color: #999; margin-top: 2px; }
+@media print { body { background: #fff; } .certificate { box-shadow: none; } }`;
 
 // ─── Starter Templates ────────────────────────────────────────────────────────
 

@@ -55,6 +55,8 @@ export async function GET(
           pdfUrl: true,
           signedByName: true,
           signedByDesignation: true,
+          signedByName2: true,
+          signedByDesignation2: true,
           template: {
             select: {
               name: true,
@@ -105,6 +107,8 @@ export async function GET(
         recipientId: true,
         signedByName: true,
         signedByDesignation: true,
+        signedByName2: true,
+        signedByDesignation2: true,
         template: {
           select: {
             name: true,

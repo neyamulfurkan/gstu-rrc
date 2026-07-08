@@ -394,14 +394,27 @@ export function CertificateVerifyDisplay({
               className="text-[var(--color-text-secondary)] mt-0.5 flex-shrink-0"
               aria-hidden="true"
             />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs text-[var(--color-text-secondary)] mb-1">Issued By</p>
-              <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                {certificate.signedByName}
-              </p>
-              <p className="text-xs text-[var(--color-text-secondary)]">
-                {certificate.signedByDesignation}
-              </p>
+            <div className="min-w-0 flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-[var(--color-text-secondary)] mb-1">Signed By (Advisor)</p>
+                <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                  {certificate.signedByName}
+                </p>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  {certificate.signedByDesignation}
+                </p>
+              </div>
+              {certificate.signedByName2 && (
+                <div>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">Signed By (President)</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {certificate.signedByName2}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {certificate.signedByDesignation2}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

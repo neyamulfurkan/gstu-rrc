@@ -199,9 +199,12 @@ export const issueCertificateSchema = z.object({
     .min(1, "Please select at least one recipient"),
   achievement: z.string().min(2, "Achievement description is required"),
   issuedAt: z.coerce.date().default(() => new Date()),
-  signedByName: z.string().min(2, "Signatory name is required"),
-  signedByDesignation: z.string().min(2, "Signatory designation is required"),
-  signatureUrl: z.string().url("Please upload a valid signature image"),
+  signedByName: z.string().min(2, "Advisor name is required"),
+  signedByDesignation: z.string().min(2, "Advisor designation is required"),
+  signatureUrl: z.string().url("Please upload the advisor's signature image"),
+  signedByName2: z.string().min(2, "President name is required"),
+  signedByDesignation2: z.string().min(2, "President designation is required"),
+  signatureUrl2: z.string().url("Please upload the president's signature image"),
 });
 
 export const announcementSchema = z.object({

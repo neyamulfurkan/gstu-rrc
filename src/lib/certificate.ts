@@ -19,6 +19,9 @@ export type CertificateData = {
   signedByName: string;
   signedByDesignation: string;
   signatureUrl: string;
+  signedByName2: string;
+  signedByDesignation2: string;
+  signatureUrl2: string;
   serial: string;
   qrCodeDataUrl: string;
   clubName: string;
@@ -170,7 +173,8 @@ const S = StyleSheet.create({
   },
   signatureBlock: {
     alignItems: "center",
-    minWidth: 120,
+    minWidth: 110,
+    maxWidth: 150,
   },
   signatureImage: {
     width: 88,
@@ -293,7 +297,7 @@ function CertificateDoc({ data }: { data: CertificateData }) {
           View,
           { style: S.signaturesRow },
 
-          // Left — signer
+          // Left — signer 1 (Advisor)
           React.createElement(
             View,
             { style: S.signatureBlock },
@@ -313,6 +317,29 @@ function CertificateDoc({ data }: { data: CertificateData }) {
               Text,
               { style: S.signerDesignation },
               data.signedByDesignation
+            )
+          ),
+
+          // Center — signer 2 (President)
+          React.createElement(
+            View,
+            { style: S.signatureBlock },
+            data.signatureUrl2
+              ? React.createElement(Image, {
+                  style: S.signatureImage,
+                  src: data.signatureUrl2,
+                })
+              : React.createElement(View, { style: { height: 36 } }),
+            React.createElement(View, { style: S.signatureLine }),
+            React.createElement(
+              Text,
+              { style: S.signerName },
+              data.signedByName2
+            ),
+            React.createElement(
+              Text,
+              { style: S.signerDesignation },
+              data.signedByDesignation2
             )
           ),
 
@@ -371,6 +398,9 @@ function replacePlaceholders(html: string, data: CertificateData): string {
     .replace(/\{\{signed_by_name\}\}/g, data.signedByName)
     .replace(/\{\{signed_by_designation\}\}/g, data.signedByDesignation)
     .replace(/\{\{signature_image\}\}/g, data.signatureUrl)
+    .replace(/\{\{signed_by_name_2\}\}/g, data.signedByName2)
+    .replace(/\{\{signed_by_designation_2\}\}/g, data.signedByDesignation2)
+    .replace(/\{\{signature_image_2\}\}/g, data.signatureUrl2)
     .replace(/\{\{serial\}\}/g, data.serial)
     .replace(/\{\{qr_code\}\}/g, data.qrCodeDataUrl)
     .replace(/\{\{club_name\}\}/g, data.clubName)

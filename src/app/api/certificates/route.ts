@@ -22,6 +22,9 @@ interface IssueCertificateBody {
   signedByName: string;
   signedByDesignation: string;
   signatureUrl: string;
+  signedByName2: string;
+  signedByDesignation2: string;
+  signatureUrl2: string;
 }
 
 interface IssuanceResult {
@@ -224,6 +227,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     signedByName,
     signedByDesignation,
     signatureUrl,
+    signedByName2,
+    signedByDesignation2,
+    signatureUrl2,
   } = body;
 
   // Validate required fields
@@ -264,6 +270,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (!signedByDesignation || typeof signedByDesignation !== "string") {
     return NextResponse.json(
       { error: "signedByDesignation is required" },
+      { status: 400 }
+    );
+  }
+  if (!signedByName2 || typeof signedByName2 !== "string") {
+    return NextResponse.json(
+      { error: "signedByName2 (president) is required" },
+      { status: 400 }
+    );
+  }
+  if (!signedByDesignation2 || typeof signedByDesignation2 !== "string") {
+    return NextResponse.json(
+      { error: "signedByDesignation2 (president) is required" },
       { status: 400 }
     );
   }
@@ -397,6 +415,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         signedByName: signedByName.trim(),
         signedByDesignation: signedByDesignation.trim(),
         signatureUrl: signatureUrl ?? "",
+        signedByName2: signedByName2.trim(),
+        signedByDesignation2: signedByDesignation2.trim(),
+        signatureUrl2: signatureUrl2 ?? "",
         serial,
         qrCodeDataUrl,
         clubName: clubConfig?.clubName ?? "GSTU Robotics & Research Club",
@@ -446,9 +467,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           signedByName: signedByName.trim(),
           signedByDesignation: signedByDesignation.trim(),
           signatureUrl: signatureUrl ?? "",
+          signedByName2: signedByName2.trim(),
+          signedByDesignation2: signedByDesignation2.trim(),
+          signatureUrl2: signatureUrl2 ?? "",
           templateId: template.id,
           recipientId: recipient.id,
-
         },
         select: { id: true },
       });
@@ -480,6 +503,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           pdfUrl,
           verifyUrl,
           serial,
+          signedByName: signedByName.trim(),
+          signedByDesignation: signedByDesignation.trim(),
+          signedByName2: signedByName2.trim(),
+          signedByDesignation2: signedByDesignation2.trim(),
           clubConfig: certEmailConfig,
         }),
       });

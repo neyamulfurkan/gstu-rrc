@@ -16,6 +16,10 @@ export interface CertificateIssuedEmailProps {
   pdfUrl: string;
   verifyUrl: string;
   serial: string;
+  signedByName?: string;
+  signedByDesignation?: string;
+  signedByName2?: string;
+  signedByDesignation2?: string;
   clubConfig: {
     clubName: string;
     logoUrl: string;
@@ -30,6 +34,10 @@ export function CertificateIssuedEmail({
   pdfUrl,
   verifyUrl,
   serial,
+  signedByName,
+  signedByDesignation,
+  signedByName2,
+  signedByDesignation2,
   clubConfig,
 }: CertificateIssuedEmailProps): JSX.Element {
   return (
@@ -135,7 +143,7 @@ export function CertificateIssuedEmail({
           style={{
             color: "#18181b",
             fontSize: "13px",
-            margin: "0",
+            margin: "0 0 12px 0",
             fontFamily: "monospace, 'Courier New', Courier",
             backgroundColor: "#e4e4e7",
             display: "inline-block" as const,
@@ -146,6 +154,18 @@ export function CertificateIssuedEmail({
         >
           {serial}
         </Text>
+
+        {(signedByName || signedByName2) && (
+          <Text style={{ color: "#71717a", fontSize: "12px", margin: "8px 0 0 0", lineHeight: "1.6" }}>
+            {signedByName && (
+              <>Signed by <strong>{signedByName}</strong>{signedByDesignation ? ` (${signedByDesignation})` : ""}</>
+            )}
+            {signedByName && signedByName2 ? " and " : ""}
+            {signedByName2 && (
+              <><strong>{signedByName2}</strong>{signedByDesignation2 ? ` (${signedByDesignation2})` : ""}</>
+            )}
+          </Text>
+        )}
       </Section>
 
       {/* Download CTA */}
