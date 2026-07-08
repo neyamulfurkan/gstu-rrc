@@ -206,7 +206,7 @@ export function Modal({
                 "relative w-full rounded-2xl overflow-hidden flex flex-col",
                 "bg-[var(--color-bg-elevated)] border border-[var(--color-border)]",
                 "shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)]",
-                size === "full" ? "overflow-y-auto" : "max-h-[90vh]",
+                size === "full" ? "h-full" : "max-h-[90vh]",
                 sizeClasses[size],
                 className
               )}

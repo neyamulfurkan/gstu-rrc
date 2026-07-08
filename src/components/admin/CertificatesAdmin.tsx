@@ -359,7 +359,7 @@ function TemplatesTab({ templates, isLoading, onRefresh }: TemplatesTabProps): J
         title={editingTemplate ? "Edit Template" : "New Certificate Template"}
         size="full"
       >
-        <div className="p-6">
+        <div className="h-full flex flex-col overflow-hidden">
           <CertificateTemplateEditor
             key={editingTemplate?.id ?? "new"}
             initialData={editingTemplate ?? undefined}
