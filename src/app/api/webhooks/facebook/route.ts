@@ -17,7 +17,7 @@ interface FacebookCommentValue {
 }
 
 interface FacebookCommentChange {
-  field: "comments";
+  field: "feed";
   value: FacebookCommentValue;
 }
 
@@ -383,8 +383,13 @@ async function processWebhookBody(body: FacebookWebhookBody): Promise<void> {
     // Handle "page" comment changes
     if (Array.isArray(entry.changes) && config.fbAutoReplyComments) {
       for (const change of entry.changes) {
+        console.log("[DEBUG] change received", {
+          field: change.field,
+          item: change.value?.item,
+          verb: change.value?.verb,
+        });
         if (
-          change.field === "comments" &&
+          change.field === "feed" &&
           change.value &&
           change.value.verb === "add" &&
           change.value.item === "comment" &&
