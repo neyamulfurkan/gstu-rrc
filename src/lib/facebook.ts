@@ -63,17 +63,11 @@ export async function postToPage(payload: FacebookPostPayload | string, imageUrl
     };
 
     // Use the page URL as the link for proper link preview card
+    // Facebook will auto-scrape Open Graph tags (title, image, description)
+    // from this URL itself — custom name/description/picture params require
+    // verified domain ownership, so we don't send them.
     if (linkUrl) {
       body.link = linkUrl;
-    }
-
-    // Add open graph fields for a rich preview card
-    if (name) body.name = name;
-    if (description) body.description = description;
-
-    // If we have a Cloudinary image, use it as the picture for the link preview
-    if (pictureUrl) {
-      body.picture = pictureUrl;
     }
 
     const response = await fetch(`${GRAPH_API_BASE}/${pageId}/feed`, {
