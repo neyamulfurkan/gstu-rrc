@@ -1173,6 +1173,10 @@ function IssuedTab({ shouldRefresh }: IssuedTabProps): JSX.Element {
   const [revokeLoading, setRevokeLoading] = useState(false);
   const [revokeError, setRevokeError] = useState<string | null>(null);
 
+  const [deleteTarget, setDeleteTarget] = useState<IssuedCertificate | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const certificates = data?.data ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -1200,6 +1204,27 @@ function IssuedTab({ shouldRefresh }: IssuedTabProps): JSX.Element {
       setRevokeError(err instanceof Error ? err.message : "Unexpected error");
     } finally {
       setRevokeLoading(false);
+    }
+  }
+
+  async function handleDelete(cert: IssuedCertificate): Promise<void> {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/certificates/${cert.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message ?? "Failed to delete certificate");
+      }
+      toast("Certificate deleted", "success");
+      setDeleteTarget(null);
+      mutate();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : "Unexpected error");
+    } finally {
+      setDeleteLoading(false);
     }
   }
 
@@ -1316,6 +1341,20 @@ function IssuedTab({ shouldRefresh }: IssuedTabProps): JSX.Element {
           >
             {row.isRevoked ? <ShieldCheck size={14} /> : <ShieldOff size={14} />}
           </button>
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(row)}
+            aria-label="Delete certificate"
+            className={cn(
+              "inline-flex items-center justify-center w-8 h-8 rounded-lg",
+              "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
+              "hover:border-[var(--color-error)] hover:text-[var(--color-error)]",
+              "transition-colors duration-150",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+            )}
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       ),
     },
@@ -1411,6 +1450,57 @@ function IssuedTab({ shouldRefresh }: IssuedTabProps): JSX.Element {
             >
               {revokeLoading && <Spinner size="sm" />}
               {revokeTarget?.isRevoked ? "Reinstate" : "Revoke"}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Delete Confirmation */}
+      <Modal
+        isOpen={!!deleteTarget}
+        onClose={() => { setDeleteTarget(null); setDeleteError(null); }}
+        title="Delete Certificate"
+        size="sm"
+      >
+        <div className="p-6">
+          <p className="text-sm text-[var(--color-text-secondary)] mb-4">
+            Permanently delete certificate{" "}
+            <code className="font-[var(--font-mono)] text-[var(--color-accent)] bg-[var(--color-accent)]/10 px-1 rounded">
+              {deleteTarget?.serial}
+            </code>{" "}
+            for <span className="font-semibold text-[var(--color-text-primary)]">{deleteTarget?.recipient?.fullName}</span>? This cannot be undone.
+          </p>
+          {deleteError && (
+            <Alert variant="error" message={deleteError} className="mb-4" />
+          )}
+          <div className="flex gap-3 justify-end">
+            <button
+              type="button"
+              onClick={() => { setDeleteTarget(null); setDeleteError(null); }}
+              className={cn(
+                "px-4 py-2 rounded-lg text-sm font-medium",
+                "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
+                "hover:text-[var(--color-text-primary)] transition-colors duration-150",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              )}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={deleteLoading}
+              onClick={() => {
+                if (deleteTarget) handleDelete(deleteTarget);
+              }}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium",
+                "bg-[var(--color-error)] text-white hover:opacity-90",
+                "disabled:opacity-60 transition-all duration-150",
+                "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+              )}
+            >
+              {deleteLoading && <Spinner size="sm" />}
+              Delete
             </button>
           </div>
         </div>
