@@ -104,6 +104,27 @@ async function sendMessage(
   }
 }
 
+async function fetchPostContent(
+  postId: string,
+  pageToken: string
+): Promise<string | null> {
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v19.0/${postId}?fields=message&access_token=${pageToken}`
+    );
+    if (!res.ok) {
+      const err = await res.text();
+      console.error("[facebook/webhook] fetchPostContent API error:", err);
+      return null;
+    }
+    const data = await res.json();
+    return data?.message ?? null;
+  } catch (error) {
+    console.error("[facebook/webhook] fetchPostContent network error:", error);
+    return null;
+  }
+}
+
 // ─── Config fetcher ───────────────────────────────────────────────────────────
 
 async function getFacebookConfig(): Promise<FacebookConfig | null> {
@@ -179,21 +200,53 @@ async function processCommentEvent(
     config.fbCommentSystemPrompt ||
     "You are a helpful assistant for a robotics and research club. Reply politely and helpfully to comments on the club's Facebook page.";
 
+  // Fetch the actual post content so the AI knows what the comment is
+  // replying to, instead of only seeing an opaque post_id.
+  const postContent = await fetchPostContent(post_id, config.fbPageToken);
+
+  // Fetch full club context (same data already used for the Messenger
+  // flow) so comment replies are grounded in real club info, not filler.
+  let clubContext = "";
   try {
-    const clubConfig = await prisma.clubConfig.findUnique({
-      where: { id: "main" },
-      select: {
-        clubName: true,
-        clubShortName: true,
-        universityName: true,
-        clubMotto: true,
-        email: true,
-        phone: true,
-        membershipFee: true,
-        regStatus: true,
-        foundedYear: true,
-      },
-    });
+    const [clubConfig, upcomingEvents, recentProjects, committeeMembers] =
+      await Promise.all([
+        prisma.clubConfig.findUnique({
+          where: { id: "main" },
+          select: {
+            clubName: true,
+            clubShortName: true,
+            universityName: true,
+            departmentName: true,
+            clubMotto: true,
+            clubDescription: true,
+            email: true,
+            phone: true,
+            address: true,
+            foundedYear: true,
+            membershipFee: true,
+            regStatus: true,
+          },
+        }),
+        prisma.event.findMany({
+          where: { isPublished: true, startDate: { gte: new Date() } },
+          orderBy: { startDate: "asc" },
+          take: 5,
+          select: { title: true, startDate: true, venue: true },
+        }),
+        prisma.project.findMany({
+          where: { isPublished: true },
+          orderBy: { createdAt: "desc" },
+          take: 5,
+          select: { title: true, status: true, technologies: true },
+        }),
+        prisma.committeeMember.findMany({
+          where: { session: null },
+          orderBy: { sortOrder: "asc" },
+          take: 5,
+          select: { memberName: true, designation: true },
+        }),
+      ]);
+
     if (clubConfig) {
       rawCommentPrompt = rawCommentPrompt
         .replace(/\{\{clubName\}\}/g, clubConfig.clubName || "GSTU Robotics & Research Club")
@@ -205,19 +258,50 @@ async function processCommentEvent(
         .replace(/\{\{membershipFee\}\}/g, String(clubConfig.membershipFee || ""))
         .replace(/\{\{regStatus\}\}/g, clubConfig.regStatus || "")
         .replace(/\{\{foundedYear\}\}/g, String(clubConfig.foundedYear || ""));
+
+      clubContext = `
+=== CLUB INFORMATION ===
+Name: ${clubConfig.clubName}
+Short Name: ${clubConfig.clubShortName}
+University: ${clubConfig.universityName}
+Department: ${clubConfig.departmentName}
+Location: Gopalganj, Bangladesh
+Address: ${clubConfig.address}
+Founded: ${clubConfig.foundedYear}
+Motto: ${clubConfig.clubMotto}
+Description: ${clubConfig.clubDescription}
+Email: ${clubConfig.email}
+Phone: ${clubConfig.phone}
+
+=== UPCOMING EVENTS ===
+${upcomingEvents.length > 0 ? upcomingEvents.map(e => `- ${e.title} on ${new Date(e.startDate).toLocaleDateString("en-BD")} at ${e.venue}`).join("\n") : "No upcoming events."}
+
+=== RECENT PROJECTS ===
+${recentProjects.length > 0 ? recentProjects.map(p => `- ${p.title} (${p.status})`).join("\n") : "No projects."}
+
+=== CURRENT COMMITTEE ===
+${committeeMembers.length > 0 ? committeeMembers.map(c => `- ${c.designation}: ${c.memberName}`).join("\n") : "Not available."}
+
+Use ONLY this information to answer questions. Never guess or invent club details. If you don't know something specific, say so and point them to ${clubConfig.email || "the club's page"} instead of making it up.`;
     }
   } catch {
-    // use raw prompt with unresolved placeholders as fallback
+    // continue with unresolved placeholders / no context as fallback
   }
+
+  const finalPrompt = rawCommentPrompt + "\n\n" + clubContext;
+
+  const postContentLine = postContent
+    ? `The Facebook post being commented on says: "${postContent}"`
+    : `The Facebook post being commented on has no text caption (it may be an image/video-only post).`;
 
   const messages: GroqMessage[] = [
     {
       role: "user",
-      content: `Someone commented on post ${post_id}: "${message}". Please write a brief, friendly reply on behalf of the club.`,
+      content: `${postContentLine}\n\nSomeone commented on this post: "${message}"\n\nWrite a brief, friendly, specific reply on behalf of the club. Reference the actual post content and/or the club information above where relevant — do not ask the commenter for details you can already see above, and do not give a generic answer.`,
     },
   ];
 
-  const replyText = await callGroq(messages, rawCommentPrompt);
+  const replyText = await callGroq(messages, finalPrompt);
 
   const delay = config.fbCommentReplyDelay ?? 2000;
 
