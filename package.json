@@ -28,6 +28,7 @@
     "@tiptap/extension-underline": "^2.27.2",
     "@tiptap/react": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
+    "@vercel/functions": "^3.7.5",
     "autoprefixer": "^10.4.27",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.9.0",

@@ -1,6 +1,7 @@
 // src/app/api/webhooks/facebook/route.ts
 
 import { NextRequest, NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
 import { prisma } from "@/lib/prisma";
 import { callGroq, type GroqMessage } from "@/lib/groq";
 
@@ -137,16 +138,40 @@ async function getFacebookConfig(): Promise<FacebookConfig | null> {
   }
 }
 
+// ─── Deduplication ────────────────────────────────────────────────────────────
+
+const processedEvents = new Set<string>();
+
+function markEventProcessed(eventId: string, eventType: string): boolean {
+  // Returns true if this is a NEW event that should be processed.
+  // Returns false if it's a duplicate (already seen) and should be skipped.
+  const key = `${eventId}:${eventType}`;
+  if (processedEvents.has(key)) {
+    console.log("[DEBUG] Duplicate event, skipping", { eventId, eventType });
+    return false;
+  }
+  processedEvents.add(key);
+  return true;
+}
+
 // ─── Async processing (non-blocking) ─────────────────────────────────────────
 
 async function processCommentEvent(
   value: FacebookCommentValue,
   config: FacebookConfig
 ): Promise<void> {
-  const { comment_id, message, post_id } = value;
+  const { comment_id, message, post_id, from } = value;
 
   if (!config.fbPageToken) {
     console.error("[facebook/webhook] No page token for comment reply.");
+    return;
+  }
+
+  // Don't reply to the page's own comments (this includes replies the bot
+  // itself just posted, which otherwise trigger a new webhook event and
+  // cause an infinite self-reply loop).
+  if (from?.id && config.fbPageId && from.id === config.fbPageId) {
+    console.log("[DEBUG] Skipping comment — author is the page itself", { comment_id });
     return;
   }
 
@@ -396,6 +421,18 @@ async function processWebhookBody(body: FacebookWebhookBody): Promise<void> {
           change.value.comment_id &&
           change.value.message
         ) {
+          // Skip the page's own comments/replies BEFORE marking as processed,
+          // to avoid both wasted dedup rows and (more importantly) self-reply loops.
+          if (change.value.from?.id && config.fbPageId && change.value.from.id === config.fbPageId) {
+            console.log("[DEBUG] Skipping comment — author is the page itself", {
+              comment_id: change.value.comment_id,
+            });
+            continue;
+          }
+
+          const isNew = await markEventProcessed(change.value.comment_id, "comment");
+          if (!isNew) continue;
+
           try {
             await processCommentEvent(change.value, config);
           } catch (error) {
@@ -420,6 +457,10 @@ async function processWebhookBody(body: FacebookWebhookBody): Promise<void> {
             console.log("[DEBUG] fbAutoReplyMessages is false — skipping");
             continue;
           }
+
+          const isNew = await markEventProcessed(messagingEntry.message.mid, "message");
+          if (!isNew) continue;
+
           try {
             await processMessageEvent(messagingEntry, config);
           } catch (error) {
@@ -498,11 +539,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return new NextResponse("OK", { status: 200 });
   }
 
-  try {
-    await processWebhookBody(body);
-  } catch (error) {
-    console.error("[facebook/webhook] Unhandled error in processWebhookBody:", error);
-  }
+  // Respond to Facebook immediately so it doesn't time out and retry the
+  // same event. Actual processing (Groq call, delay, posting) continues
+  // in the background via waitUntil.
+  waitUntil(
+    processWebhookBody(body).catch((error) => {
+      console.error("[facebook/webhook] Unhandled error in processWebhookBody:", error);
+    })
+  );
 
   return new NextResponse("EVENT_RECEIVED", {
     status: 200,
