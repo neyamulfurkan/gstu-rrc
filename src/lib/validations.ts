@@ -179,8 +179,8 @@ export const galleryItemSchema = z.object({
   altText: z.string().min(1, "Alt text is required for accessibility"),
   categoryId: z.string().min(1, "Please select a valid category"),
   tags: z.array(z.string()).default([]),
-  eventId: z.string().cuid().optional(),
-  projectId: z.string().cuid().optional(),
+  eventId: z.string().cuid().nullable().optional(),
+  projectId: z.string().cuid().nullable().optional(),
   year: z.number().int().min(2000).max(2100),
   downloadEnabled: z.boolean().default(false),
 });
