@@ -231,6 +231,7 @@ interface TokenRowProps {
   hasContrastWarning: boolean;
   contrastRatio?: number | null;
   onChange: (key: string, val: string) => void;
+  onHoverToken?: (token: string | null) => void;
 }
 
 function TokenRow({
@@ -241,6 +242,7 @@ function TokenRow({
   hasContrastWarning,
   contrastRatio,
   onChange,
+  onHoverToken,
 }: TokenRowProps): JSX.Element {
   const [hexInput, setHexInput] = useState(currentValue);
   const [hexError, setHexError] = useState<string | undefined>(undefined);
@@ -300,7 +302,11 @@ function TokenRow({
   const isRgba = currentValue.startsWith("rgba") || currentValue.startsWith("rgb");
 
   return (
-    <div className="flex items-center gap-3 py-2 border-b border-[var(--color-border)] last:border-b-0">
+    <div
+      className="flex items-center gap-3 py-2 border-b border-[var(--color-border)] last:border-b-0"
+      onMouseEnter={() => onHoverToken?.(tokenKey)}
+      onMouseLeave={() => onHoverToken?.(null)}
+    >
       {/* Color preview / picker */}
       <div className="relative flex-shrink-0">
         <div
@@ -466,9 +472,10 @@ function ContrastReport({ value }: ContrastReportProps): JSX.Element {
 
 interface LivePreviewProps {
   colorValue: Record<string, string>;
+  hoveredToken?: string | null;
 }
 
-function LivePreview({ colorValue }: LivePreviewProps): JSX.Element {
+function LivePreview({ colorValue, hoveredToken }: LivePreviewProps): JSX.Element {
   const [iframeKey, setIframeKey] = useState(0);
   const [previewError, setPreviewError] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "";
@@ -498,6 +505,17 @@ function LivePreview({ colorValue }: LivePreviewProps): JSX.Element {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [encodedColors]);
+
+  // Forward hovered-token to the preview iframe so it can outline matching elements
+  useEffect(() => {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    if (hoveredToken) {
+      win.postMessage({ type: "GRRC_HIGHLIGHT_TOKEN", token: hoveredToken }, "*");
+    } else {
+      win.postMessage({ type: "GRRC_CLEAR_HIGHLIGHT" }, "*");
+    }
+  }, [hoveredToken]);
 
   const handleRefresh = () => {
     setIframeKey((k) => k + 1);
@@ -601,6 +619,8 @@ export function ColorEditor({ value, onChange, fonts, onFontsChange }: ColorEdit
     }
     return null;
   });
+
+  const [hoveredToken, setHoveredToken] = useState<string | null>(null);
 
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(TOKEN_GROUPS.map((g) => [g.label, true]))
@@ -795,6 +815,7 @@ export function ColorEditor({ value, onChange, fonts, onFontsChange }: ColorEdit
                             hasContrastWarning={warningInfo?.fails ?? false}
                             contrastRatio={warningInfo?.ratio ?? null}
                             onChange={handleTokenChange}
+                            onHoverToken={setHoveredToken}
                           />
                         );
                       })}
@@ -813,7 +834,7 @@ export function ColorEditor({ value, onChange, fonts, onFontsChange }: ColorEdit
       {/* ── Right Column: Live Preview ── */}
       <div className="lg:w-1/2 xl:w-2/5">
         <div className="sticky top-4">
-          <LivePreview colorValue={value} />
+          <LivePreview colorValue={value} hoveredToken={hoveredToken} />
         </div>
       </div>
     </div>

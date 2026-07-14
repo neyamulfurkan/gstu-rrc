@@ -444,14 +444,15 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
         role="banner"
       >
         <nav
+          data-color-token="--color-nav-bg"
           className="w-full flex items-center justify-between px-4 md:px-6 lg:px-8"
           style={{
             height: isScrolled ? "56px" : "60px",
             transition: "height 0.3s ease",
             borderRadius: isScrolled ? "0" : "16px",
             background: isScrolled
-              ? "color-mix(in srgb, var(--color-bg-base) 97%, transparent)"
-              : "color-mix(in srgb, var(--color-bg-elevated) 80%, transparent)",
+              ? "color-mix(in srgb, var(--color-nav-bg) 97%, transparent)"
+              : "color-mix(in srgb, var(--color-nav-bg) 80%, transparent)",
             backdropFilter: "blur(24px) saturate(180%)",
             border: isScrolled
               ? "none"
@@ -524,8 +525,9 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                       : "hover:bg-white/5"
                   )}
                   aria-current={active ? "page" : undefined}
+                  data-color-token={active ? "--color-nav-active" : "--color-nav-text"}
                   style={{
-                    color: active ? "var(--color-accent)" : "var(--color-text-primary)",
+                    color: active ? "var(--color-nav-active)" : "var(--color-nav-text)",
                   }}
                 >
                   <span aria-hidden="true">{link.icon}</span>
@@ -544,7 +546,8 @@ export function NavBar({ config }: NavBarProps): JSX.Element {
                     "transition-colors duration-150",
                     "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
                   )}
-                  style={{ color: "var(--color-text-primary)" }}
+                  style={{ color: "var(--color-nav-text)" }}
+                  data-color-token="--color-nav-text"
                   aria-haspopup="menu"
                 >
                   <Menu size={15} aria-hidden="true" />

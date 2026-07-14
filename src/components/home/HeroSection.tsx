@@ -512,7 +512,10 @@ export function HeroSection({ config }: HeroSectionProps): JSX.Element {
 
         {/* Particles overlay always rendered when enabled, on top of any bg */}
         {effectiveHeroType === "particles" && (
-          <div className="absolute inset-0 bg-gradient-to-b from-[var(--color-gradient-hero-start)] to-[var(--color-gradient-hero-end)]" />
+          <div
+            data-color-token="--color-gradient-hero-start --color-gradient-hero-end"
+            className="absolute inset-0 bg-gradient-to-b from-[var(--color-gradient-hero-start)] to-[var(--color-gradient-hero-end)]"
+          />
         )}
       </div>
 
@@ -591,6 +594,7 @@ export function HeroSection({ config }: HeroSectionProps): JSX.Element {
           {config.heroCtaLabel1 && config.heroCtaUrl1 && (
             <Link
               href={config.heroCtaUrl1}
+              data-color-token="--color-primary"
               className={cn(
                 "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm md:text-base",
                 "bg-[var(--color-primary)] text-[var(--color-text-inverse)]",
@@ -606,6 +610,7 @@ export function HeroSection({ config }: HeroSectionProps): JSX.Element {
           {config.heroCtaLabel2 && config.heroCtaUrl2 && (
             <Link
               href={config.heroCtaUrl2}
+              data-color-token="--color-accent --color-border-accent"
               className={cn(
                 "inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold text-sm md:text-base",
                 "border border-[var(--color-border-accent)] text-[var(--color-accent)]",

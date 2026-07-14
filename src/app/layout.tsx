@@ -493,6 +493,39 @@ export default async function RootLayout({
           />
         )}
 
+        {/* Preview-mode token highlighter — only acts when embedded in the ColorEditor iframe */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+  if (window.self === window.top) return;
+  var highlighted = [];
+  function clear(){
+    highlighted.forEach(function(el){
+      el.style.outline = "";
+      el.style.outlineOffset = "";
+      el.style.transition = "";
+    });
+    highlighted = [];
+  }
+  window.addEventListener("message", function(e){
+    if (!e.data || typeof e.data !== "object") return;
+    if (e.data.type === "GRRC_HIGHLIGHT_TOKEN" && e.data.token) {
+      clear();
+      highlighted = Array.prototype.slice.call(
+        document.querySelectorAll('[data-color-token*="' + e.data.token + '"]')
+      );
+      highlighted.forEach(function(el){
+        el.style.transition = "outline-color 0.15s ease";
+        el.style.outline = "2px dashed #FF2D75";
+        el.style.outlineOffset = "2px";
+      });
+    }
+    if (e.data.type === "GRRC_CLEAR_HIGHLIGHT") clear();
+  });
+})();`,
+          }}
+        />
+
         {/* Preconnect to Cloudinary CDN for faster LCP */}
         <link rel="preconnect" href="https://res.cloudinary.com" />
         <link rel="dns-prefetch" href="https://res.cloudinary.com" />
@@ -527,6 +560,7 @@ export default async function RootLayout({
       </head>
       <body
         data-transition-style={config.transitionStyle}
+        data-color-token="--color-bg-base"
         style={{
           backgroundColor: "var(--color-bg-base)",
           color: "var(--color-text-primary)",
