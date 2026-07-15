@@ -318,6 +318,11 @@ export function generateOrganizationJsonLd(config: ClubConfigPublic): string {
       "@type": "CollegeOrUniversity",
       name: config.universityName,
     },
+    creator: {
+      "@type": "Person",
+      name: "Neamul Forkan Moon",
+      url: `${BASE_URL}/members/neyamulfurkan`,
+    },
     ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 

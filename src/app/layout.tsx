@@ -184,6 +184,8 @@ export async function generateMetadata(): Promise<Metadata> {
         images: ogImage ? [ogImage] : [],
       },
       verification: gscTag ? { google: gscTag } : undefined,
+      authors: [{ name: "Neamul Forkan Moon", url: `${process.env.NEXT_PUBLIC_BASE_URL ?? ""}/members/neyamulfurkan` }],
+      creator: "Neamul Forkan Moon",
       icons: faviconUrl
         ? { icon: faviconUrl, apple: faviconUrl }
         : undefined,

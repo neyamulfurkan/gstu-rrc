@@ -11,6 +11,7 @@ import { generateBaseMetadata, generateBreadcrumbJsonLd } from "@/lib/seo";
 import { Timeline, EmptyState } from "@/components/ui/DataDisplay";
 import { AdvisorsSection, WhyJoinSection } from "@/components/home/HomeSections";
 import { ExCommitteeAccordion } from "@/components/about/ExCommitteeAccordion";
+import { PlatformArchitecture } from "@/components/about/PlatformArchitecture";
 import type {
   ClubConfigPublic,
   CommitteeMemberEntry,
@@ -138,6 +139,7 @@ export default async function AboutPage(): Promise<JSX.Element> {
     member: { username: string; avatarUrl: string; fullName: string } | null;
   }> = [];
   let achievements: Achievement[] = [];
+  let architect: { username: string; fullName: string; avatarUrl: string; roleName: string } | null = null;
   let memberCount = 0;
   let eventCount = 0;
   let projectCount = 0;
@@ -150,6 +152,7 @@ export default async function AboutPage(): Promise<JSX.Element> {
       committeeRaw,
       exCommittee,
       achievementsRaw,
+      architectRaw,
       memberCountRaw,
       eventCountRaw,
       projectCountRaw,
@@ -293,6 +296,10 @@ export default async function AboutPage(): Promise<JSX.Element> {
           sortOrder: true,
         },
       }),
+      prisma.member.findUnique({
+        where: { username: "neyamulfurkan" },
+        select: { username: true, fullName: true, avatarUrl: true, role: { select: { name: true } } },
+      }),
       prisma.member.count({ where: { status: "active" } }),
       prisma.event.count({ where: { isPublished: true } }),
       prisma.project.count({ where: { isPublished: true } }),
@@ -341,6 +348,9 @@ export default async function AboutPage(): Promise<JSX.Element> {
     }));
 
     achievements = achievementsRaw as Achievement[];
+    architect = architectRaw
+      ? { username: architectRaw.username, fullName: architectRaw.fullName, avatarUrl: architectRaw.avatarUrl, roleName: architectRaw.role.name }
+      : null;
     memberCount = memberCountRaw;
     eventCount = eventCountRaw;
     projectCount = projectCountRaw;
@@ -857,6 +867,9 @@ export default async function AboutPage(): Promise<JSX.Element> {
             </div>
           </section>
         )}
+
+        {/* ── Platform Architecture Credit ─────────────────────────────────── */}
+        <PlatformArchitecture architect={architect} />
 
         {/* ── Empty states ─────────────────────────────────────────────────── */}
         {milestones.length === 0 &&
