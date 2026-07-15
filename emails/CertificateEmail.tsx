@@ -20,6 +20,8 @@ export interface CertificateIssuedEmailProps {
   signedByDesignation?: string;
   signedByName2?: string;
   signedByDesignation2?: string;
+  signedByName3?: string;
+  signedByDesignation3?: string;
   clubConfig: {
     clubName: string;
     logoUrl: string;
@@ -38,6 +40,8 @@ export function CertificateIssuedEmail({
   signedByDesignation,
   signedByName2,
   signedByDesignation2,
+  signedByName3,
+  signedByDesignation3,
   clubConfig,
 }: CertificateIssuedEmailProps): JSX.Element {
   return (
@@ -155,14 +159,18 @@ export function CertificateIssuedEmail({
           {serial}
         </Text>
 
-        {(signedByName || signedByName2) && (
+        {(signedByName || signedByName2 || signedByName3) && (
           <Text style={{ color: "#71717a", fontSize: "12px", margin: "8px 0 0 0", lineHeight: "1.6" }}>
             {signedByName && (
               <>Signed by <strong>{signedByName}</strong>{signedByDesignation ? ` (${signedByDesignation})` : ""}</>
             )}
-            {signedByName && signedByName2 ? " and " : ""}
+            {signedByName && (signedByName2 || signedByName3) ? ", " : ""}
             {signedByName2 && (
               <><strong>{signedByName2}</strong>{signedByDesignation2 ? ` (${signedByDesignation2})` : ""}</>
+            )}
+            {signedByName2 && signedByName3 ? " and " : ""}
+            {signedByName3 && (
+              <><strong>{signedByName3}</strong>{signedByDesignation3 ? ` (${signedByDesignation3})` : ""}</>
             )}
           </Text>
         )}

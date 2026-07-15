@@ -163,6 +163,8 @@ export interface CertificateCardWithRecipient extends CertificateCard {
   signedByDesignation: string;
   signedByName2?: string;
   signedByDesignation2?: string;
+  signedByName3?: string;
+  signedByDesignation3?: string;
 }
 
 // ─── Notification ─────────────────────────────────────────────────────────────

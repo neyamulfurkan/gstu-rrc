@@ -506,6 +506,9 @@ model Certificate {
   signedByName2        String              @default("")
   signedByDesignation2 String              @default("")
   signatureUrl2        String              @default("")
+  signedByName3        String              @default("")
+  signedByDesignation3 String              @default("")
+  signatureUrl3        String              @default("")
   pdfUrl               String
   isRevoked            Boolean             @default(false)
 

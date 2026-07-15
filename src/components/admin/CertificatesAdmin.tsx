@@ -122,6 +122,9 @@ const issueSchema = z.object({
   signedByName2: z.string().min(2, "President name is required"),
   signedByDesignation2: z.string().min(2, "President designation is required"),
   signatureUrl2: z.string().optional(),
+  signedByName3: z.string().optional(),
+  signedByDesignation3: z.string().optional(),
+  signatureUrl3: z.string().optional(),
 });
 
 type IssueFormValues = z.infer<typeof issueSchema>;
@@ -621,6 +624,9 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
   const [signatureUploading, setSignatureUploading] = useState(false);
   const [signatureUrl2, setSignatureUrl2] = useState<string>("");
   const [signatureUploading2, setSignatureUploading2] = useState(false);
+  const [showThirdSignatory, setShowThirdSignatory] = useState(false);
+  const [signatureUrl3, setSignatureUrl3] = useState<string>("");
+  const [signatureUploading3, setSignatureUploading3] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -705,6 +711,9 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
           signedByName2: data.signedByName2,
           signedByDesignation2: data.signedByDesignation2,
           signatureUrl2: signatureUrl2 || undefined,
+          signedByName3: showThirdSignatory ? (data.signedByName3 || undefined) : undefined,
+          signedByDesignation3: showThirdSignatory ? (data.signedByDesignation3 || undefined) : undefined,
+          signatureUrl3: showThirdSignatory ? (signatureUrl3 || undefined) : undefined,
         }),
       });
 
@@ -790,6 +799,20 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
       toast("Failed to upload signature", "error");
     } finally {
       setSignatureUploading2(false);
+    }
+  }
+
+  async function handleSignatureUpload3(file: File): Promise<void> {
+    if (!file) return;
+    setSignatureUploading3(true);
+    try {
+      const url = await uploadSignatureFile(file);
+      setSignatureUrl3(url);
+      toast("Signature uploaded", "success");
+    } catch {
+      toast("Failed to upload signature", "error");
+    } finally {
+      setSignatureUploading3(false);
     }
   }
 
@@ -1066,6 +1089,90 @@ function IssueTab({ templates, onIssueSuccess }: IssueTabProps): JSX.Element {
               </button>
             )}
           </div>
+        </div>
+
+        {/* Signatory 3 — optional (e.g., General Secretary) */}
+        <div className="rounded-xl border border-[var(--color-border)] p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)]">
+              Signature 3 — Optional
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowThirdSignatory((v) => !v)}
+              className={cn(
+                "text-xs font-medium px-3 py-1 rounded-lg border transition-colors duration-150",
+                showThirdSignatory
+                  ? "border-[var(--color-accent)] text-[var(--color-accent)]"
+                  : "border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              )}
+            >
+              {showThirdSignatory ? "Remove" : "Add signatory"}
+            </button>
+          </div>
+          {showThirdSignatory && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass} htmlFor="signedByName3">
+                    Name
+                  </label>
+                  <input
+                    id="signedByName3"
+                    type="text"
+                    placeholder="e.g., Sarah Ahmed"
+                    {...register("signedByName3")}
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass} htmlFor="signedByDesignation3">
+                    Designation
+                  </label>
+                  <input
+                    id="signedByDesignation3"
+                    type="text"
+                    placeholder="e.g., General Secretary"
+                    {...register("signedByDesignation3")}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                {signatureUrl3 ? (
+                  <div className="relative h-14 w-32 border border-[var(--color-border)] rounded-lg overflow-hidden bg-white">
+                    <Image src={signatureUrl3} alt="GS signature" fill className="object-contain" sizes="128px" />
+                  </div>
+                ) : null}
+                <label
+                  className={cn(
+                    "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer",
+                    "border border-[var(--color-border)] text-[var(--color-text-secondary)]",
+                    "hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]",
+                    "transition-colors duration-150",
+                    signatureUploading3 && "opacity-60 pointer-events-none"
+                  )}
+                >
+                  {signatureUploading3 ? <Spinner size="sm" /> : <Plus size={14} />}
+                  {signatureUrl3 ? "Change" : "Upload Signature"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleSignatureUpload3(file);
+                    }}
+                  />
+                </label>
+                {signatureUrl3 && (
+                  <button type="button" onClick={() => setSignatureUrl3("")} className="text-xs text-[var(--color-error)] hover:underline focus:outline-none">
+                    Remove
+                  </button>
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {issueError && (

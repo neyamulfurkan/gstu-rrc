@@ -25,6 +25,9 @@ interface IssueCertificateBody {
   signedByName2: string;
   signedByDesignation2: string;
   signatureUrl2: string;
+  signedByName3?: string;
+  signedByDesignation3?: string;
+  signatureUrl3?: string;
 }
 
 interface IssuanceResult {
@@ -230,6 +233,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     signedByName2,
     signedByDesignation2,
     signatureUrl2,
+    signedByName3,
+    signedByDesignation3,
+    signatureUrl3,
   } = body;
 
   // Validate required fields
@@ -418,6 +424,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         signedByName2: signedByName2.trim(),
         signedByDesignation2: signedByDesignation2.trim(),
         signatureUrl2: signatureUrl2 ?? "",
+        signedByName3: (signedByName3 ?? "").trim(),
+        signedByDesignation3: (signedByDesignation3 ?? "").trim(),
+        signatureUrl3: signatureUrl3 ?? "",
         serial,
         qrCodeDataUrl,
         clubName: clubConfig?.clubName ?? "GSTU Robotics & Research Club",
@@ -470,6 +479,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           signedByName2: signedByName2.trim(),
           signedByDesignation2: signedByDesignation2.trim(),
           signatureUrl2: signatureUrl2 ?? "",
+          signedByName3: (signedByName3 ?? "").trim(),
+          signedByDesignation3: (signedByDesignation3 ?? "").trim(),
+          signatureUrl3: signatureUrl3 ?? "",
           templateId: template.id,
           recipientId: recipient.id,
         },
@@ -507,6 +519,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           signedByDesignation: signedByDesignation.trim(),
           signedByName2: signedByName2.trim(),
           signedByDesignation2: signedByDesignation2.trim(),
+          signedByName3: (signedByName3 ?? "").trim() || undefined,
+          signedByDesignation3: (signedByDesignation3 ?? "").trim() || undefined,
           clubConfig: certEmailConfig,
         }),
       });

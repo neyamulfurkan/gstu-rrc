@@ -415,6 +415,17 @@ export function CertificateVerifyDisplay({
                   </p>
                 </div>
               )}
+              {certificate.signedByName3 && (
+                <div>
+                  <p className="text-xs text-[var(--color-text-secondary)] mb-1">Signed By</p>
+                  <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                    {certificate.signedByName3}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {certificate.signedByDesignation3}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

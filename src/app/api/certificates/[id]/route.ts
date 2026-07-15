@@ -109,6 +109,8 @@ export async function GET(
         signedByDesignation: true,
         signedByName2: true,
         signedByDesignation2: true,
+        signedByName3: true,
+        signedByDesignation3: true,
         template: {
           select: {
             name: true,
