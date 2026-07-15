@@ -13,7 +13,6 @@ import {
   Phone,
   MapPin,
   GraduationCap,
-  Building2,
   ChevronRight,
   ExternalLink,
 } from "lucide-react";
@@ -28,9 +27,11 @@ interface FooterProps {
   announcements: AnnouncementCard[];
 }
 
-// ─── Circuit Board SVG Pattern ────────────────────────────────────────────────
+// ─── Static styles (social icons + legal row) ─────────────────────────────────
+// Kept as a single injected <style> tag since this is a Server Component with
+// no client-side interactivity — hover states can't rely on JS here.
 
-const SOCIAL_ICON_STYLE = `
+const FOOTER_STYLE = `
   .footer-social-icon {
     background-color: var(--color-bg-elevated);
     color: var(--color-text-secondary);
@@ -41,9 +42,27 @@ const SOCIAL_ICON_STYLE = `
     color: var(--color-bg-base);
     border-color: var(--color-accent);
   }
+  .footer-legal-link:hover {
+    color: var(--color-text-primary);
+  }
+  .footer-nav-link:hover .footer-nav-chevron {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .footer-nav-link:hover .footer-nav-label {
+    color: var(--color-text-primary);
+  }
 `;
 
-const CIRCUIT_PATTERN_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><path d='M10 10h5v5h-5zM45 10h5v5h-5zM10 45h5v5h-5zM45 45h5v5h-5zM15 12h15M30 12h15M12 15v15M12 30v15M15 47h15M30 47h15M47 15v15M47 30v15M25 25h10v10h-10zM20 12v8M40 12v8M20 40v8M40 40v8M12 20h8M12 40h8M40 20h8M40 40h8' stroke='rgba(255,255,255,0.03)' fill='none' stroke-width='1'/></svg>`;
+// ─── Decorative texture: circuit board + crescent horizon ────────────────────
+//
+// Design signature: a faint crescent rises just above the wave line, as if
+// glimpsed over a horizon of circuitry — the one deliberate flourish in an
+// otherwise disciplined, quiet footer. Rendered at the same low-opacity
+// register as the circuit lines so it reads as part of the night sky, not
+// as an isolated icon. Circuit grid unchanged from the working pattern.
+
+const CIRCUIT_PATTERN_SVG = `<svg xmlns='http://www.w3.org/2000/svg' width='60' height='60'><path d='M10 10h5v5h-5zM45 10h5v5h-5zM10 45h5v5h-5zM45 45h5v5h-5zM15 12h15M30 12h15M12 15v15M12 30v15M15 47h15M30 47h15M47 15v15M47 30v15M25 25h10v10h-10zM20 12v8M40 12v8M20 40v8M40 40v8M12 20h8M12 40h8M40 20h8M40 40h8' stroke='rgba(255,255,255,0.035)' fill='none' stroke-width='1'/></svg>`;
 
 const CIRCUIT_PATTERN_DATA_URI = `data:image/svg+xml;utf8,${encodeURIComponent(CIRCUIT_PATTERN_SVG)}`;
 
@@ -59,57 +78,27 @@ function buildSocialLinks(config: ClubConfigPublic): SocialLink[] {
   const links: SocialLink[] = [];
 
   if (config.fbUrl) {
-    links.push({
-      label: "Facebook",
-      url: config.fbUrl,
-      icon: <Facebook className="w-4 h-4" />,
-    });
+    links.push({ label: "Facebook", url: config.fbUrl, icon: <Facebook className="w-4 h-4" /> });
   }
   if (config.ytUrl) {
-    links.push({
-      label: "YouTube",
-      url: config.ytUrl,
-      icon: <Youtube className="w-4 h-4" />,
-    });
+    links.push({ label: "YouTube", url: config.ytUrl, icon: <Youtube className="w-4 h-4" /> });
   }
   if (config.igUrl) {
-    links.push({
-      label: "Instagram",
-      url: config.igUrl,
-      icon: <Instagram className="w-4 h-4" />,
-    });
+    links.push({ label: "Instagram", url: config.igUrl, icon: <Instagram className="w-4 h-4" /> });
   }
   if (config.liUrl) {
-    links.push({
-      label: "LinkedIn",
-      url: config.liUrl,
-      icon: <Linkedin className="w-4 h-4" />,
-    });
+    links.push({ label: "LinkedIn", url: config.liUrl, icon: <Linkedin className="w-4 h-4" /> });
   }
   if (config.ghUrl) {
-    links.push({
-      label: "GitHub",
-      url: config.ghUrl,
-      icon: <Github className="w-4 h-4" />,
-    });
+    links.push({ label: "GitHub", url: config.ghUrl, icon: <Github className="w-4 h-4" /> });
   }
   if (config.twitterUrl) {
-    links.push({
-      label: "Twitter / X",
-      url: config.twitterUrl,
-      icon: <Twitter className="w-4 h-4" />,
-    });
+    links.push({ label: "Twitter / X", url: config.twitterUrl, icon: <Twitter className="w-4 h-4" /> });
   }
-
-  // Extra social links from config
   if (Array.isArray(config.extraSocialLinks)) {
     config.extraSocialLinks.forEach((extra) => {
       if (extra.url && extra.label) {
-        links.push({
-          label: extra.label,
-          url: extra.url,
-          icon: <ExternalLink className="w-4 h-4" />,
-        });
+        links.push({ label: extra.label, url: extra.url, icon: <ExternalLink className="w-4 h-4" /> });
       }
     });
   }
@@ -145,13 +134,39 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
 
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: SOCIAL_ICON_STYLE }} />
-      {/* Top Wave Transition */}
+      <style dangerouslySetInnerHTML={{ __html: FOOTER_STYLE }} />
+
+      {/* ── Wave transition + crescent signature ──────────────────────────── */}
       <div
-        className="w-full overflow-hidden leading-none"
+        className="relative w-full overflow-hidden leading-none"
         aria-hidden="true"
         style={{ marginBottom: "-1px" }}
       >
+        {/* Crescent: two overlapping circles produce the sliver via a subtractive
+            mask. Positioned upper-right, well clear of the wave crest, so it
+            never competes with foreground copy on any breakpoint. */}
+        <svg
+          viewBox="0 0 1440 80"
+          xmlns="http://www.w3.org/2000/svg"
+          preserveAspectRatio="none"
+          className="absolute right-[8%] top-[-34px] w-[64px] h-[64px] md:right-[12%] md:top-[-46px] md:w-[84px] md:h-[84px] pointer-events-none"
+        >
+          <defs>
+            <mask id="footer-crescent-mask">
+              <rect x="0" y="0" width="100" height="100" fill="white" />
+              <circle cx="58" cy="38" r="30" fill="black" />
+            </mask>
+          </defs>
+          <circle
+            cx="46"
+            cy="46"
+            r="30"
+            fill="var(--color-accent)"
+            opacity="0.05"
+            mask="url(#footer-crescent-mask)"
+          />
+        </svg>
+
         <svg
           viewBox="0 0 1440 80"
           xmlns="http://www.w3.org/2000/svg"
@@ -163,7 +178,7 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
         </svg>
       </div>
 
-      {/* Footer Body */}
+      {/* ── Footer Body ─────────────────────────────────────────────────────── */}
       <footer
         className="relative w-full pb-24 md:pb-10"
         style={{
@@ -172,22 +187,27 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
           backgroundRepeat: "repeat",
         }}
       >
-        {/* Gradient overlay for depth */}
+        {/* Depth gradient */}
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
+          style={{ background: "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 100%)" }}
+        />
+        {/* Faint ambient wash beneath the crescent, tying the signature to the body */}
+        <div
+          className="absolute right-0 top-0 w-[420px] h-[420px] pointer-events-none"
+          aria-hidden="true"
           style={{
-            background:
-              "linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 100%)",
+            background: "radial-gradient(circle at top right, var(--color-accent) 0%, transparent 65%)",
+            opacity: 0.04,
           }}
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
           {/* ── 4-Column Grid ── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-12 mb-12">
             {/* ── Column 1: Branding + Socials ── */}
             <div className="flex flex-col gap-5">
-              {/* Logo + Name */}
               <div className="flex items-center gap-3">
                 {config.logoUrl ? (
                   <div className="relative w-10 h-10 flex-shrink-0">
@@ -202,75 +222,25 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                 ) : null}
                 <div>
                   <span
-                    className="block font-bold text-base leading-tight"
-                    style={{
-                      color: "var(--color-text-primary)",
-                      fontFamily: "var(--font-display)",
-                    }}
+                    className="block font-bold text-base leading-tight tracking-tight"
+                    style={{ color: "var(--color-text-primary)", fontFamily: "var(--font-display)" }}
                   >
                     {config.clubShortName || config.clubName}
                   </span>
                   {config.clubShortName && (
-                    <span
-                      className="block text-xs leading-tight"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
+                    <span className="block text-xs leading-tight" style={{ color: "var(--color-text-secondary)" }}>
                       {config.clubName}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* University block moved to below socials — removed from here */}
-              {false && (
-                <div className="hidden">
-                  {config.universityLogoUrl ? (
-                    <div className="relative w-8 h-8 flex-shrink-0">
-                      <Image
-                        src={config.universityLogoUrl}
-                        alt={config.universityName || "University logo"}
-                        fill
-                        sizes="32px"
-                        className="object-contain"
-                      />
-                    </div>
-                  ) : null}
-                  {config.universityName && (
-                    config.universityWebUrl ? (
-                      <a
-                        href={config.universityWebUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs leading-tight transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        {config.universityName}
-                      </a>
-                    ) : (
-                      <span
-                        className="text-xs leading-tight"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
-                        {config.universityName}
-                      </span>
-                    )
-                  )}
-                </div>
-              )}
-
-              {/* Motto */}
               {config.clubMotto && (
-                <p
-                  className="text-sm italic leading-relaxed"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
+                <p className="text-sm italic leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
                   &ldquo;{config.clubMotto}&rdquo;
                 </p>
               )}
 
-
-
-              {/* Social Icons */}
               {socialLinks.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {socialLinks.map((social) => (
@@ -288,9 +258,8 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                 </div>
               )}
 
-              {/* University Logo + Name — below social icons */}
               {(config.universityLogoUrl || config.universityName) && (
-                <div className="flex items-center gap-2 pt-2 border-t border-[var(--color-border)]">
+                <div className="flex items-center gap-2 pt-4 mt-1 border-t border-[var(--color-border)]">
                   {config.universityLogoUrl ? (
                     <div className="relative w-8 h-8 flex-shrink-0">
                       <Image
@@ -302,26 +271,22 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                       />
                     </div>
                   ) : null}
-                  {config.universityName && (
-                    config.universityWebUrl ? (
+                  {config.universityName &&
+                    (config.universityWebUrl ? (
                       <a
                         href={config.universityWebUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs leading-tight transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                        className="footer-legal-link text-xs leading-tight transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                         style={{ color: "var(--color-text-secondary)" }}
                       >
                         {config.universityName}
                       </a>
                     ) : (
-                      <span
-                        className="text-xs leading-tight"
-                        style={{ color: "var(--color-text-secondary)" }}
-                      >
+                      <span className="text-xs leading-tight" style={{ color: "var(--color-text-secondary)" }}>
                         {config.universityName}
                       </span>
-                    )
-                  )}
+                    ))}
                 </div>
               )}
             </div>
@@ -329,26 +294,26 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
             {/* ── Column 2: Quick Navigation ── */}
             <div>
               <h3
-                className="text-sm font-semibold uppercase tracking-widest mb-4"
+                className="text-xs font-semibold uppercase tracking-[0.14em] mb-5"
                 style={{ color: "var(--color-accent)" }}
               >
                 Quick Links
               </h3>
-              <ul className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 {QUICK_NAV.map((item) => (
                   <li key={item.href}>
                     <Link
                       href={item.href}
-                      className="group inline-flex items-center gap-1 text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
-                      style={{ color: "var(--color-text-secondary)" }}
+                      className="footer-nav-link group inline-flex items-center gap-1 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                     >
                       <ChevronRight
-                        className="w-3 h-3 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
+                        className="footer-nav-chevron w-3 h-3 flex-shrink-0 opacity-0 -translate-x-1 transition-all duration-150"
                         style={{ color: "var(--color-accent)" }}
                         aria-hidden="true"
                       />
                       <span
-                        className="group-hover:text-[var(--color-text-primary)] transition-colors duration-150"
+                        className="footer-nav-label transition-colors duration-150"
+                        style={{ color: "var(--color-text-secondary)" }}
                       >
                         {item.label}
                       </span>
@@ -361,96 +326,66 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
             {/* ── Column 3: Contact Info ── */}
             <div>
               <h3
-                className="text-sm font-semibold uppercase tracking-widest mb-4"
+                className="text-xs font-semibold uppercase tracking-[0.14em] mb-5"
                 style={{ color: "var(--color-accent)" }}
               >
                 Contact
               </h3>
-              <ul className="flex flex-col gap-3">
+              <ul className="flex flex-col gap-3.5">
                 {config.email && (
-                  <li className="flex items-start gap-2">
-                    <Mail
-                      className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "var(--color-accent)" }}
-                      aria-hidden="true"
-                    />
+                  <li className="flex items-start gap-2.5">
+                    <Mail className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
                     <a
                       href={`mailto:${config.email}`}
-                      className="text-sm break-all transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                      className="footer-legal-link text-sm break-all transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       {config.email}
                     </a>
                   </li>
                 )}
-
                 {config.phone && (
-                  <li className="flex items-start gap-2">
-                    <Phone
-                      className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "var(--color-accent)" }}
-                      aria-hidden="true"
-                    />
+                  <li className="flex items-start gap-2.5">
+                    <Phone className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
                     <a
                       href={`tel:${config.phone}`}
-                      className="text-sm transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                      className="footer-legal-link text-sm transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       {config.phone}
                     </a>
                   </li>
                 )}
-
                 {config.address && (
-                  <li className="flex items-start gap-2">
-                    <MapPin
-                      className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "var(--color-accent)" }}
-                      aria-hidden="true"
-                    />
-                    <span
-                      className="text-sm leading-relaxed"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
+                  <li className="flex items-start gap-2.5">
+                    <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
+                    <span className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
                       {config.address}
                     </span>
                   </li>
                 )}
-
                 {config.departmentName && (
-                  <li className="flex items-start gap-2">
-                    <GraduationCap
-                      className="w-4 h-4 flex-shrink-0 mt-0.5"
-                      style={{ color: "var(--color-accent)" }}
-                      aria-hidden="true"
-                    />
-                    <span
-                      className="text-sm leading-relaxed"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
+                  <li className="flex items-start gap-2.5">
+                    <GraduationCap className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: "var(--color-accent)" }} aria-hidden="true" />
+                    <span className="text-sm leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
                       {config.departmentName}
                     </span>
                   </li>
                 )}
-
-
               </ul>
             </div>
 
             {/* ── Column 4: Latest Announcements ── */}
             <div>
               <h3
-                className="text-sm font-semibold uppercase tracking-widest mb-4"
+                className="text-xs font-semibold uppercase tracking-[0.14em] mb-5"
                 style={{ color: "var(--color-accent)" }}
               >
                 Latest News
               </h3>
 
               {announcements.length === 0 ? (
-                <p
-                  className="text-sm"
-                  style={{ color: "var(--color-text-secondary)" }}
-                >
+                <p className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
                   No recent announcements.
                 </p>
               ) : (
@@ -458,38 +393,26 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                   {announcements.slice(0, 3).map((announcement) => (
                     <li key={announcement.id}>
                       <article>
-                        {/* Category badge */}
                         {announcement.category?.name && (
                           <span
-                            className="inline-block text-xs font-medium px-1.5 py-0.5 rounded mb-1"
+                            className="inline-block text-[11px] font-medium px-1.5 py-0.5 rounded mb-1.5"
                             style={{
-                              backgroundColor:
-                                announcement.category.color
-                                  ? `${announcement.category.color}22`
-                                  : "var(--color-bg-elevated)",
-                              color:
-                                announcement.category.color ||
-                                "var(--color-accent)",
+                              backgroundColor: announcement.category.color ? `${announcement.category.color}22` : "var(--color-bg-elevated)",
+                              color: announcement.category.color || "var(--color-accent)",
                               border: `1px solid ${announcement.category.color || "var(--color-accent)"}44`,
                             }}
                           >
                             {announcement.category.name}
                           </span>
                         )}
-
                         <p
                           className="text-sm font-medium leading-snug mb-1 line-clamp-2"
                           style={{ color: "var(--color-text-primary)" }}
                         >
                           {truncateText(announcement.title, 70)}
                         </p>
-
                         <time
-                          dateTime={
-                            typeof announcement.createdAt === "string"
-                              ? announcement.createdAt
-                              : announcement.createdAt.toISOString()
-                          }
+                          dateTime={typeof announcement.createdAt === "string" ? announcement.createdAt : announcement.createdAt.toISOString()}
                           className="text-xs"
                           style={{ color: "var(--color-text-secondary)" }}
                         >
@@ -503,7 +426,7 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
 
               <Link
                 href="/events"
-                className="inline-flex items-center gap-1 text-xs font-medium mt-4 transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                className="footer-legal-link inline-flex items-center gap-1 text-xs font-medium mt-4 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                 style={{ color: "var(--color-accent)" }}
               >
                 View all
@@ -513,76 +436,49 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
           </div>
 
           {/* ── Divider ── */}
-          <div
-            className="w-full h-px mb-6"
-            style={{ backgroundColor: "var(--color-border)" }}
-            aria-hidden="true"
-          />
+          <div className="w-full h-px mb-6" style={{ backgroundColor: "var(--color-border)" }} aria-hidden="true" />
 
           {/* ── Bottom Bar ── */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            {/* Copyright */}
-            <p
-              className="text-xs text-center sm:text-left"
-              style={{ color: "var(--color-text-secondary)" }}
-            >
+            <p className="text-xs text-center sm:text-left" style={{ color: "var(--color-text-secondary)" }}>
               {copyrightText}
             </p>
 
-            {/* Legal Links */}
             <nav aria-label="Legal links">
               <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
                 {config.privacyPolicy && (
                   <li>
                     <a
                       href={config.privacyPolicy}
-                      target={
-                        config.privacyPolicy.startsWith("http")
-                          ? "_blank"
-                          : undefined
-                      }
-                      rel={
-                        config.privacyPolicy.startsWith("http")
-                          ? "noopener noreferrer"
-                          : undefined
-                      }
-                      className="text-xs transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                      target={config.privacyPolicy.startsWith("http") ? "_blank" : undefined}
+                      rel={config.privacyPolicy.startsWith("http") ? "noopener noreferrer" : undefined}
+                      className="footer-legal-link text-xs transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       Privacy Policy
                     </a>
                   </li>
                 )}
-
                 {config.termsOfUse && (
                   <li>
                     <a
                       href={config.termsOfUse}
-                      target={
-                        config.termsOfUse.startsWith("http")
-                          ? "_blank"
-                          : undefined
-                      }
-                      rel={
-                        config.termsOfUse.startsWith("http")
-                          ? "noopener noreferrer"
-                          : undefined
-                      }
-                      className="text-xs transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                      target={config.termsOfUse.startsWith("http") ? "_blank" : undefined}
+                      rel={config.termsOfUse.startsWith("http") ? "noopener noreferrer" : undefined}
+                      className="footer-legal-link text-xs transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       Terms of Use
                     </a>
                   </li>
                 )}
-
                 {config.constitutionUrl && (
                   <li>
                     <a
                       href={config.constitutionUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs transition-colors duration-150 hover:text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
+                      className="footer-legal-link inline-flex items-center gap-1 text-xs transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] rounded"
                       style={{ color: "var(--color-text-secondary)" }}
                     >
                       Constitution
@@ -590,13 +486,9 @@ export function Footer({ config, announcements }: FooterProps): JSX.Element {
                     </a>
                   </li>
                 )}
-
                 {config.foundedYear && (
                   <li>
-                    <span
-                      className="text-xs"
-                      style={{ color: "var(--color-text-secondary)" }}
-                    >
+                    <span className="text-xs" style={{ color: "var(--color-text-secondary)" }}>
                       Est. {config.foundedYear}
                     </span>
                   </li>
