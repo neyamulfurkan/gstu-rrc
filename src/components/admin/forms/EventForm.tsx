@@ -452,7 +452,7 @@ export function EventForm({
                       (optional — any external or internal URL)
                     </span>
                   </FormLabel>
-                  
+                  <a
                     href="https://forms.new"
                     target="_blank"
                     rel="noopener noreferrer"

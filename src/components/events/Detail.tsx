@@ -509,7 +509,7 @@ function EventDetailContent({
 
         {/* Registration CTA */}
         {event.registrationEnabled && event.registrationLink && (
-          
+          <a
             href={event.registrationLink}
             target="_blank"
             rel="noopener noreferrer"
