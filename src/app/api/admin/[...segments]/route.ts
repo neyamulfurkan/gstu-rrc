@@ -3018,6 +3018,26 @@ async function handleFacebookPending(
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
 
+// ─── facebook page webhook subscription ───────────────────────────────────────
+
+async function subscribeToPageWebhook(pageId: string, pageToken: string): Promise<void> {
+  try {
+    const subUrl = new URL(`https://graph.facebook.com/v19.0/${pageId}/subscribed_apps`);
+    subUrl.searchParams.set("subscribed_fields", "messages,messaging_postbacks,feed");
+    subUrl.searchParams.set("access_token", pageToken);
+    const res = await fetch(subUrl.toString(), { method: "POST" });
+    const data = (await res.json()) as { success?: boolean; error?: { message?: string } };
+    if (!data.success) {
+      console.error(
+        `[facebook-oauth] Failed to subscribe page ${pageId} to webhook:`,
+        data.error
+      );
+    }
+  } catch (err) {
+    console.error(`[facebook-oauth] subscribed_apps call failed for page ${pageId}:`, err);
+  }
+}
+
 // ─── facebook-oauth ───────────────────────────────────────────────────────────
 
 async function handleFacebookOAuth(
@@ -3111,6 +3131,8 @@ async function handleFacebookOAuth(
       where: { id: "main" },
       data: { fbPageId: pageId, fbPageToken: pageToken, fbUrl: pageLink },
     });
+
+    await subscribeToPageWebhook(pageId, pageToken);
 
     await logAction({
       adminId: session.user.userId,
@@ -3249,6 +3271,8 @@ async function handleFacebookOAuth(
     where: { id: "main" },
     data: { fbPageId: pageId, fbPageToken: pageToken, fbUrl: pageLinkPost },
   });
+
+  await subscribeToPageWebhook(pageId, pageToken);
 
   await logAction({
     adminId: session.user.userId,
