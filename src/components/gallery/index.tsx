@@ -422,20 +422,20 @@ function GalleryItemTile({ item, isPending, onClick }: GalleryItemTileProps): JS
         }}
       >
         <div className="relative w-full aspect-square">
-          <Image
-            src={item.url}
-            alt={item.altText}
-            fill
-            sizes="(max-width: 768px) 50vw, 25vw"
-            className="object-cover"
-          />
-
-          {isVideo && (
-            <div className="absolute inset-0 flex items-center justify-center">
+          {isVideo ? (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--color-bg-elevated)] to-[var(--color-bg-surface)]">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/60 backdrop-blur-sm">
                 <Play size={20} className="text-white ml-0.5" fill="white" aria-hidden="true" />
               </div>
             </div>
+          ) : (
+            <Image
+              src={item.url}
+              alt={item.altText}
+              fill
+              sizes="(max-width: 768px) 50vw, 25vw"
+              className="object-cover"
+            />
           )}
 
           {isPending && (

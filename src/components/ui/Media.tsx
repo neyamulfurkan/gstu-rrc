@@ -758,7 +758,13 @@ function detectVideoSource(src: string): VideoSource {
   if (/youtu\.be\/|youtube\.com\/(watch|embed|shorts)/.test(src)) {
     return "youtube";
   }
-  if (/facebook\.com\/.*\/videos\//.test(src)) {
+  if (
+    /facebook\.com\/.*\/videos\//.test(src) ||
+    /facebook\.com\/watch\/?\?/.test(src) ||
+    /facebook\.com\/reel\//.test(src) ||
+    /facebook\.com\/share\/(v|r)\//.test(src) ||
+    /fb\.watch\//.test(src)
+  ) {
     return "facebook";
   }
   if (/res\.cloudinary\.com/.test(src) || /cloudinary\.com\/.*\/video\//.test(src)) {
@@ -796,7 +802,9 @@ function getYouTubeEmbedUrl(src: string): string {
 }
 
 function getFacebookEmbedUrl(src: string): string {
-  return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(src)}&show_text=false&width=560`;
+  // Normalize mobile-domain links so the embed plugin resolves them reliably
+  const normalized = src.replace("m.facebook.com", "www.facebook.com");
+  return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(normalized)}&show_text=false&width=560`;
 }
 
 interface VideoPlayerProps {

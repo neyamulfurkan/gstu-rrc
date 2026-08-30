@@ -809,6 +809,203 @@ projectId: bulkProjectId || null,
   );
 }
 
+// ─── Video Link Section (Facebook / YouTube via pasted URL) ──────────────────
+
+interface VideoLinkSectionProps {
+  categories: CategoryItem[];
+  events: EventOption[];
+  projects: ProjectOption[];
+  onComplete: () => void;
+}
+
+function VideoLinkSection({ categories, events, projects, onComplete }: VideoLinkSectionProps) {
+  const [videoUrl, setVideoUrl] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
+  const [categoryId, setCategoryId] = useState("");
+  const [eventId, setEventId] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function isLikelyVideoUrl(url: string): boolean {
+    try {
+      const parsed = new URL(url);
+      return /facebook\.com|fb\.watch|youtube\.com|youtu\.be/.test(parsed.hostname);
+    } catch {
+      return false;
+    }
+  }
+
+  async function handleAdd() {
+    setError(null);
+    const trimmedUrl = videoUrl.trim();
+
+    if (!trimmedUrl) {
+      setError("Please paste a video link.");
+      return;
+    }
+    if (!isLikelyVideoUrl(trimmedUrl)) {
+      setError("Please paste a valid Facebook or YouTube video link.");
+      return;
+    }
+    if (!categoryId) {
+      setError("Please select a category.");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/gallery", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: trimmedUrl,
+          type: "video",
+          title: videoTitle.trim() || undefined,
+          altText: videoTitle.trim() || "Video",
+          categoryId,
+          tags: [],
+          downloadEnabled: false,
+          year: new Date().getFullYear(),
+          eventId: eventId || null,
+          projectId: projectId || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to add video link");
+      }
+
+      toast("Video link added successfully", "success");
+      setVideoUrl("");
+      setVideoTitle("");
+      onComplete();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to add video link");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const inputClass = cn(
+    "w-full rounded-md px-3 py-2 text-sm transition-colors",
+    "bg-[var(--color-bg-surface)] border border-[var(--color-border)]",
+    "text-[var(--color-text-primary)] placeholder:text-[var(--color-text-secondary)]",
+    "focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
+  );
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-base font-semibold text-[var(--color-text-primary)] font-[var(--font-heading)]">
+          Add Video by Link
+        </h3>
+        <p className="text-xs text-[var(--color-text-secondary)] mt-1">
+          Paste a public Facebook or YouTube video link — no file upload needed. It plays embedded in the gallery.
+        </p>
+      </div>
+
+      {error && (
+        <Alert variant="error" message={error} dismissible onDismiss={() => setError(null)} />
+      )}
+
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
+          Video URL
+        </label>
+        <input
+          type="url"
+          value={videoUrl}
+          onChange={(e) => setVideoUrl(e.target.value)}
+          placeholder="https://www.facebook.com/.../videos/... or https://youtu.be/..."
+          className={inputClass}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wide">
+          Title (optional)
+        </label>
+        <input
+          type="text"
+          value={videoTitle}
+          onChange={(e) => setVideoTitle(e.target.value)}
+          placeholder="Give this video a title..."
+          className={inputClass}
+        />
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <select
+          value={categoryId}
+          onChange={(e) => setCategoryId(e.target.value)}
+          className={cn(inputClass, "flex-1 min-w-[180px]")}
+        >
+          <option value="" disabled>Select a category (required)</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+        {events.length > 0 && (
+          <select
+            value={eventId}
+            onChange={(e) => { setEventId(e.target.value); if (e.target.value) setProjectId(""); }}
+            className={cn(inputClass, "flex-1 min-w-[180px]")}
+          >
+            <option value="">Link to event (optional)</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {truncateText(ev.title, 35)}
+              </option>
+            ))}
+          </select>
+        )}
+        {projects.length > 0 && (
+          <select
+            value={projectId}
+            onChange={(e) => { setProjectId(e.target.value); if (e.target.value) setEventId(""); }}
+            className={cn(inputClass, "flex-1 min-w-[180px]")}
+          >
+            <option value="">Link to project (optional)</option>
+            {projects.map((proj) => (
+              <option key={proj.id} value={proj.id}>
+                {truncateText(proj.title, 35)}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <button
+        type="button"
+        onClick={handleAdd}
+        disabled={submitting}
+        className={cn(
+          "w-full px-4 py-2.5 rounded-md text-sm font-medium transition-colors",
+          "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]",
+          "focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]",
+          "disabled:opacity-50 flex items-center justify-center gap-2"
+        )}
+      >
+        {submitting ? (
+          <>
+            <Spinner size="sm" />
+            Adding...
+          </>
+        ) : (
+          <>
+            <Plus size={16} aria-hidden="true" />
+            Add Video Link
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
 // ─── Gallery Item Card ────────────────────────────────────────────────────────
 
 interface GalleryItemCardProps {
@@ -1553,7 +1750,7 @@ aria-label="Filter by event"
 
       {/* Bulk Upload Sub-tab */}
       {activeSubTab === "bulk-upload" && (
-        <div className="max-w-2xl">
+        <div className="max-w-2xl space-y-6">
           <div
             className={cn(
               "rounded-xl border border-[var(--color-border)] p-6",
@@ -1561,6 +1758,24 @@ aria-label="Filter by event"
             )}
           >
             <BulkUploadSection
+              categories={categories}
+              events={events}
+              projects={projects}
+              onComplete={() => {
+                mutateGallery();
+                setActiveSubTab("gallery");
+                setActiveTab("approved");
+              }}
+            />
+          </div>
+
+          <div
+            className={cn(
+              "rounded-xl border border-[var(--color-border)] p-6",
+              "bg-[var(--color-bg-surface)]"
+            )}
+          >
+            <VideoLinkSection
               categories={categories}
               events={events}
               projects={projects}
