@@ -859,7 +859,7 @@ export function VideoPlayer({
           title={title}
           allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
           allowFullScreen
-          sandbox="allow-scripts allow-same-origin allow-presentation"
+          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox allow-forms"
           className="absolute inset-0 h-full w-full border-0"
           scrolling="no"
         />
