@@ -131,6 +131,7 @@ export function EventForm({
       description: initialData?.description ?? null,
       registrationEnabled: initialData?.registrationEnabled ?? false,
       registrationDeadline: undefined,
+      registrationLink: (initialData as { registrationLink?: string })?.registrationLink ?? "",
       metaDescription: initialData?.metaDescription ?? "",
       isPublished: initialData?.isPublished ?? false,
     },
@@ -424,22 +425,53 @@ export function EventForm({
           />
 
           {registrationEnabled && (
-            <div className="w-full">
-              <FormLabel htmlFor="registrationDeadline">
-                Registration Deadline
-                <span className="ml-1.5 text-xs text-[var(--color-text-secondary)] font-normal">
-                  (optional)
-                </span>
-              </FormLabel>
-              <input
-                id="registrationDeadline"
-                type="datetime-local"
-                className="block w-full rounded-lg px-3 py-2 text-sm bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] border border-[var(--color-border)] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
-                {...register("registrationDeadline", {
-                  setValueAs: (v) =>
-                    v ? new Date(v) : undefined,
-                })}
-              />
+            <div className="space-y-4">
+              <div className="w-full">
+                <FormLabel htmlFor="registrationDeadline">
+                  Registration Deadline
+                  <span className="ml-1.5 text-xs text-[var(--color-text-secondary)] font-normal">
+                    (optional)
+                  </span>
+                </FormLabel>
+                <input
+                  id="registrationDeadline"
+                  type="datetime-local"
+                  className="block w-full rounded-lg px-3 py-2 text-sm bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] border border-[var(--color-border)] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:border-[var(--color-accent)]"
+                  {...register("registrationDeadline", {
+                    setValueAs: (v) =>
+                      v ? new Date(v) : undefined,
+                  })}
+                />
+              </div>
+
+              <div className="w-full">
+                <div className="flex items-center justify-between mb-1">
+                  <FormLabel htmlFor="registrationLink">
+                    Registration Link
+                    <span className="ml-1.5 text-xs text-[var(--color-text-secondary)] font-normal">
+                      (optional — any external or internal URL)
+                    </span>
+                  </FormLabel>
+                  
+                    href="https://forms.new"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium bg-[var(--color-bg-elevated)] text-[var(--color-accent)] border border-[var(--color-border)] hover:border-[var(--color-accent)] transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)]"
+                  >
+                    + Create a Google Form
+                  </a>
+                </div>
+                <Input
+                  id="registrationLink"
+                  type="url"
+                  placeholder="https://forms.gle/... or any registration URL"
+                  error={errors.registrationLink?.message}
+                  {...register("registrationLink")}
+                />
+                <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                  No form yet? Click "Create a Google Form" above, build your form, then paste its link here.
+                </p>
+              </div>
             </div>
           )}
         </div>

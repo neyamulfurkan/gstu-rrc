@@ -507,6 +507,25 @@ function EventDetailContent({
           )}
         </div>
 
+        {/* Registration CTA */}
+        {event.registrationEnabled && event.registrationLink && (
+          
+            href={event.registrationLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "inline-flex items-center justify-center gap-2 w-full sm:w-auto",
+              "px-5 py-2.5 rounded-lg text-sm font-semibold",
+              "bg-[var(--color-accent)] text-[var(--color-bg-base)]",
+              "hover:opacity-90 transition-opacity duration-150",
+              "focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg-elevated)]"
+            )}
+          >
+            Register Now
+            <ExternalLink size={15} aria-hidden="true" />
+          </a>
+        )}
+
         {/* Divider */}
         <hr className="border-[var(--color-border)]" />
 

@@ -256,6 +256,7 @@ model Event {
   description          Json          @default("{}")
   registrationEnabled  Boolean       @default(false)
   registrationDeadline DateTime?
+  registrationLink     String?
   metaDescription      String?
   isPublished          Boolean       @default(false)
   galleryItems         GalleryItem[]

@@ -74,6 +74,7 @@ export const eventSchema = z.object({
   description: z.any(),
   registrationEnabled: z.boolean().default(false),
   registrationDeadline: z.coerce.date().optional(),
+  registrationLink: z.string().url("Please enter a valid registration URL").optional().or(z.literal("")),
   metaDescription: z.string().optional(),
   isPublished: z.boolean().default(false),
 });

@@ -116,6 +116,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           description: true,
           isPublished: true,
           registrationEnabled: true,
+          registrationLink: true,
         },
       }),
       prisma.event.count({ where }),
@@ -146,6 +147,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
           : "",
       isPublished: event.isPublished,
       registrationEnabled: event.registrationEnabled,
+      registrationLink: event.registrationLink ?? null,
     }));
 
     const response: ApiListResponse<EventCard> = {
@@ -250,6 +252,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         description: data.description ?? null,
         registrationEnabled: data.registrationEnabled,
         registrationDeadline: data.registrationDeadline ?? null,
+        registrationLink: data.registrationLink || null,
         metaDescription: data.metaDescription ?? null,
         isPublished: data.isPublished,
         coverUrl: bodyWithCover.coverUrl as string ?? "",

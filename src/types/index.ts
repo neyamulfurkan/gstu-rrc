@@ -75,6 +75,7 @@ export interface EventCard {
   description: string;
   isPublished: boolean;
   registrationEnabled: boolean;
+  registrationLink?: string | null;
 }
 
 export interface EventDetail extends Omit<EventCard, "description"> {

@@ -117,6 +117,7 @@ export async function GET(
         isPublished: true,
         registrationEnabled: true,
         registrationDeadline: true,
+        registrationLink: true,
         category: {
           select: { name: true, color: true },
         },
@@ -186,6 +187,7 @@ export async function GET(
       metaDescription: event.metaDescription ?? null,
       isPublished: event.isPublished,
       registrationEnabled: event.registrationEnabled,
+      registrationLink: event.registrationLink ?? null,
       galleryItems: event.galleryItems.map((g) => ({
         id: g.id,
         url: g.url,
@@ -374,6 +376,7 @@ export async function PUT(
         description: data.description ?? {},
         registrationEnabled: data.registrationEnabled,
         registrationDeadline: data.registrationDeadline ?? null,
+        registrationLink: data.registrationLink || null,
         metaDescription: data.metaDescription ?? null,
         isPublished: data.isPublished,
         coverUrl: bodyRecord.coverUrl as string ?? existingEvent.coverUrl ?? "",
