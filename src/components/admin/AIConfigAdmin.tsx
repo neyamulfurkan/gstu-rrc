@@ -67,9 +67,9 @@ const PLACEHOLDER_VARS = [
 ];
 
 const MODEL_OPTIONS = [
-  { value: "llama3-70b-8192", label: "LLaMA 3 70B (8192 context)" },
-  { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B (32768 context)" },
-  { value: "llama3-8b-8192", label: "LLaMA 3 8B (8192 context)" },
+  { value: "openai/gpt-oss-120b", label: "GPT-OSS 120B (recommended)" },
+  { value: "openai/gpt-oss-20b", label: "GPT-OSS 20B (faster, lower cost)" },
+  { value: "moonshotai/kimi-k2-instruct-0905", label: "Kimi K2 Instruct" },
 ];
 
 const HISTORY_OPTIONS = [
@@ -80,7 +80,7 @@ const HISTORY_OPTIONS = [
 const DEFAULT_AI_CONFIG: AIConfig = {
   aiEnabled: false,
   groqApiKey: "",
-  groqModel: "llama3-70b-8192",
+  groqModel: "openai/gpt-oss-120b",
   groqTemperature: 0.7,
   groqMaxTokens: 1000,
   aiSystemPrompt:
@@ -774,7 +774,7 @@ export function AIConfigAdmin(): JSX.Element {
                   options={MODEL_OPTIONS}
                 />
                 <p className="text-xs text-[var(--color-text-secondary)] mt-1">
-                  LLaMA 3 70B is recommended for best quality.
+                  GPT-OSS 120B is recommended for best quality.
                 </p>
               </div>
 

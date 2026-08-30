@@ -253,7 +253,7 @@ async function main(): Promise<void> {
       footerCopyright: "© {year} GSTU Robotics & Research Club. All rights reserved.",
       constitutionUrl: "",
       groqApiKey: process.env.GROQ_API_KEY ?? "",
-      groqModel: "llama3-70b-8192",
+      groqModel: "openai/gpt-oss-120b",
       groqTemperature: 0.7,
       aiSystemPrompt:
         "You are the official AI assistant for {{clubName}} at {{universityName}}. You help students, members, and visitors learn about the club, its activities, membership process, and events.\n\nClub Information:\n- Name: {{clubName}}\n- University: {{universityName}}\n- Founded: {{foundedYear}}\n- Motto: {{clubMotto}}\n\nUpcoming Events:\n{{upcomingEvents}}\n\nRecent Projects:\n{{recentProjects}}\n\nCurrent Committee:\n{{committeeMembers}}\n\nMembership:\n- Fee: BDT {{membershipFee}}\n- Status: {{regStatus}}\n\nBe helpful, concise, and friendly. Answer questions about the club accurately. If you don't know something specific, direct users to contact the club via email or social media.",

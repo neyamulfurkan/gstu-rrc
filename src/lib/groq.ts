@@ -16,7 +16,7 @@ export async function callGroq(
   systemPrompt: string
 ): Promise<string> {
   let groqApiKey: string | null = null;
-  let groqModel = "llama-3.3-70b-versatile";
+  let groqModel = "openai/gpt-oss-20b";
   let groqTemperature = 0.7;
 
   try {
@@ -29,13 +29,19 @@ export async function callGroq(
       },
     });
 
-    const DECOMMISSIONED_MODELS = ["llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768"];
+    const DECOMMISSIONED_MODELS = [
+      "llama3-70b-8192",
+      "llama3-8b-8192",
+      "mixtral-8x7b-32768",
+      "llama-3.3-70b-versatile",
+      "llama-3.1-8b-instant",
+    ];
     if (config) {
       groqApiKey = config.groqApiKey || null;
       const dbModel = config.groqModel || "";
       groqModel = dbModel && !DECOMMISSIONED_MODELS.includes(dbModel)
         ? dbModel
-        : "llama-3.3-70b-versatile";
+        : "openai/gpt-oss-20b";
       groqTemperature = config.groqTemperature ?? 0.7;
     }
   } catch (configError) {
