@@ -363,7 +363,12 @@ function EventDetailContent({
   const mapsUrl = event.mapLink ?? buildGoogleMapsUrl(event.venue);
 
   return (
-    <article className="flex flex-col">
+    <article
+      className={cn(
+        "flex flex-col",
+        !standalone && "h-full min-h-0 overflow-hidden"
+      )}
+    >
       {/* Cover Image */}
       <div className="relative w-full h-[300px] flex-shrink-0 overflow-hidden bg-[var(--color-bg-surface)]">
         {event.coverUrl ? (
@@ -435,7 +440,12 @@ function EventDetailContent({
       </div>
 
       {/* Content */}
-      <div className="p-6 space-y-5 overflow-y-auto">
+      <div
+        className={cn(
+          "p-6 space-y-5",
+          !standalone && "flex-1 min-h-0 overflow-y-auto"
+        )}
+      >
         {/* Title */}
         <h2 className="text-2xl font-bold text-[var(--color-text-primary)] font-[var(--font-heading)] leading-tight">
           {event.title}
